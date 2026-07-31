@@ -1,4 +1,5 @@
 PREVIEW_PACKAGE := Tools/PreviewGenerator
+PREVIEW_SCRATCH := .build/preview
 PREVIEW_OUTPUT := Sources/RorkHighlighter/RorkHighlighter.docc/Resources/swift-attributed-output.png
 
 .PHONY: build test format lint preview vendor-languages check-languages check-documentation check-preview check
@@ -16,7 +17,7 @@ lint:
 	swift format lint --recursive --strict Package.swift Sources/RorkHighlighter Tests $(PREVIEW_PACKAGE)/Package.swift $(PREVIEW_PACKAGE)/Sources
 
 preview:
-	swift run --package-path $(PREVIEW_PACKAGE) --scratch-path .build PreviewGenerator "$(PREVIEW_OUTPUT)"
+	swift run --package-path $(PREVIEW_PACKAGE) --scratch-path $(PREVIEW_SCRATCH) PreviewGenerator "$(PREVIEW_OUTPUT)"
 
 vendor-languages:
 	python3 Scripts/vendor_languages.py --update
@@ -29,7 +30,7 @@ check-documentation:
 
 ifeq ($(shell uname -s),Darwin)
 check-preview:
-	swift build --package-path $(PREVIEW_PACKAGE) --scratch-path .build --target PreviewGenerator -Xswiftc -warnings-as-errors
+	swift build --package-path $(PREVIEW_PACKAGE) --scratch-path $(PREVIEW_SCRATCH) --target PreviewGenerator -Xswiftc -warnings-as-errors
 else
 check-preview:
 	@echo "The AppKit preview build is skipped on non-macOS hosts."

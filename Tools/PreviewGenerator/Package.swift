@@ -9,7 +9,10 @@ let package = Package(
         .macOS(.v13)
     ],
     dependencies: [
-        .package(path: "../..")
+        .package(
+            name: "rork-highlighter",
+            path: "../.."
+        )
     ],
     targets: [
         .executableTarget(

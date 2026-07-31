@@ -400,22 +400,20 @@ private final class PreviewView: NSView {
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.alignment = .right
         paragraphStyle.lineSpacing = lineSpacing
-        NSAttributedString(
+        let renderedLineNumbers = NSAttributedString(
             string: lineNumbers,
             attributes: [
-                .font: NSFont.monospacedDigitSystemFont(
-                    ofSize: codeFont.pointSize,
-                    weight: .regular
-                ),
+                .font: codeFont,
                 .foregroundColor: NSColor.white.withAlphaComponent(0.18),
                 .paragraphStyle: paragraphStyle,
             ]
-        ).draw(
+        )
+        renderedLineNumbers.draw(
             in: NSRect(
                 x: editorRect.minX + 66,
                 y: codeOrigin.y,
                 width: 42,
-                height: editorRect.height - 36
+                height: ceil(renderedLineNumbers.size().height)
             )
         )
 
