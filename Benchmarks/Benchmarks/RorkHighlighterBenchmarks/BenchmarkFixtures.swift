@@ -44,6 +44,12 @@ enum BenchmarkFixtures {
     /// Marks the fixed-width token changed by the incremental benchmark.
     static let revisionMarker = "1000"
 
+    /// Replaces the revision marker during variable-width edits.
+    static let expandedRevisionMarker = "20000000"
+
+    /// Marks a fixed-width token near the end of the largest fixture.
+    static let tailRevisionMarker = "3000"
+
     /// Holds Swift documents at each supported benchmark scale.
     static let swiftSources = BenchmarkDocumentSize.allCases.map { size in
         BenchmarkSource(
@@ -97,6 +103,30 @@ enum BenchmarkFixtures {
         )
     }
 
+    /// Locates the fixed-width revision token nearest the fixture end.
+    ///
+    /// - Parameter source: The generated source containing the marker.
+    /// - Returns: The exact UTF-16 range occupied by the final marker.
+    static func tailRevisionMarkerRange(
+        in source: String
+    ) -> UTF16Range {
+        guard
+            let range = source.range(
+                of: tailRevisionMarker,
+                options: .backwards
+            )
+        else {
+            preconditionFailure(
+                "The Swift benchmark fixture has no tail revision marker."
+            )
+        }
+        let rangeInUTF16 = NSRange(range, in: source)
+        return UTF16Range(
+            location: rangeInUTF16.location,
+            length: rangeInUTF16.length
+        )
+    }
+
     /// Builds valid Swift declarations until the requested scale is reached.
     ///
     /// - Parameter minimumUTF16Length: The minimum generated document length.
@@ -126,6 +156,7 @@ enum BenchmarkFixtures {
                 """
             index += 1
         }
+        source += "let tailRevisionMarker = \(tailRevisionMarker)\n"
         return source
     }
 

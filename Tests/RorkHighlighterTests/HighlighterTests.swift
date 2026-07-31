@@ -96,6 +96,26 @@ struct HighlighterTests {
         )
     }
 
+    /// Confirms internal range provenance does not change public snapshot
+    /// equality or hashing.
+    @Test
+    func ignoresRangeProvenanceInSnapshotValueSemantics() throws {
+        let highlighter = try Highlighter()
+        let parsed = try highlighter.highlight(
+            "let value = 1",
+            as: .swift
+        )
+        let reconstructed = HighlightSnapshot(
+            text: parsed.text,
+            language: parsed.language,
+            revision: parsed.revision,
+            highlights: parsed.highlights
+        )
+
+        #expect(parsed == reconstructed)
+        #expect(Set([parsed, reconstructed]).count == 1)
+    }
+
     /// Confirms Codable round trips preserve validated public value types.
     @Test
     func roundTripsValidatedCodableValues() throws {

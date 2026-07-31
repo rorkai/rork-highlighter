@@ -35,6 +35,11 @@ catalog initialization, one-shot Swift highlighting, HTML with JavaScript and
 CSS injections, a fixed-width incremental edit, hierarchical theme resolution,
 and native attributed rendering where those frameworks are available.
 
+Incremental coverage includes fixed-width replacements near both ends of the
+document and edits that alternate between shorter and longer text. The
+variable-width workload exercises range rebasing for every retained capture
+after the edit.
+
 Performance results should only be compared on the same hardware, operating
 system, and Swift toolchain. The first benchmark PR deliberately records no
 regression thresholds because a stable baseline must come from repeated runs on

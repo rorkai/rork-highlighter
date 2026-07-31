@@ -173,29 +173,77 @@ public struct Highlighter: Sendable {
             length: text.utf16.count
         )
 
-        do {
-            let ranges = try layer.highlights(
-                in: fullRange,
-                provider: text.predicateTextProvider
-            )
-            let highlights =
-                ranges
-                .map { range in
-                    HighlightSpan(
-                        scopeComponents: range.nameComponents,
-                        range: UTF16Range(
-                            location: range.range.location,
-                            length: range.range.length
-                        )
-                    )
-                }
-                .sorted()
-            return HighlightSnapshot(
+        return HighlightSnapshot(
+            parserProducedText: text,
+            language: language,
+            revision: revision,
+            highlights: try makeHighlights(
                 text: text,
                 language: language,
-                revision: revision,
-                highlights: highlights
+                layer: layer,
+                in: fullRange
             )
+        )
+    }
+
+    /// Queries a parsed layer and converts captures with one ordered buffer.
+    ///
+    /// SwiftTreeSitter's convenience API first sorts query captures into an
+    /// intermediate `NamedRange` array. Rork Highlighter needs its own public
+    /// value type and ordering, so collecting captures directly avoids an
+    /// intermediate allocation and a redundant sort.
+    ///
+    /// - Parameters:
+    ///   - text: The source represented by the layer.
+    ///   - language: The canonical root language identifier.
+    ///   - layer: The parsed root language layer.
+    ///   - range: The UTF-16 region whose intersecting captures are requested.
+    /// - Returns: Highlight spans in deterministic application order.
+    /// - Throws: ``HighlighterError`` when the tree or query is unavailable.
+    func makeHighlights(
+        text: String,
+        language: LanguageID,
+        layer: LanguageLayer,
+        in range: NSRange
+    ) throws(HighlighterError) -> [HighlightSpan] {
+        guard range.length > 0 else {
+            return []
+        }
+
+        do {
+            let matches = try layer.executeQuery(
+                .highlights,
+                in: range
+            )
+            let resolvedMatches = matches.resolve(
+                with: Predicate.Context(string: text)
+            )
+            var highlights: [HighlightSpan] = []
+            var previousHighlight: HighlightSpan?
+            var requiresSorting = false
+
+            for match in resolvedMatches {
+                for capture in match.captures
+                where !capture.nameComponents.isEmpty {
+                    let highlight = HighlightSpan(
+                        scopeComponents: capture.nameComponents,
+                        range: UTF16Range(
+                            location: capture.range.location,
+                            length: capture.range.length
+                        )
+                    )
+                    if let previousHighlight, highlight < previousHighlight {
+                        requiresSorting = true
+                    }
+                    highlights.append(highlight)
+                    previousHighlight = highlight
+                }
+            }
+
+            if requiresSorting {
+                highlights.sort()
+            }
+            return highlights
         } catch LanguageLayerError.noRootNode {
             throw HighlighterError.parsingFailed(
                 language: language,

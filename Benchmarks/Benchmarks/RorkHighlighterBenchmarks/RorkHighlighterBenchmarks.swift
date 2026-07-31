@@ -48,7 +48,7 @@ private enum BenchmarkSetup {
     /// - Parameters:
     ///   - fixture: The initial source document.
     ///   - highlighter: The highlighter that creates the session.
-    /// - Returns: An actor-isolated session ready for fixed-width edits.
+    /// - Returns: An actor-isolated session ready for incremental edits.
     static func session(
         for fixture: BenchmarkSource,
         using highlighter: Highlighter
@@ -61,7 +61,6 @@ private enum BenchmarkSetup {
             )
         }
     }
-
 }
 
 /// Registers benchmarks for the public highlighting and rendering workflows.
@@ -148,6 +147,81 @@ let benchmarks: @Sendable () -> Void = {
     Benchmark(
         "Highlight/IncrementalEdit/Large",
         closure: incrementalEdit
+    )
+
+    let variableEditSession = BenchmarkSetup.session(
+        for: largeFixture,
+        using: highlighter
+    )
+    let variableWidthEdit: @Sendable (Benchmark) async throws -> Void = { _ in
+        #if compiler(>=6.1)
+            let revision = await variableEditSession.currentRevision
+        #else
+            // Swift 6.0 imports this cross-package actor access as synchronous.
+            let revision = variableEditSession.currentRevision
+        #endif
+        let usesExpandedMarker = !revision.isMultiple(of: 2)
+        let currentRange = UTF16Range(
+            location: markerRange.location,
+            length:
+                usesExpandedMarker
+                ? BenchmarkFixtures.expandedRevisionMarker.utf16.count
+                : BenchmarkFixtures.revisionMarker.utf16.count
+        )
+        let replacement =
+            usesExpandedMarker
+            ? BenchmarkFixtures.revisionMarker
+            : BenchmarkFixtures.expandedRevisionMarker
+
+        #if compiler(>=6.1)
+            let update = try await variableEditSession.replaceCharacters(
+                in: currentRange,
+                with: replacement
+            )
+        #else
+            // Swift 6.0 imports this cross-package actor call as synchronous.
+            let update = try variableEditSession.replaceCharacters(
+                in: currentRange,
+                with: replacement
+            )
+        #endif
+        blackHole(update)
+    }
+    Benchmark(
+        "Highlight/IncrementalVariableWidthEdit/Large",
+        closure: variableWidthEdit
+    )
+
+    let tailMarkerRange = BenchmarkFixtures.tailRevisionMarkerRange(
+        in: largeFixture.text
+    )
+    let tailEditSession = BenchmarkSetup.session(
+        for: largeFixture,
+        using: highlighter
+    )
+    let tailEdit: @Sendable (Benchmark) async throws -> Void = { benchmark in
+        let replacement =
+            benchmark.currentIteration.isMultiple(of: 2)
+            ? "4000"
+            : BenchmarkFixtures.tailRevisionMarker
+
+        #if compiler(>=6.1)
+            let update = try await tailEditSession.replaceCharacters(
+                in: tailMarkerRange,
+                with: replacement
+            )
+        #else
+            // Swift 6.0 imports this cross-package actor call as synchronous.
+            let update = try tailEditSession.replaceCharacters(
+                in: tailMarkerRange,
+                with: replacement
+            )
+        #endif
+        blackHole(update)
+    }
+    Benchmark(
+        "Highlight/IncrementalTailEdit/Large",
+        closure: tailEdit
     )
 
     guard let largeSnapshot = snapshots.last?.snapshot else {

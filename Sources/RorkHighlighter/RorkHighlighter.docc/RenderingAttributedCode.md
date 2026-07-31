@@ -91,7 +91,8 @@ removes traits inherited from broader theme rules while preserving the
 caller-provided base font.
 
 The renderer resolves shared UTF-16 boundaries during one forward traversal of
-the source. It does not rescan the complete document for each capture.
+the source. It does not rescan the complete document for each capture. Styles,
+native colors, and derived font faces are reused when capture scopes repeat.
 
 ## Handle invalid ranges
 
@@ -99,6 +100,10 @@ Rendering throws ``HighlightRenderingError`` when a manually constructed
 snapshot contains an out-of-bounds range or a boundary inside a Swift
 character. Ranges are never rounded because rounding could color source text
 outside the Tree-sitter capture.
+
+Snapshots produced by ``Highlighter`` and ``HighlightSession`` carry
+Tree-sitter range provenance. The TextKit renderer recognizes that provenance
+and avoids repeating the Unicode boundary validation pass.
 
 The Swift value renderer is available when SwiftUI is present. The TextKit
 renderer is available when UIKit or AppKit is present. The raw
