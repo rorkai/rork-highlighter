@@ -16,6 +16,13 @@ Run every benchmark from the repository root.
 make benchmark
 ```
 
+Linux uses jemalloc-backed allocation metrics. Install its development headers
+before building the benchmark package on Debian or Ubuntu.
+
+```sh
+sudo apt-get install libjemalloc-dev
+```
+
 Pass additional command-plugin arguments when a focused run is more useful.
 
 ```sh

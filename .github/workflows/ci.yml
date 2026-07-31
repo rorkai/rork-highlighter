@@ -45,6 +45,10 @@ jobs:
           persist-credentials: false
       - name: Build and test
         run: swift test
+      - name: Install benchmark prerequisites
+        run: |
+          apt-get update -q
+          apt-get install -y -q libjemalloc-dev
       - name: Build measurement tools
         run: |
           swift build \
