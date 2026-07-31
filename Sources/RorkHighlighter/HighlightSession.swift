@@ -114,12 +114,9 @@ public actor HighlightSession {
             throw HighlighterError.invalidUTF16Boundary(range)
         }
 
-        let startPoint = Self.point(
-            atUTF16Offset: range.location,
-            in: text
-        )
-        let oldEndPoint = Self.point(
-            atUTF16Offset: range.upperBound,
+        let editPoints = Self.points(
+            atUTF16Offsets: range.location,
+            and: range.upperBound,
             in: text
         )
 
@@ -131,16 +128,16 @@ public actor HighlightSession {
             location: range.location,
             length: replacement.utf16.count
         )
-        let newEndPoint = Self.point(
-            atUTF16Offset: replacementRange.upperBound,
-            in: updatedText
+        let newEndPoint = Self.endPoint(
+            of: replacement,
+            startingAt: editPoints.start
         )
         let edit = InputEdit(
             startByte: UInt32(range.location * 2),
             oldEndByte: UInt32(range.upperBound * 2),
             newEndByte: UInt32(replacementRange.upperBound * 2),
-            startPoint: startPoint,
-            oldEndPoint: oldEndPoint,
+            startPoint: editPoints.start,
+            oldEndPoint: editPoints.end,
             newEndPoint: newEndPoint
         )
         let invalidated = layer.didChangeContent(
@@ -164,22 +161,58 @@ public actor HighlightSession {
         )
     }
 
-    /// Computes the Tree-sitter row and byte column at a UTF-16 offset.
+    /// Computes two Tree-sitter points during one traversal of the source.
     ///
     /// Document-length validation guarantees both values fit in `UInt32`.
     ///
     /// - Parameters:
-    ///   - offset: The UTF-16 offset to locate.
+    ///   - startOffset: The first UTF-16 offset to locate.
+    ///   - endOffset: The second UTF-16 offset to locate.
     ///   - text: The complete source text.
-    /// - Returns: The corresponding zero-based Tree-sitter point.
-    private static func point(
-        atUTF16Offset offset: Int,
+    /// - Returns: The corresponding zero-based Tree-sitter points.
+    private static func points(
+        atUTF16Offsets startOffset: Int,
+        and endOffset: Int,
         in text: String
-    ) -> Point {
+    ) -> (start: Point, end: Point) {
         var row: UInt32 = 0
         var column: UInt32 = 0
+        var currentOffset = 0
+        var startPoint = startOffset == 0 ? Point.zero : nil
 
-        for codeUnit in text.utf16.prefix(offset) {
+        for codeUnit in text.utf16.prefix(endOffset) {
+            if codeUnit == 0x0A {
+                row += 1
+                column = 0
+            } else {
+                column += 2
+            }
+            currentOffset += 1
+            if currentOffset == startOffset {
+                startPoint = Point(row: row, column: column)
+            }
+        }
+
+        let endPoint = Point(row: row, column: column)
+        return (startPoint ?? endPoint, endPoint)
+    }
+
+    /// Advances a Tree-sitter point across newly inserted UTF-16 text.
+    ///
+    /// Document-length validation guarantees the result fits in `UInt32`.
+    ///
+    /// - Parameters:
+    ///   - replacement: The source text inserted at the starting point.
+    ///   - startPoint: The point immediately before the replacement.
+    /// - Returns: The point immediately after the replacement.
+    private static func endPoint(
+        of replacement: String,
+        startingAt startPoint: Point
+    ) -> Point {
+        var row = startPoint.row
+        var column = startPoint.column
+
+        for codeUnit in replacement.utf16 {
             if codeUnit == 0x0A {
                 row += 1
                 column = 0

@@ -48,6 +48,7 @@ struct LanguageCatalogTests {
         #expect(catalog.language(forFilename: "tsconfig.json")?.id == .json5)
         #expect(catalog.language(forFilename: "Package.resolved")?.id == .json)
         #expect(catalog.language(forFilename: "Podfile.lock")?.id == .yaml)
+        #expect(catalog.language(forFilename: "Example.swift\n")?.id == .swift)
         #expect(catalog.language(forFileExtension: ".MM")?.id == .objectiveC)
     }
 

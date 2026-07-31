@@ -46,6 +46,11 @@ public struct HighlightSpan: Hashable, Sendable, Codable, Comparable {
         if lhs.range != rhs.range {
             return lhs.range < rhs.range
         }
-        return lhs.scopeComponents.count < rhs.scopeComponents.count
+        if lhs.scopeComponents.count != rhs.scopeComponents.count {
+            return lhs.scopeComponents.count < rhs.scopeComponents.count
+        }
+        return lhs.scopeComponents.lexicographicallyPrecedes(
+            rhs.scopeComponents
+        )
     }
 }

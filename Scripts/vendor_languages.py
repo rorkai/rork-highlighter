@@ -26,14 +26,36 @@ LOCK_PATH = REPOSITORY_ROOT / "LanguagePack.lock.json"
 # The notices document attributes every source distributed in the pack.
 NOTICES_PATH = REPOSITORY_ROOT / "THIRD_PARTY_NOTICES.md"
 
-# These paths are replaced atomically when the language pack is updated.
-MANAGED_PATHS = (
-    Path("Sources/CRorkHighlighterParsers/languages"),
-    Path("Sources/CRorkHighlighterParsers/include/CRorkHighlighterParsers.h"),
-    Path("Sources/RorkHighlighter/BundledLanguages.generated.swift"),
-    Path("Sources/RorkHighlighter/Resources/Languages"),
-    Path("ThirdPartyLicenses"),
+# Generated parser sources are copied into the shared Clang target.
+PARSER_SOURCES_PATH = Path("Sources/CRorkHighlighterParsers/languages")
+
+# The generated header exposes every parser entry point to Swift.
+GENERATED_HEADER_PATH = Path(
+    "Sources/CRorkHighlighterParsers/include/CRorkHighlighterParsers.h"
 )
+
+# The generated Swift source constructs the standard language catalog.
+GENERATED_SWIFT_PATH = Path(
+    "Sources/RorkHighlighter/BundledLanguages.generated.swift"
+)
+
+# Bundled Tree-sitter queries are copied as SwiftPM resources.
+QUERY_RESOURCES_PATH = Path("Sources/RorkHighlighter/Resources/Languages")
+
+# Retained upstream license texts accompany the distributed parser sources.
+RETAINED_LICENSES_PATH = Path("ThirdPartyLicenses")
+
+# These paths are replaced together when the language pack is updated.
+MANAGED_PATHS = (
+    PARSER_SOURCES_PATH,
+    GENERATED_HEADER_PATH,
+    GENERATED_SWIFT_PATH,
+    QUERY_RESOURCES_PATH,
+    RETAINED_LICENSES_PATH,
+)
+
+# Repository fetches fail instead of hanging indefinitely.
+GIT_FETCH_TIMEOUT_SECONDS = 300
 
 # Official packs accept only licenses that allow commercial redistribution.
 PERMISSIVE_LICENSES = {
@@ -250,20 +272,27 @@ def checkout_repositories(
             ],
             check=True,
         )
-        subprocess.run(
-            [
-                "git",
-                "-C",
-                str(checkout),
-                "fetch",
-                "--quiet",
-                "--depth",
-                "1",
-                "origin",
-                repository["revision"],
-            ],
-            check=True,
-        )
+        try:
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(checkout),
+                    "fetch",
+                    "--quiet",
+                    "--depth",
+                    "1",
+                    "origin",
+                    repository["revision"],
+                ],
+                check=True,
+                timeout=GIT_FETCH_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired as error:
+            raise TimeoutError(
+                f"Fetching repository '{identifier}' exceeded "
+                f"{GIT_FETCH_TIMEOUT_SECONDS} seconds."
+            ) from error
         subprocess.run(
             [
                 "git",
@@ -308,9 +337,9 @@ def populate_staging_output(
 ) -> None:
     """Copies native sources, queries, and licenses into a staged tree."""
     repositories = manifest["repositories"]
-    parser_root = output_root / MANAGED_PATHS[0]
-    query_root = output_root / MANAGED_PATHS[3]
-    license_root = output_root / MANAGED_PATHS[4]
+    parser_root = output_root / PARSER_SOURCES_PATH
+    query_root = output_root / QUERY_RESOURCES_PATH
+    license_root = output_root / RETAINED_LICENSES_PATH
 
     for language in manifest["languages"]:
         default_repository = language["repository"]
@@ -675,8 +704,8 @@ def write_generated_interfaces(
     output_root: Path,
 ) -> None:
     """Writes the C header and Swift catalog generated from the manifest."""
-    header_path = output_root / MANAGED_PATHS[1]
-    swift_path = output_root / MANAGED_PATHS[2]
+    header_path = output_root / GENERATED_HEADER_PATH
+    swift_path = output_root / GENERATED_SWIFT_PATH
     header_path.parent.mkdir(parents=True, exist_ok=True)
     swift_path.parent.mkdir(parents=True, exist_ok=True)
     header_path.write_text(
@@ -704,6 +733,13 @@ def write_generated_interfaces(
 
 def install_staged_output(output_root: Path) -> None:
     """Replaces each managed destination with its complete staged value."""
+    for relative_path in MANAGED_PATHS:
+        source = output_root / relative_path
+        if not source.exists():
+            raise FileNotFoundError(
+                f"Staged managed output is missing at {source}."
+            )
+
     for relative_path in MANAGED_PATHS:
         source = output_root / relative_path
         destination = REPOSITORY_ROOT / relative_path
@@ -796,7 +832,10 @@ def verify_generated_interfaces(manifest: dict[str, Any]) -> list[str]:
     ) as temporary_directory:
         output_root = Path(temporary_directory)
         write_generated_interfaces(manifest, output_root)
-        for relative_path in (MANAGED_PATHS[1], MANAGED_PATHS[2]):
+        for relative_path in (
+            GENERATED_HEADER_PATH,
+            GENERATED_SWIFT_PATH,
+        ):
             expected = output_root / relative_path
             actual = REPOSITORY_ROOT / relative_path
             if not actual.exists() or expected.read_bytes() != actual.read_bytes():
@@ -807,7 +846,7 @@ def verify_generated_interfaces(manifest: dict[str, Any]) -> list[str]:
 def verify_parser_entry_points(manifest: dict[str, Any]) -> list[str]:
     """Returns parser definitions whose generated factory cannot be found."""
     failures: list[str] = []
-    parser_root = REPOSITORY_ROOT / MANAGED_PATHS[0]
+    parser_root = REPOSITORY_ROOT / PARSER_SOURCES_PATH
     for language in manifest["languages"]:
         needles = (
             f"{language['entryPoint']}(void)",

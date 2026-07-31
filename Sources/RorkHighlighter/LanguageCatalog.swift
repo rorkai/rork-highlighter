@@ -97,7 +97,9 @@ public struct LanguageCatalog: Sendable {
     /// - Parameter fileExtension: The extension to resolve.
     /// - Returns: The matching definition, or `nil` when no language matches.
     public func language(forFileExtension fileExtension: String) -> HighlightLanguage? {
-        let normalizedExtension = Self.normalizeFileExtension(fileExtension)
+        let normalizedExtension = LanguageNameNormalizer.fileExtension(
+            from: fileExtension
+        )
         guard let canonicalID = fileExtensions[normalizedExtension] else {
             return nil
         }
@@ -112,12 +114,14 @@ public struct LanguageCatalog: Sendable {
     /// - Parameter filename: The complete source filename to resolve.
     /// - Returns: The matching definition, or `nil` when no language matches.
     public func language(forFilename filename: String) -> HighlightLanguage? {
-        let normalizedFilename = Self.normalizeFilename(filename)
+        let normalizedFilename = LanguageNameNormalizer.filename(
+            from: filename
+        )
         if let canonicalID = filenames[normalizedFilename] {
             return languagesByID[canonicalID]
         }
         return language(
-            forFileExtension: (filename as NSString).pathExtension
+            forFileExtension: (normalizedFilename as NSString).pathExtension
         )
     }
 
@@ -127,25 +131,5 @@ public struct LanguageCatalog: Sendable {
     /// - Returns: The matching definition, or `nil` when no language matches.
     public func language(for fileURL: URL) -> HighlightLanguage? {
         language(forFilename: fileURL.lastPathComponent)
-    }
-
-    /// Removes spelling variations that should not affect extension lookup.
-    ///
-    /// - Parameter fileExtension: The extension supplied by a caller.
-    /// - Returns: A lowercase extension without surrounding periods or spaces.
-    private static func normalizeFileExtension(_ fileExtension: String) -> String {
-        fileExtension
-            .trimmingCharacters(in: CharacterSet(charactersIn: ". \t\r\n"))
-            .lowercased()
-    }
-
-    /// Removes spelling variations that should not affect filename lookup.
-    ///
-    /// - Parameter filename: The filename supplied by a caller.
-    /// - Returns: A lowercase filename without surrounding whitespace.
-    private static func normalizeFilename(_ filename: String) -> String {
-        filename
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
     }
 }

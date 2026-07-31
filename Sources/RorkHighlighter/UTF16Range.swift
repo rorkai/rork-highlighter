@@ -10,6 +10,15 @@ public struct UTF16Range:
     Comparable,
     CustomStringConvertible
 {
+    /// Names the fields in the stable serialized representation.
+    private enum CodingKeys: String, CodingKey {
+        /// Identifies the first UTF-16 code-unit offset.
+        case location
+
+        /// Identifies the number of UTF-16 code units.
+        case length
+    }
+
     /// Holds the first UTF-16 code-unit offset in the range.
     public let location: Int
 
@@ -40,6 +49,49 @@ public struct UTF16Range:
             location: range.lowerBound,
             length: range.count
         )
+    }
+
+    /// Decodes a range after validating its public invariants.
+    ///
+    /// - Parameter decoder: The decoder containing the serialized range.
+    /// - Throws: `DecodingError` when either value is negative or their sum
+    ///   exceeds the platform integer width.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let location = try container.decode(
+            Int.self,
+            forKey: .location
+        )
+        let length = try container.decode(
+            Int.self,
+            forKey: .length
+        )
+
+        guard location >= 0 else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .location,
+                in: container,
+                debugDescription: "UTF-16 locations cannot be negative."
+            )
+        }
+        guard length >= 0 else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .length,
+                in: container,
+                debugDescription: "UTF-16 lengths cannot be negative."
+            )
+        }
+        guard location <= Int.max - length else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .length,
+                in: container,
+                debugDescription:
+                    "The UTF-16 range exceeds the platform integer width."
+            )
+        }
+
+        self.location = location
+        self.length = length
     }
 
     /// Returns the first offset outside the range.

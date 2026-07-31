@@ -77,6 +77,8 @@ Apply broader spans first and more specific spans afterward.
 Filename and file-extension discovery are also available:
 
 ```swift
+import Foundation
+
 let snapshot = try highlighter.highlight(
     source,
     for: URL(fileURLWithPath: "/tmp/settings.json")

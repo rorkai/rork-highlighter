@@ -103,12 +103,16 @@ public struct HighlightLanguage: Identifiable, Sendable {
         self.aliases = aliases
         self.fileExtensions = Set(
             fileExtensions
-                .map(Self.normalizeFileExtension)
+                .map {
+                    LanguageNameNormalizer.fileExtension(from: $0)
+                }
                 .filter { !$0.isEmpty }
         )
         self.filenames = Set(
             filenames
-                .map(Self.normalizeFilename)
+                .map {
+                    LanguageNameNormalizer.filename(from: $0)
+                }
                 .filter { !$0.isEmpty }
         )
         self.configuration = LanguageConfiguration(
@@ -147,26 +151,6 @@ public struct HighlightLanguage: Identifiable, Sendable {
                 message: queryErrorDescription(error)
             )
         }
-    }
-
-    /// Removes spelling variations that should not affect extension lookup.
-    ///
-    /// - Parameter fileExtension: The extension supplied by a definition.
-    /// - Returns: A lowercase extension without surrounding periods or spaces.
-    private static func normalizeFileExtension(_ fileExtension: String) -> String {
-        fileExtension
-            .trimmingCharacters(in: CharacterSet(charactersIn: ". \t\r\n"))
-            .lowercased()
-    }
-
-    /// Removes spelling variations that should not affect filename lookup.
-    ///
-    /// - Parameter filename: The filename supplied by a definition.
-    /// - Returns: A lowercase filename without surrounding whitespace.
-    private static func normalizeFilename(_ filename: String) -> String {
-        filename
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
     }
 
     /// Converts a Tree-sitter query failure into a stable diagnostic.

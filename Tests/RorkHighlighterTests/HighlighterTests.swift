@@ -22,6 +22,7 @@ struct HighlighterTests {
         #expect(scopes.contains("string"))
         #expect(scopes.contains("number"))
         #expect(scopes.contains("constant.builtin"))
+        #expect(snapshot.highlights == snapshot.highlights.sorted())
     }
 
     /// Confirms public ranges use Foundation-compatible UTF-16 offsets.
@@ -66,5 +67,88 @@ struct HighlighterTests {
         #expect(range.overlaps(UTF16Range(location: 5, length: 2)))
         #expect(!range.overlaps(UTF16Range(location: 6, length: 2)))
         #expect(!range.overlaps(UTF16Range(location: 4, length: 0)))
+    }
+
+    /// Confirms spans with equal ranges and specificity have a stable lexical
+    /// order.
+    @Test
+    func ordersEqualRangeHighlightSpansDeterministically() {
+        let range = UTF16Range(location: 2, length: 4)
+        let spans = [
+            HighlightSpan(
+                scopeComponents: ["variable", "property"],
+                range: range
+            ),
+            HighlightSpan(scope: "variable", range: range),
+            HighlightSpan(
+                scopeComponents: ["variable", "parameter"],
+                range: range
+            ),
+        ]
+
+        #expect(
+            spans.sorted().map(\.scope)
+                == [
+                    "variable",
+                    "variable.parameter",
+                    "variable.property",
+                ]
+        )
+    }
+
+    /// Confirms Codable round trips preserve validated public value types.
+    @Test
+    func roundTripsValidatedCodableValues() throws {
+        let encoder = JSONEncoder()
+        let decoder = JSONDecoder()
+        let range = UTF16Range(location: 12, length: 4)
+        let configuration = HighlighterConfiguration(
+            maximumInjectionDepth: 8
+        )
+
+        let decodedRange = try decoder.decode(
+            UTF16Range.self,
+            from: encoder.encode(range)
+        )
+        let decodedConfiguration = try decoder.decode(
+            HighlighterConfiguration.self,
+            from: encoder.encode(configuration)
+        )
+
+        #expect(decodedRange == range)
+        #expect(decodedConfiguration == configuration)
+    }
+
+    /// Confirms decoding cannot create ranges that violate initializer
+    /// invariants.
+    @Test
+    func rejectsInvalidDecodedUTF16Ranges() {
+        let payloads = [
+            #"{"location":-1,"length":1}"#,
+            #"{"location":1,"length":-1}"#,
+            #"{"location":\#(Int.max),"length":1}"#,
+        ]
+
+        for payload in payloads {
+            #expect(throws: DecodingError.self) {
+                try JSONDecoder().decode(
+                    UTF16Range.self,
+                    from: Data(payload.utf8)
+                )
+            }
+        }
+    }
+
+    /// Confirms decoding cannot create a negative language injection depth.
+    @Test
+    func rejectsInvalidDecodedHighlighterConfiguration() {
+        let payload = #"{"maximumInjectionDepth":-1}"#
+
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(
+                HighlighterConfiguration.self,
+                from: Data(payload.utf8)
+            )
+        }
     }
 }

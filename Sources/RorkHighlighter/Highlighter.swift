@@ -178,15 +178,18 @@ public struct Highlighter: Sendable {
                 in: fullRange,
                 provider: text.predicateTextProvider
             )
-            let highlights = ranges.map { range in
-                HighlightSpan(
-                    scopeComponents: range.nameComponents,
-                    range: UTF16Range(
-                        location: range.range.location,
-                        length: range.range.length
+            let highlights =
+                ranges
+                .map { range in
+                    HighlightSpan(
+                        scopeComponents: range.nameComponents,
+                        range: UTF16Range(
+                            location: range.range.location,
+                            length: range.range.length
+                        )
                     )
-                )
-            }
+                }
+                .sorted()
             return HighlightSnapshot(
                 text: text,
                 language: language,

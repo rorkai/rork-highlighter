@@ -33,6 +33,45 @@ struct HighlightSessionTests {
         #expect(await session.currentRevision == 1)
     }
 
+    /// Confirms multiline edits after non-BMP text use correct Tree-sitter byte
+    /// points.
+    @Test
+    func reparsesMultilineEditAfterUnicode() async throws {
+        let highlighter = try Highlighter()
+        let source = """
+            let emoji = "😀"; let count = 1
+            let enabled = false
+            """
+        let replacedText = "let count = 1"
+        let replacement = """
+            let count = 42
+            let name = "Rork"
+            """
+        let replacedRange = (source as NSString).range(of: replacedText)
+        let session = try highlighter.makeSession(source, as: .swift)
+
+        let update = try await session.replaceCharacters(
+            in: UTF16Range(
+                location: replacedRange.location,
+                length: replacedRange.length
+            ),
+            with: replacement
+        )
+        let expectedText = """
+            let emoji = "😀"; let count = 42
+            let name = "Rork"
+            let enabled = false
+            """
+        let expectedSnapshot = try highlighter.highlight(
+            expectedText,
+            as: .swift
+        )
+
+        #expect(update.snapshot.text == expectedText)
+        #expect(update.snapshot.highlights == expectedSnapshot.highlights)
+        #expect(!update.invalidatedRanges.isEmpty)
+    }
+
     /// Confirms a range that splits a surrogate pair is rejected before
     /// mutating parser state.
     @Test

@@ -30,6 +30,8 @@ let snapshot = try highlighter.highlight(
 Use a file URL when its filename or extension should choose the language:
 
 ```swift
+import Foundation
+
 let snapshot = try highlighter.highlight(
     source,
     for: URL(fileURLWithPath: "/tmp/settings.json")
