@@ -8,7 +8,9 @@ the initial API and correctness guarantees.
 - Keep the Swift 6 package, one-shot API, incremental actor session, and common
   language fixtures green on macOS, iOS, and Linux.
 - Preserve complete DocC coverage for maintained declarations.
-- Add benchmarks for parse, edit, query, and snapshot conversion costs.
+- Maintain public-workflow benchmarks for catalog initialization, one-shot
+  highlighting, incremental edits, injections, theme resolution, and native
+  rendering.
 
 ## Rendering
 
@@ -21,7 +23,8 @@ the initial API and correctness guarantees.
 
 ## Common languages
 
-- Measure source-build time and linked size for the current 36 definitions.
+- Track clean source-build time and source, object, linked executable, and
+  resource sizes for the current 36 definitions.
 - Keep the mobile and web set focused on formats with demonstrated demand.
 - Extend injection coverage when a compatible parser and permissive query
   source can be pinned together.

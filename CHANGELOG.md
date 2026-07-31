@@ -3,6 +3,15 @@
 This document records the user-visible changes in each Rork Highlighter
 release.
 
+## Unreleased
+
+### Added
+
+- Added public-workflow performance benchmarks for parsing, incremental edits,
+  injections, theme resolution, and native attributed rendering.
+- Added clean-build and distribution-size measurement for generated parser
+  sources, compiled objects, linked code, and query resources.
+
 ## 0.2.0 - 2026-07-31
 
 ### Added

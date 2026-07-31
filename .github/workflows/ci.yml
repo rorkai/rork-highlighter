@@ -45,3 +45,5 @@ jobs:
           persist-credentials: false
       - name: Build and test
         run: swift test
+      - name: Build measurement tools
+        run: make check-benchmarks
