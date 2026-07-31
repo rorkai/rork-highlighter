@@ -26,7 +26,7 @@ extension HighlightTheme {
             foregroundColor: HighlightColor(rgb: 0xD9_9B_FF)
         )
         let number = HighlightStyle(
-            foregroundColor: HighlightColor(rgb: 0xF7_8C_6C)
+            foregroundColor: HighlightColor(rgb: 0xD0_BF_69)
         )
         let punctuation = HighlightStyle(
             foregroundColor: HighlightColor(rgb: 0x8B_93_A7)

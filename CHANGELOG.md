@@ -17,6 +17,8 @@ release.
 
 - Built-in themes now leave attributed text backgrounds unset so the
   surrounding editor or view controls its canvas.
+- The Rork Dark numeric-literal color now uses a quieter gold that sits
+  naturally beside the surrounding syntax.
 
 ## 0.1.0 - 2026-07-31
 

@@ -7,10 +7,10 @@ import RorkHighlighter
 @MainActor
 private enum PreviewGenerator {
     /// The logical drawing size used to position every preview element.
-    private static let designSize = NSSize(width: 1_600, height: 740)
+    private static let designSize = NSSize(width: 1_120, height: 800)
 
     /// The fixed pixel dimensions of the committed preview.
-    private static let pixelSize = NSSize(width: 2_400, height: 1_110)
+    private static let pixelSize = NSSize(width: 1_680, height: 1_200)
 
     /// The monospaced font used for highlighted code.
     private static let codeFont = NSFont.monospacedSystemFont(
@@ -50,7 +50,6 @@ private enum PreviewGenerator {
             frame: NSRect(origin: .zero, size: designSize),
             backdrop: backdrop,
             code: code,
-            source: source,
             codeFont: codeFont,
             lineSpacing: lineSpacing
         )
@@ -202,14 +201,14 @@ private final class PreviewView: NSView {
     /// The source after Rork Highlighter applies native attributes.
     private let code: NSAttributedString
 
-    /// The plain source used to derive the line-number gutter.
-    private let source: String
-
-    /// The font whose metrics align code with its line numbers.
+    /// The font whose metrics position the focused source lines.
     private let codeFont: NSFont
 
-    /// The line spacing shared by code and its line numbers.
+    /// The additional distance between rendered source lines.
     private let lineSpacing: CGFloat
+
+    /// The zero-based source lines that receive restrained emphasis.
+    private let focusedLines = 8..<10
 
     /// Uses top-left coordinates for straightforward editor layout.
     override var isFlipped: Bool {
@@ -222,20 +221,17 @@ private final class PreviewView: NSView {
     ///   - frameRect: The logical canvas occupied by the preview.
     ///   - backdrop: The spatial image drawn behind the editor.
     ///   - code: The attributed source rendered by Rork Highlighter.
-    ///   - source: The original source used to create line numbers.
-    ///   - codeFont: The font shared by code and its line numbers.
+    ///   - codeFont: The font used to render the highlighted source.
     ///   - lineSpacing: The extra distance between source lines.
     init(
         frame frameRect: NSRect,
         backdrop: NSImage,
         code: NSAttributedString,
-        source: String,
         codeFont: NSFont,
         lineSpacing: CGFloat
     ) {
         self.backdrop = backdrop
         self.code = code
-        self.source = source
         self.codeFont = codeFont
         self.lineSpacing = lineSpacing
         super.init(frame: frameRect)
@@ -254,13 +250,20 @@ private final class PreviewView: NSView {
         super.draw(dirtyRect)
         drawBackdrop()
 
+        let titlebarHeight: CGFloat = 64
+        let codePadding = NSSize(width: 56, height: 24)
+        let codeSize = code.size()
         let windowRect = NSRect(
-            x: 164,
-            y: 48,
-            width: 1_272,
-            height: 644
+            x: floor((bounds.width - ceil(codeSize.width) - codePadding.width * 2) / 2),
+            y: floor(
+                (bounds.height - titlebarHeight - ceil(codeSize.height)
+                    - codePadding.height * 2) / 2
+            ),
+            width: ceil(codeSize.width) + codePadding.width * 2,
+            height: titlebarHeight + ceil(codeSize.height)
+                + codePadding.height * 2
         )
-        let titlebarHeight: CGFloat = 70
+        drawWindowGlow(behind: windowRect)
         drawWindow(in: windowRect)
         drawTitlebar(in: windowRect, height: titlebarHeight)
         drawCode(
@@ -273,7 +276,7 @@ private final class PreviewView: NSView {
         )
     }
 
-    /// Fills the canvas with the committed backdrop and a quiet vignette.
+    /// Fills the canvas with the committed backdrop, vignette, and fine grain.
     private func drawBackdrop() {
         backdrop.draw(
             in: bounds,
@@ -291,12 +294,88 @@ private final class PreviewView: NSView {
             colors: [
                 NSColor.black.withAlphaComponent(0.08),
                 NSColor.clear,
-                NSColor.black.withAlphaComponent(0.18),
+                NSColor.black.withAlphaComponent(0.24),
             ]
         )?.draw(in: bounds, angle: -90)
+
+        drawBackdropNoise()
     }
 
-    /// Draws the single flat editor surface, border, and shadow.
+    /// Adds deterministic grain that keeps the dark gradient from banding.
+    private func drawBackdropNoise() {
+        guard let context = NSGraphicsContext.current?.cgContext else {
+            return
+        }
+
+        let lightNoise = CGMutablePath()
+        let darkNoise = CGMutablePath()
+        let sampleCount = Int(bounds.width * bounds.height / 34)
+        var state: UInt64 = 0xA076_1D64_78BD_642F
+
+        for index in 0..<sampleCount {
+            state =
+                state &* 6_364_136_223_846_793_005
+                &+ 1_442_695_040_888_963_407
+            let x =
+                CGFloat(state & 0xFFFF_FFFF)
+                / CGFloat(UInt32.max) * bounds.width
+            state =
+                state &* 6_364_136_223_846_793_005
+                &+ 1_442_695_040_888_963_407
+            let y =
+                CGFloat(state & 0xFFFF_FFFF)
+                / CGFloat(UInt32.max) * bounds.height
+            let speck = NSRect(
+                x: floor(x),
+                y: floor(y),
+                width: 0.75,
+                height: 0.75
+            )
+            if index.isMultiple(of: 2) {
+                lightNoise.addRect(speck)
+            } else {
+                darkNoise.addRect(speck)
+            }
+        }
+
+        context.saveGState()
+        context.addPath(darkNoise)
+        context.setFillColor(
+            NSColor.black.withAlphaComponent(0.05).cgColor
+        )
+        context.fillPath()
+        context.addPath(lightNoise)
+        context.setFillColor(
+            NSColor.white.withAlphaComponent(0.035).cgColor
+        )
+        context.fillPath()
+        context.restoreGState()
+    }
+
+    /// Draws a broad colored glow that separates the editor from the canvas.
+    ///
+    /// - Parameter windowRect: The editor bounds used to position the glow.
+    private func drawWindowGlow(behind windowRect: NSRect) {
+        let center = NSPoint(
+            x: windowRect.midX,
+            y: windowRect.midY + 26
+        )
+        NSGradient(
+            colors: [
+                NSColor.rgb(0x7A_5C_FF, alpha: 0.22),
+                NSColor.rgb(0x3B_68_E8, alpha: 0.09),
+                NSColor.clear,
+            ]
+        )?.draw(
+            fromCenter: center,
+            radius: 0,
+            toCenter: center,
+            radius: windowRect.width * 0.72,
+            options: []
+        )
+    }
+
+    /// Draws the single editor surface with its border, shadow, and inner glow.
     ///
     /// - Parameter windowRect: The bounds occupied by the editor window.
     private func drawWindow(in windowRect: NSRect) {
@@ -308,17 +387,37 @@ private final class PreviewView: NSView {
 
         NSGraphicsContext.saveGraphicsState()
         let shadow = NSShadow()
-        shadow.shadowColor = NSColor.black.withAlphaComponent(0.62)
-        shadow.shadowBlurRadius = 48
-        shadow.shadowOffset = NSSize(width: 0, height: 24)
+        shadow.shadowColor = NSColor.black.withAlphaComponent(0.72)
+        shadow.shadowBlurRadius = 64
+        shadow.shadowOffset = NSSize(width: 0, height: 28)
         shadow.set()
-        NSColor.rgb(0x10_12_18, alpha: 0.92).setFill()
+        NSColor.rgb(0x12_14_1B, alpha: 0.965).setFill()
         windowPath.fill()
         NSGraphicsContext.restoreGraphicsState()
 
         windowPath.lineWidth = 1.1
-        NSColor.white.withAlphaComponent(0.17).setStroke()
+        NSColor.white.withAlphaComponent(0.15).setStroke()
         windowPath.stroke()
+
+        NSGraphicsContext.saveGraphicsState()
+        windowPath.addClip()
+        NSGradient(
+            colors: [
+                NSColor.clear,
+                NSColor.white.withAlphaComponent(0.075),
+                NSColor.white.withAlphaComponent(0.075),
+                NSColor.clear,
+            ]
+        )?.draw(
+            in: NSRect(
+                x: windowRect.minX + 28,
+                y: windowRect.minY + 1,
+                width: windowRect.width - 56,
+                height: 1
+            ),
+            angle: 0
+        )
+        NSGraphicsContext.restoreGraphicsState()
     }
 
     /// Draws the traffic lights, centered filename, and separator.
@@ -381,58 +480,55 @@ private final class PreviewView: NSView {
         separator.stroke()
     }
 
-    /// Draws the highlighted source and its restrained line-number gutter.
+    /// Draws the highlighted source without decorative editor furniture.
     ///
     /// - Parameter editorRect: The area below the titlebar.
     private func drawCode(in editorRect: NSRect) {
         let codeOrigin = NSPoint(
-            x: editorRect.minX + 142,
-            y: editorRect.minY + 25
+            x: editorRect.minX + 56,
+            y: editorRect.minY + 24
         )
+        drawFocus(in: editorRect, codeOrigin: codeOrigin)
         code.draw(at: codeOrigin)
+    }
 
-        let lineNumbers =
-            source
-            .split(separator: "\n", omittingEmptySubsequences: false)
-            .indices
-            .map { String($0 + 1) }
-            .joined(separator: "\n")
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.alignment = .right
-        paragraphStyle.lineSpacing = lineSpacing
-        let renderedLineNumbers = NSAttributedString(
-            string: lineNumbers,
-            attributes: [
-                .font: codeFont,
-                .foregroundColor: NSColor.white.withAlphaComponent(0.18),
-                .paragraphStyle: paragraphStyle,
+    /// Gives the central API example a quiet visual anchor.
+    ///
+    /// - Parameters:
+    ///   - editorRect: The complete editor area below the titlebar.
+    ///   - codeOrigin: The point where the highlighted source begins.
+    private func drawFocus(
+        in editorRect: NSRect,
+        codeOrigin: NSPoint
+    ) {
+        let lineHeight =
+            codeFont.ascender - codeFont.descender
+            + codeFont.leading + lineSpacing
+        let focusRect = NSRect(
+            x: editorRect.minX + 18,
+            y: codeOrigin.y + CGFloat(focusedLines.lowerBound) * lineHeight - 3,
+            width: editorRect.width - 36,
+            height: CGFloat(focusedLines.count) * lineHeight + 6
+        )
+        let focusPath = NSBezierPath(
+            roundedRect: focusRect,
+            xRadius: 8,
+            yRadius: 8
+        )
+
+        NSGraphicsContext.saveGraphicsState()
+        focusPath.addClip()
+        NSGradient(
+            colors: [
+                NSColor.rgb(0x82_6C_FF, alpha: 0.065),
+                NSColor.rgb(0x56_7D_EF, alpha: 0.035),
             ]
-        )
-        renderedLineNumbers.draw(
-            in: NSRect(
-                x: editorRect.minX + 66,
-                y: codeOrigin.y,
-                width: 42,
-                height: ceil(renderedLineNumbers.size().height)
-            )
-        )
+        )?.draw(in: focusRect, angle: 0)
+        NSGraphicsContext.restoreGraphicsState()
 
-        let gutter = NSBezierPath()
-        gutter.move(
-            to: NSPoint(
-                x: editorRect.minX + 124,
-                y: editorRect.minY + 22
-            )
-        )
-        gutter.line(
-            to: NSPoint(
-                x: editorRect.minX + 124,
-                y: editorRect.maxY - 22
-            )
-        )
-        gutter.lineWidth = 1
-        NSColor.white.withAlphaComponent(0.055).setStroke()
-        gutter.stroke()
+        focusPath.lineWidth = 0.8
+        NSColor.white.withAlphaComponent(0.04).setStroke()
+        focusPath.stroke()
     }
 
     /// Calculates the centered crop needed to fill the canvas.

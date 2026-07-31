@@ -171,6 +171,7 @@ struct HighlightThemeTests {
         let darkKeyword = HighlightTheme.rorkDark.style(
             for: "keyword.function"
         )
+        let darkNumber = HighlightTheme.rorkDark.style(for: "number")
 
         #expect(HighlightTheme.rorkLight.baseStyle.backgroundColor == nil)
         #expect(HighlightTheme.rorkDark.baseStyle.backgroundColor == nil)
@@ -183,6 +184,10 @@ struct HighlightThemeTests {
                 != HighlightTheme.rorkDark.baseStyle.foregroundColor
         )
         #expect(lightKeyword != darkKeyword)
+        #expect(
+            darkNumber.foregroundColor
+                == HighlightColor(rgb: 0xD0_BF_69)
+        )
         #expect(
             Set(HighlightTheme.rorkLight.styles.keys)
                 == Set(HighlightTheme.rorkDark.styles.keys)
