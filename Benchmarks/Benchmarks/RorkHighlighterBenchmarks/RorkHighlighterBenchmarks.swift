@@ -128,11 +128,21 @@ let benchmarks: @Sendable () -> Void = {
             benchmark.currentIteration.isMultiple(of: 2)
             ? "2000"
             : BenchmarkFixtures.revisionMarker
-        blackHole(
-            try await session.replaceCharacters(
+
+        #if compiler(>=6.1)
+            let update = try await session.replaceCharacters(
                 in: markerRange,
                 with: replacement
             )
+        #else
+            // Swift 6.0 imports this cross-package actor call as synchronous.
+            let update = try session.replaceCharacters(
+                in: markerRange,
+                with: replacement
+            )
+        #endif
+        blackHole(
+            update
         )
     }
     Benchmark(
