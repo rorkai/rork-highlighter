@@ -16,6 +16,7 @@ separate SwiftPM dependency for every Tree-sitter grammar.
 - Incremental parsing inside one actor per document.
 - Explicit UTF-16 ranges that match Foundation text systems.
 - Renderer-neutral light and dark themes with hierarchical scope matching.
+- Native SwiftUI `AttributedString` output on Apple platforms.
 - Deterministic aliases, filenames, and file-extension discovery.
 - Nested-language infrastructure through SwiftTreeSitterLayer.
 - A parser-neutral registry for custom and generated language packs.
@@ -125,6 +126,33 @@ let theme = HighlightTheme(
 Scope matching proceeds from broad captures to specific captures. A
 `string.special.key` span inherits `string` and `string.special` refinements
 before its exact rule is applied.
+
+## Native attributed output
+
+Render a snapshot directly into SwiftUI:
+
+```swift
+import RorkHighlighter
+import SwiftUI
+
+let rendered = try snapshot.attributedString(theme: .rorkDark)
+let code = Text(rendered)
+```
+
+The renderer uses a monospaced system font by default. Supply any SwiftUI font
+when the surrounding interface owns typography:
+
+```swift
+let rendered = try snapshot.attributedString(
+    theme: .rorkLight,
+    font: .system(size: 14, design: .monospaced)
+)
+```
+
+Rendering preserves the snapshot's UTF-16 ranges and overlap order. Invalid
+ranges throw `HighlightRenderingError` instead of being rounded or trapping.
+The native API is available on Apple platforms. Renderer-neutral themes and
+raw spans remain available on Linux and other Swift platforms.
 
 ## Bundled languages
 
