@@ -23,6 +23,8 @@ jobs:
         with:
           persist-credentials: false
       - name: Validate the package
+        env:
+          BENCHMARK_DISABLE_JEMALLOC: "true"
         run: make check
       - name: Build for iOS
         run: >-
