@@ -27,6 +27,12 @@ TEST_SOURCE_DIRECTORY = (
     REPOSITORY_ROOT / "Tests" / f"{MODULE_NAME}Tests"
 )
 
+# Preview tool declarations follow the same documentation policy as library
+# code.
+PREVIEW_TOOL_SOURCE_DIRECTORY = (
+    REPOSITORY_ROOT / "Tools" / "PreviewGenerator" / "Sources"
+)
+
 # Authored C declarations use the same line-oriented documentation style.
 C_HEADER_DIRECTORY = (
     REPOSITORY_ROOT
@@ -60,13 +66,15 @@ EXTENSION_DECLARATION = re.compile(
     r"extension\b"
 )
 
-# Swift-format keeps suite and test declarations at zero or four spaces, while
-# local bindings begin at a deeper indentation level.
-TEST_DECLARATION = re.compile(
+# Swift-format keeps supporting type declarations and members at zero or four
+# spaces, while local bindings and switch cases begin at a deeper indentation.
+SUPPORTING_SWIFT_DECLARATION = re.compile(
     r"^(?: {0}| {4})(?:@\S+\s+)*"
-    r"(?:(?:public|package|internal|fileprivate|private|final|indirect)\s+)*"
+    r"(?:(?:public|package|internal|fileprivate|private|open|final|"
+    r"indirect|static|class|override|required|convenience|mutating|"
+    r"nonmutating|nonisolated|isolated|lazy)\s+)*"
     r"(?:actor|class|enum|struct|protocol|extension|typealias|"
-    r"associatedtype|init|subscript|func|var|let)\b"
+    r"associatedtype|init|deinit|subscript|func|var|let|case)\b"
 )
 
 # Public C declarations are confined to authored headers outside vendor trees.
@@ -155,6 +163,11 @@ def swift_test_paths() -> list[Path]:
     return sorted(TEST_SOURCE_DIRECTORY.rglob("*.swift"))
 
 
+def swift_preview_tool_paths() -> list[Path]:
+    """Returns maintained Swift source files in the preview tool."""
+    return sorted(PREVIEW_TOOL_SOURCE_DIRECTORY.rglob("*.swift"))
+
+
 def c_header_paths() -> list[Path]:
     """Returns authored C headers exposed by the parser target."""
     return sorted(C_HEADER_DIRECTORY.rglob("*.h"))
@@ -195,10 +208,14 @@ def undocumented_source_declarations() -> list[str]:
             relative_path = path.relative_to(REPOSITORY_ROOT)
             missing.append(f"{relative_path}:{index + 1}")
 
-    for path in swift_test_paths():
+    supporting_paths = [
+        *swift_test_paths(),
+        *swift_preview_tool_paths(),
+    ]
+    for path in supporting_paths:
         lines = path.read_text(encoding="utf-8").splitlines()
         for index, line in enumerate(lines):
-            if not TEST_DECLARATION.match(line):
+            if not SUPPORTING_SWIFT_DECLARATION.match(line):
                 continue
             if has_leading_doc_comment(lines, index):
                 continue
@@ -306,7 +323,7 @@ def main() -> int:
 
     validate_docc(paths)
     print(
-        f"Every maintained {MODULE_NAME} declaration and authored C file has documentation."
+        f"Every maintained {MODULE_NAME}, preview tool, and authored C declaration has documentation."
     )
     return 0
 
