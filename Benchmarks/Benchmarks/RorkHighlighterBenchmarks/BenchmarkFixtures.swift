@@ -55,13 +55,20 @@ enum BenchmarkFixtures {
     }
 
     /// Holds an HTML document with embedded JavaScript and CSS.
-    static let injectedHTML = BenchmarkSource(
-        name: "Medium",
-        text: makeInjectedHTML(
+    static let injectedHTML: BenchmarkSource = {
+        let text = makeInjectedHTML(
             minimumUTF16Length: BenchmarkDocumentSize.medium
                 .minimumUTF16Length
         )
-    )
+        precondition(
+            text.contains("const state0 = { count: 0"),
+            "The injected HTML fixture contains uninterpolated indices."
+        )
+        return BenchmarkSource(
+            name: "Medium",
+            text: text
+        )
+    }()
 
     /// Returns the largest generated Swift document.
     static var largeSwiftSource: BenchmarkSource {
@@ -134,16 +141,16 @@ enum BenchmarkFixtures {
 
         while source.utf16.count < minimumUTF16Length {
             source += #"""
-                <section class="card-#(index)">
-                    <h2>Card #(index)</h2>
+                <section class="card-\#(index)">
+                    <h2>Card \#(index)</h2>
                     <script type="module">
-                        const state#(index) = { count: #(index), enabled: true };
-                        document.querySelector(".card-#(index)")?.addEventListener("click", () => {
-                            console.log(`Selected ${state#(index).count}`);
+                        const state\#(index) = { count: \#(index), enabled: true };
+                        document.querySelector(".card-\#(index)")?.addEventListener("click", () => {
+                            console.log(`Selected ${state\#(index).count}`);
                         });
                     </script>
                     <style>
-                        .card-#(index) { display: grid; gap: 12px; color: rgb(90, 212, 230); }
+                        .card-\#(index) { display: grid; gap: 12px; color: rgb(90, 212, 230); }
                     </style>
                 </section>
 

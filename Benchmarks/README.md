@@ -26,7 +26,7 @@ sudo apt-get install libjemalloc-dev
 Pass additional command-plugin arguments when a focused run is more useful.
 
 ```sh
-make benchmark BENCHMARK_ARGUMENTS='--filter Highlight/Swift'
+make benchmark BENCHMARK_ARGUMENTS="--filter '.*Highlight/Swift.*'"
 ```
 
 The suite generates its inputs before measurement begins. Swift fixtures cover
