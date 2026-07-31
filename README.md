@@ -15,6 +15,7 @@ separate SwiftPM dependency for every Tree-sitter grammar.
 - Typed `HighlighterError` contracts for highlighting operations.
 - Incremental parsing inside one actor per document.
 - Explicit UTF-16 ranges that match Foundation text systems.
+- Renderer-neutral light and dark themes with hierarchical scope matching.
 - Deterministic aliases, filenames, and file-extension discovery.
 - Nested-language infrastructure through SwiftTreeSitterLayer.
 - A parser-neutral registry for custom and generated language packs.
@@ -84,6 +85,46 @@ let snapshot = try highlighter.highlight(
     for: URL(fileURLWithPath: "/tmp/settings.json")
 )
 ```
+
+## Themes
+
+Resolve highlight spans through a bundled light or dark theme:
+
+```swift
+let theme = HighlightTheme.rorkDark
+
+for span in snapshot.highlights {
+    let style = theme.style(for: span)
+    print(span.range, style)
+}
+```
+
+Themes are immutable, `Sendable`, and `Codable`. A custom theme supplies a base
+style and scope-specific refinements:
+
+```swift
+let theme = HighlightTheme(
+    name: "Brand",
+    baseStyle: HighlightStyle(
+        foregroundColor: HighlightColor(rgb: 0xE6_E6_E6),
+        backgroundColor: HighlightColor(rgb: 0x18_18_18),
+        textTraits: []
+    ),
+    styles: [
+        "comment": HighlightStyle(
+            foregroundColor: HighlightColor(rgb: 0x7A_8A_99),
+            textTraits: [.italic]
+        ),
+        "keyword": HighlightStyle(
+            foregroundColor: HighlightColor(rgb: 0xD9_9B_FF)
+        ),
+    ]
+)
+```
+
+Scope matching proceeds from broad captures to specific captures. A
+`string.special.key` span inherits `string` and `string.special` refinements
+before its exact rule is applied.
 
 ## Bundled languages
 

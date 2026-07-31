@@ -12,7 +12,7 @@ the initial API and correctness guarantees.
 
 ## Rendering
 
-- Add a platform-neutral theme model with hierarchical capture matching.
+- Keep hierarchical theme resolution independent of any rendering framework.
 - Add native `AttributedString` output on Apple platforms.
 - Add TextKit adapters that can apply invalidated ranges without rebuilding an
   entire document.
