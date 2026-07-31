@@ -280,10 +280,9 @@ let benchmarks: @Sendable () -> Void = {
     Benchmark(
         "EditorEdit/RorkHighlighter/\(editFixture.name)",
         configuration: editConfiguration
-    ) { _ in
-        let revision = await rorkSession.currentRevision
+    ) { benchmark in
         let replacement =
-            revision.isMultiple(of: 2)
+            benchmark.currentIteration.isMultiple(of: 2)
             ? ComparisonFixtures.replacementMarker
             : ComparisonFixtures.revisionMarker
         blackHole(

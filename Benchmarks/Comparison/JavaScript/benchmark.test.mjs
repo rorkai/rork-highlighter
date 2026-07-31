@@ -56,7 +56,18 @@ test("parses command options", () => {
  * Verifies both runtimes receive the complete generated corpus.
  */
 test("loads verified shared fixtures", () => {
-  const fixtures = loadFixtures();
+  let fixtures;
+  try {
+    fixtures = loadFixtures();
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      throw new Error(
+        "Generate the shared fixtures first with make comparison-fixtures.",
+        { cause: error },
+      );
+    }
+    throw error;
+  }
   assert.deepEqual(
     fixtures.map((fixture) => fixture.name),
     ["4KiB", "64KiB", "256KiB"],

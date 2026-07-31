@@ -30,14 +30,14 @@ Run a focused Swift comparison when iterating on one workload:
 
 ```sh
 make benchmark-comparison-swift \
-  COMPARISON_BENCHMARK_ARGUMENTS="--filter '.*256KiB$$' --metric wallClock --time-units microseconds --no-progress"
+  COMPARISON_BENCHMARK_ARGUMENTS="--filter '.*256KiB\$\$' --metric wallClock --time-units microseconds --no-progress"
 ```
 
 Run a focused highlight.js comparison with an optional JSON artifact:
 
 ```sh
 make benchmark-comparison-javascript \
-  JAVASCRIPT_BENCHMARK_ARGUMENTS="--filter '256KiB$$' --json ../.build/highlightjs-results.json"
+  JAVASCRIPT_BENCHMARK_ARGUMENTS="--filter '256KiB\$\$' --json ../.build/highlightjs-results.json"
 ```
 
 Validate both harnesses without running the complete measurement matrix:

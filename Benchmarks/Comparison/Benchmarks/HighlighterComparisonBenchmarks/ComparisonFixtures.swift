@@ -101,6 +101,17 @@ struct ComparisonFixture: Sendable {
 
 /// Loads the canonical fixture corpus shared by every comparison runtime.
 enum ComparisonFixtures {
+    /// Holds the validated manifest shared by every fixture accessor.
+    private static let manifest: ComparisonFixtureManifest = {
+        do {
+            return try loadManifest()
+        } catch {
+            preconditionFailure(
+                "Could not load the comparison fixture manifest. \(error)"
+            )
+        }
+    }()
+
     /// Contains every generated Swift fixture in measurement order.
     static let swiftSources: [ComparisonFixture] = {
         do {
@@ -113,26 +124,10 @@ enum ComparisonFixtures {
     }()
 
     /// Holds the original marker used by editing workloads.
-    static let revisionMarker: String = {
-        do {
-            return try loadManifest().revisionMarker
-        } catch {
-            preconditionFailure(
-                "Could not load the original comparison marker. \(error)"
-            )
-        }
-    }()
+    static var revisionMarker: String { manifest.revisionMarker }
 
     /// Holds the same-width replacement used by editing workloads.
-    static let replacementMarker: String = {
-        do {
-            return try loadManifest().replacementMarker
-        } catch {
-            preconditionFailure(
-                "Could not load the replacement comparison marker. \(error)"
-            )
-        }
-    }()
+    static var replacementMarker: String { manifest.replacementMarker }
 
     /// Returns the largest fixture used by editor workloads.
     static var editingFixture: ComparisonFixture {
@@ -191,9 +186,8 @@ enum ComparisonFixtures {
     /// Loads every source file and verifies its recorded identity.
     ///
     /// - Returns: The complete ordered fixture collection.
-    /// - Throws: A manifest or source-file validation error.
+    /// - Throws: A source-file validation error.
     private static func loadFixtures() throws -> [ComparisonFixture] {
-        let manifest = try loadManifest()
         return try manifest.fixtures.map { entry in
             try loadFixture(entry, manifest: manifest)
         }
