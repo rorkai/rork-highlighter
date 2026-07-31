@@ -46,4 +46,14 @@ jobs:
       - name: Build and test
         run: swift test
       - name: Build measurement tools
-        run: make check-benchmarks
+        run: |
+          swift build \
+            --package-path Benchmarks \
+            --scratch-path .build/benchmarks \
+            --target RorkHighlighterBenchmarks \
+            -Xswiftc -warnings-as-errors
+          swift build \
+            --package-path Tools/DistributionProbe \
+            --scratch-path .build/distribution-probe \
+            --target DistributionProbe \
+            -Xswiftc -warnings-as-errors
