@@ -53,6 +53,10 @@ Colors use eight-bit sRGB channels and remain independent of UIKit, AppKit, and
 SwiftUI. Text traits describe bold, italic, underline, and strikethrough
 presentation without selecting a platform font.
 
+Integer literals passed to ``HighlightColor/init(rgb:alpha:)`` are checked as
+24-bit values. Validate colors obtained from files or network responses with
+``HighlightColor/RGB/init(rawValue:)`` before constructing a color.
+
 ## Refine hierarchical scopes
 
 Tree-sitter capture names become more specific from left to right. Resolving

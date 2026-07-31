@@ -17,6 +17,14 @@ struct HighlightThemeTests {
         #expect(color.alpha == 0x78)
     }
 
+    /// Confirms dynamic packed RGB values fail without trapping when they
+    /// exceed 24 bits.
+    @Test
+    func rejectsInvalidDynamicRGB() {
+        #expect(HighlightColor.RGB(rawValue: 0xFF_FF_FF) != nil)
+        #expect(HighlightColor.RGB(rawValue: 0x1_00_00_00) == nil)
+    }
+
     /// Confirms specific scope rules refine broader rules and the base style.
     @Test
     func resolvesHierarchicalScopeStyles() {
@@ -181,5 +189,9 @@ struct HighlightThemeTests {
                 != HighlightTheme.rorkDark.baseStyle.foregroundColor
         )
         #expect(lightKeyword != darkKeyword)
+        #expect(
+            Set(HighlightTheme.rorkLight.styles.keys)
+                == Set(HighlightTheme.rorkDark.styles.keys)
+        )
     }
 }
