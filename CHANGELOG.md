@@ -3,7 +3,7 @@
 This document records the user-visible changes in each Rork Highlighter
 release.
 
-## Unreleased
+## 0.2.0 - 2026-07-31
 
 ### Added
 
