@@ -7,7 +7,7 @@ public struct HighlightStyle: Hashable, Sendable, Codable {
     /// Holds the requested foreground color.
     public let foregroundColor: HighlightColor?
 
-    /// Holds the requested background color.
+    /// Holds the requested color behind the styled text.
     public let backgroundColor: HighlightColor?
 
     /// Holds typography that replaces inherited text traits when present.
@@ -17,7 +17,7 @@ public struct HighlightStyle: Hashable, Sendable, Codable {
     ///
     /// - Parameters:
     ///   - foregroundColor: The requested foreground color.
-    ///   - backgroundColor: The requested background color.
+    ///   - backgroundColor: The requested color behind the styled text.
     ///   - textTraits: Typography that replaces inherited text traits.
     public init(
         foregroundColor: HighlightColor? = nil,

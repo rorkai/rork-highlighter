@@ -13,6 +13,11 @@ release.
   rendering with caller-selected fonts, typed range errors, and Unicode-safe
   UTF-16 conversion.
 
+### Changed
+
+- Built-in themes now leave attributed text backgrounds unset so the
+  surrounding editor or view controls its canvas.
+
 ## 0.1.0 - 2026-07-31
 
 ### Added

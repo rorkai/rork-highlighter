@@ -50,6 +50,7 @@
             )
 
             #expect(rendered.string == source)
+            #expect(attributes[.backgroundColor] == nil)
             #expect(
                 color(
                     attributes[.foregroundColor],

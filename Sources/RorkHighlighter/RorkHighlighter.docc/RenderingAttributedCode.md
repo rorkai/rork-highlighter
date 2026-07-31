@@ -35,12 +35,18 @@ let rendered = try snapshot.attributedString(
 
 let code = Text(rendered)
     .textSelection(.enabled)
+    .padding()
+    .background(Color.black)
 ```
 
 The syntax colors below come directly from `.rorkDark`. The surrounding editor
 chrome is illustrative.
 
 ![Swift source highlighted with the Rork Dark theme.](swift-attributed-output.png)
+
+The bundled themes leave ``HighlightStyle/backgroundColor`` unset. Set the
+canvas on the containing view or editor so attributed text does not paint
+background strips behind individual text runs.
 
 The default font is the monospaced system body font. Pass a font when an editor
 or design system owns the typography:

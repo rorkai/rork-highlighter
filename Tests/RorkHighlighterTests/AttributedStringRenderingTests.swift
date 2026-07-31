@@ -34,6 +34,7 @@
             }
 
             #expect(String(rendered.characters) == source)
+            #expect(rendered.backgroundColor == nil)
             #expect(
                 rendered[keyRange].foregroundColor
                     == swiftUIColor(foregroundColor)

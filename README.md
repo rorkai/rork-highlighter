@@ -108,7 +108,6 @@ let theme = HighlightTheme(
     name: "Brand",
     baseStyle: HighlightStyle(
         foregroundColor: HighlightColor(rgb: 0xE6_E6_E6),
-        backgroundColor: HighlightColor(rgb: 0x18_18_18),
         textTraits: []
     ),
     styles: [
@@ -160,12 +159,18 @@ let rendered = try snapshot.attributedString(
 
 let code = Text(rendered)
     .textSelection(.enabled)
+    .padding()
+    .background(Color.black)
 ```
 
 The syntax colors below come directly from `.rorkDark`. The surrounding editor
 chrome is illustrative.
 
 ![Swift source highlighted with the Rork Dark theme.](Sources/RorkHighlighter/RorkHighlighter.docc/Resources/swift-attributed-output.png)
+
+The bundled themes leave `HighlightStyle.backgroundColor` unset. Set the canvas
+on the containing view or editor so attributed text does not paint background
+strips behind individual text runs.
 
 The renderer uses a monospaced system font by default. Supply any SwiftUI font
 when the surrounding interface owns typography:

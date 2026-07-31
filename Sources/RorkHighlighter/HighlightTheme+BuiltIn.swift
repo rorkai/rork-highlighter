@@ -42,7 +42,6 @@ extension HighlightTheme {
             name: "Rork Dark",
             baseStyle: HighlightStyle(
                 foregroundColor: HighlightColor(rgb: 0xD8_DE_E9),
-                backgroundColor: HighlightColor(rgb: 0x1E_22_2A),
                 textTraits: []
             ),
             styles: [
@@ -220,7 +219,6 @@ extension HighlightTheme {
             name: "Rork Light",
             baseStyle: HighlightStyle(
                 foregroundColor: HighlightColor(rgb: 0x24_29_2F),
-                backgroundColor: HighlightColor(rgb: 0xFF_FF_FF),
                 textTraits: []
             ),
             styles: [
