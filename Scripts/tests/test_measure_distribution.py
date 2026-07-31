@@ -10,6 +10,14 @@ from Scripts import measure_distribution
 class DistributionMeasurementTests(unittest.TestCase):
     """Verifies file and artifact size aggregation."""
 
+    def test_rejects_missing_source_directory(self) -> None:
+        """Fails when a configured source directory does not exist."""
+        with tempfile.TemporaryDirectory() as directory:
+            missing = Path(directory) / "missing"
+
+            with self.assertRaises(FileNotFoundError):
+                measure_distribution.measure_files(missing)
+
     def test_measures_selected_source_files(self) -> None:
         """Counts only requested suffixes and handles a final partial line."""
         with tempfile.TemporaryDirectory() as directory:

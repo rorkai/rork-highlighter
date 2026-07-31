@@ -110,6 +110,10 @@ def measure_files(
     suffixes: frozenset[str] | None = None,
 ) -> FileMeasurements:
     """Counts files, bytes, and text lines beneath a directory."""
+    if not root.is_dir():
+        raise FileNotFoundError(
+            f"Expected a source directory at {root}."
+        )
     paths = sorted(
         path
         for path in root.rglob("*")
