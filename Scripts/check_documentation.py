@@ -368,7 +368,7 @@ def validate_docc(paths: list[Path]) -> None:
                 "--fallback-bundle-identifier",
                 "com.rork.highlighter",
                 "--fallback-bundle-version",
-                "0.1.0",
+                "0.2.0",
                 "--warnings-as-errors",
             ],
             cwd=REPOSITORY_ROOT,
