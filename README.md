@@ -12,6 +12,7 @@ separate SwiftPM dependency for every Tree-sitter grammar.
 
 - Tree-sitter parsing and query-based highlighting.
 - Native Swift 6 concurrency and `Sendable` value types.
+- Typed `HighlighterError` contracts for highlighting operations.
 - Incremental parsing inside one actor per document.
 - Explicit UTF-16 ranges that match Foundation text systems.
 - Deterministic aliases, filenames, and file-extension discovery.

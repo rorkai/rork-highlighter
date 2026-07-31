@@ -184,7 +184,7 @@
     "Sources/CRorkHighlighterParsers/languages/yaml/tree_sitter/alloc.h": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
     "Sources/CRorkHighlighterParsers/languages/yaml/tree_sitter/array.h": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
     "Sources/CRorkHighlighterParsers/languages/yaml/tree_sitter/parser.h": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
-    "Sources/RorkHighlighter/BundledLanguages.generated.swift": "c0b010c49cf2873b6fa7addd51e2ed4e1d05598a43911bb69a33fc1072e78f4b",
+    "Sources/RorkHighlighter/BundledLanguages.generated.swift": "9271521308bb956fef56060110945bce92592a62d311810df9e88ed9c0edbc93",
     "Sources/RorkHighlighter/Resources/Languages/astro/highlights.scm": "f6e51028ed98eee88788fd9510e4a3cd764d74aee3ab93af816df3a37302fd16",
     "Sources/RorkHighlighter/Resources/Languages/astro/injections.scm": "a4dd780cab4c6cb3b74934a19d3590b45b1519d91d76cc7f87366d524ffaa30c",
     "Sources/RorkHighlighter/Resources/Languages/bash/highlights.scm": "b74220d954f485b7626d2b2b61f37b522e12eb1830803e388e57dd797dc99f11",

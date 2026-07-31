@@ -124,7 +124,7 @@ extension LanguageCatalog {
     ///
     /// - Returns: A catalog containing every bundled language definition.
     /// - Throws: ``HighlighterError`` when a parser or resource is unavailable.
-    public static func standard() throws -> Self {
+    public static func standard() throws(HighlighterError) -> Self {
         try standardCatalogResult.get()
     }
 
@@ -147,7 +147,7 @@ extension LanguageCatalog {
     ///
     /// - Returns: A validated language catalog.
     /// - Throws: ``HighlighterError`` when bundled metadata is invalid.
-    private static func makeStandardCatalog() throws -> Self {
+    private static func makeStandardCatalog() throws(HighlighterError) -> Self {
         let definitions: [BundledLanguageDefinition] = [
             BundledLanguageDefinition(
                 id: .astro,
@@ -591,7 +591,12 @@ extension LanguageCatalog {
                 localsQueries: []
             ),
         ]
-        return try Self(languages: definitions.map(makeLanguage))
+        var languages: [HighlightLanguage] = []
+        languages.reserveCapacity(definitions.count)
+        for definition in definitions {
+            languages.append(try makeLanguage(definition))
+        }
+        return try Self(languages: languages)
     }
 
     /// Creates one public language definition from bundled metadata.
@@ -601,7 +606,7 @@ extension LanguageCatalog {
     /// - Throws: ``HighlighterError`` when a parser or query is invalid.
     private static func makeLanguage(
         _ definition: BundledLanguageDefinition
-    ) throws -> HighlightLanguage {
+    ) throws(HighlighterError) -> HighlightLanguage {
         try HighlightLanguage(
             id: definition.id,
             displayName: definition.displayName,
@@ -634,10 +639,13 @@ extension LanguageCatalog {
     private static func query(
         files: [String],
         directory: String
-    ) throws -> String {
-        try files.map { filename in
-            try resource(filename: filename, directory: directory)
-        }.joined(separator: "\n")
+    ) throws(HighlighterError) -> String {
+        var sources: [String] = []
+        sources.reserveCapacity(files.count)
+        for filename in files {
+            sources.append(try resource(filename: filename, directory: directory))
+        }
+        return sources.joined(separator: "\n")
     }
 
     /// Loads an optional query only when the language declares fragments.
@@ -650,7 +658,7 @@ extension LanguageCatalog {
     private static func optionalQuery(
         files: [String],
         directory: String
-    ) throws -> String? {
+    ) throws(HighlighterError) -> String? {
         guard !files.isEmpty else {
             return nil
         }
@@ -667,7 +675,7 @@ extension LanguageCatalog {
     private static func resource(
         filename: String,
         directory: String
-    ) throws -> String {
+    ) throws(HighlighterError) -> String {
         let subdirectory = "Languages/\(directory)"
         let resourceName = (filename as NSString).deletingPathExtension
         let fileExtension = (filename as NSString).pathExtension

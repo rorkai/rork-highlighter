@@ -21,7 +21,7 @@ public struct Highlighter: Sendable {
     ///   loaded.
     public init(
         configuration: HighlighterConfiguration = .default
-    ) throws {
+    ) throws(HighlighterError) {
         self.init(
             catalog: try .standard(),
             configuration: configuration
@@ -52,7 +52,7 @@ public struct Highlighter: Sendable {
     public func highlight(
         _ text: String,
         as language: LanguageID
-    ) throws -> HighlightSnapshot {
+    ) throws(HighlighterError) -> HighlightSnapshot {
         try validateDocumentLength(text)
         let definition = try languageDefinition(for: language)
         let layer = try makeLanguageLayer(for: definition)
@@ -76,7 +76,7 @@ public struct Highlighter: Sendable {
     public func highlight(
         _ text: String,
         for fileURL: URL
-    ) throws -> HighlightSnapshot {
+    ) throws(HighlighterError) -> HighlightSnapshot {
         guard let language = catalog.language(for: fileURL) else {
             let unresolvedName =
                 fileURL.pathExtension.isEmpty
@@ -100,7 +100,7 @@ public struct Highlighter: Sendable {
     public func makeSession(
         _ text: String,
         as language: LanguageID
-    ) throws -> HighlightSession {
+    ) throws(HighlighterError) -> HighlightSession {
         try HighlightSession(
             highlighter: self,
             text: text,
@@ -116,7 +116,7 @@ public struct Highlighter: Sendable {
     ///   matches.
     func languageDefinition(
         for identifier: LanguageID
-    ) throws -> HighlightLanguage {
+    ) throws(HighlighterError) -> HighlightLanguage {
         guard let language = catalog.language(for: identifier) else {
             throw HighlighterError.unknownLanguage(identifier)
         }
@@ -131,7 +131,7 @@ public struct Highlighter: Sendable {
     ///   Tree-sitter rejects the parser configuration.
     func makeLanguageLayer(
         for language: HighlightLanguage
-    ) throws -> LanguageLayer {
+    ) throws(HighlighterError) -> LanguageLayer {
         let layerConfiguration = LanguageLayer.Configuration(
             maximumLanguageDepth: configuration.maximumInjectionDepth
         ) { injectedName in
@@ -167,7 +167,7 @@ public struct Highlighter: Sendable {
         language: LanguageID,
         revision: UInt64,
         layer: LanguageLayer
-    ) throws -> HighlightSnapshot {
+    ) throws(HighlighterError) -> HighlightSnapshot {
         let fullRange = NSRange(
             location: 0,
             length: text.utf16.count
@@ -214,7 +214,9 @@ public struct Highlighter: Sendable {
     /// - Parameter text: The document to validate.
     /// - Throws: ``HighlighterError/documentTooLarge`` when encoded offsets
     ///   would overflow.
-    func validateDocumentLength(_ text: String) throws {
+    func validateDocumentLength(
+        _ text: String
+    ) throws(HighlighterError) {
         guard text.utf16.count <= Self.maximumUTF16Length else {
             throw HighlighterError.documentTooLarge
         }

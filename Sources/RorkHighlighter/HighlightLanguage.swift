@@ -53,7 +53,7 @@ public struct HighlightLanguage: Identifiable, Sendable {
         highlightsQuery: String,
         injectionsQuery: String? = nil,
         localsQuery: String? = nil
-    ) throws {
+    ) throws(HighlighterError) {
         guard !id.rawValue.isEmpty else {
             throw HighlighterError.emptyLanguageIdentifier
         }
@@ -138,7 +138,7 @@ public struct HighlightLanguage: Identifiable, Sendable {
         kind: LanguageQueryKind,
         languageID: LanguageID,
         language: Language
-    ) throws -> Query {
+    ) throws(HighlighterError) -> Query {
         do {
             return try Query(
                 language: language,

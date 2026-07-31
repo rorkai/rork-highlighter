@@ -38,7 +38,7 @@ public actor HighlightSession {
         highlighter: Highlighter,
         text: String,
         language: LanguageID
-    ) throws {
+    ) throws(HighlighterError) {
         try highlighter.validateDocumentLength(text)
         let languageDefinition = try highlighter.languageDefinition(
             for: language
@@ -76,7 +76,7 @@ public actor HighlightSession {
     ///
     /// - Returns: An immutable snapshot of the session state.
     /// - Throws: ``HighlighterError`` when query execution fails.
-    public func snapshot() throws -> HighlightSnapshot {
+    public func snapshot() throws(HighlighterError) -> HighlightSnapshot {
         try highlighter.makeSnapshot(
             text: text,
             language: languageDefinition.id,
@@ -102,7 +102,7 @@ public actor HighlightSession {
     public func replaceCharacters(
         in range: UTF16Range,
         with replacement: String
-    ) throws -> HighlightUpdate {
+    ) throws(HighlighterError) -> HighlightUpdate {
         let oldLength = text.utf16.count
         guard range.upperBound <= oldLength else {
             throw HighlighterError.rangeOutOfBounds(

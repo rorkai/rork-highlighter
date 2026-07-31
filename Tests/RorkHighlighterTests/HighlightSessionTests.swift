@@ -87,7 +87,7 @@ struct HighlightSessionTests {
                 with: "x"
             )
             Issue.record("Expected the edit to reject a split Unicode scalar.")
-        } catch let error as HighlighterError {
+        } catch {
             #expect(error == .invalidUTF16Boundary(invalidRange))
         }
 
@@ -109,7 +109,7 @@ struct HighlightSessionTests {
                 with: "0"
             )
             Issue.record("Expected the edit to reject an out-of-bounds range.")
-        } catch let error as HighlighterError {
+        } catch {
             #expect(
                 error
                     == .rangeOutOfBounds(

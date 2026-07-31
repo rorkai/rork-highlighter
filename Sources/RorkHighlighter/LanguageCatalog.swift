@@ -25,7 +25,9 @@ public struct LanguageCatalog: Sendable {
     /// - Parameter languages: The definitions available to a highlighter.
     /// - Throws: ``HighlighterError`` when an identifier is empty or discovery
     ///   metadata is ambiguous.
-    public init(languages: [HighlightLanguage]) throws {
+    public init(
+        languages: [HighlightLanguage]
+    ) throws(HighlighterError) {
         var languagesByID: [LanguageID: HighlightLanguage] = [:]
         var identifiers: [LanguageID: LanguageID] = [:]
         var fileExtensions: [String: LanguageID] = [:]
