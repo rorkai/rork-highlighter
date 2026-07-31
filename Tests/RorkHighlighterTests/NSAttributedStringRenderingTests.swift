@@ -258,11 +258,19 @@
                 at: 0,
                 effectiveRange: nil
             )
+            var keywordEffectiveRange = NSRange(location: 0, length: 0)
             let keywordAttributes = rendered.attributes(
                 at: keywordRange.location,
-                effectiveRange: nil
+                effectiveRange: &keywordEffectiveRange
             )
 
+            #expect(
+                keywordEffectiveRange
+                    == NSRange(
+                        location: keywordRange.location,
+                        length: keywordRange.length
+                    )
+            )
             #expect(
                 color(
                     emojiAttributes[.foregroundColor],
