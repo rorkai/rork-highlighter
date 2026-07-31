@@ -16,7 +16,7 @@ public struct Highlighter: Sendable {
 
     /// Creates a highlighter with the package's bundled language catalog.
     ///
-    /// - Parameter configuration: Behavior shared by highlighting operations.
+    /// - Parameter configuration: The behavior shared by highlighting operations.
     /// - Throws: ``HighlighterError`` when a bundled parser or query cannot be
     ///   loaded.
     public init(
@@ -32,7 +32,7 @@ public struct Highlighter: Sendable {
     ///
     /// - Parameters:
     ///   - catalog: The languages available to highlighting operations.
-    ///   - configuration: Behavior shared by highlighting operations.
+    ///   - configuration: The behavior shared by highlighting operations.
     public init(
         catalog: LanguageCatalog,
         configuration: HighlighterConfiguration = .default

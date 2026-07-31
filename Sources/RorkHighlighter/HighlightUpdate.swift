@@ -17,7 +17,7 @@ public struct HighlightUpdate: Hashable, Sendable {
     /// - Parameters:
     ///   - replacedRange: The range removed from the previous revision.
     ///   - replacementRange: The replacement range in the new revision.
-    ///   - invalidatedRanges: Ranges requiring display invalidation.
+    ///   - invalidatedRanges: The ranges requiring display invalidation.
     ///   - snapshot: The complete state after the edit.
     public init(
         replacedRange: UTF16Range,

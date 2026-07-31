@@ -219,9 +219,9 @@ private struct BundledLanguageFixture: CustomTestStringConvertible, Sendable {
     /// - Parameters:
     ///   - language: The parser used for the fixture.
     ///   - source: The complete source text to parse.
-    ///   - expectedScope: A capture scope expected in the result.
+    ///   - expectedScope: The capture scope expected in the result.
     ///   - expectedRootNodeType: The grammar root expected for the source.
-    ///   - expectedNodeTypes: Representative syntax nodes expected in the tree.
+    ///   - expectedNodeTypes: The representative syntax nodes expected in the tree.
     init(
         language: LanguageID,
         source: String,

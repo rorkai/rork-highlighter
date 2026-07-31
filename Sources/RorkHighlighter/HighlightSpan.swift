@@ -24,7 +24,7 @@ public struct HighlightSpan: Hashable, Sendable, Codable, Comparable {
     /// Creates a highlight span from individual capture components.
     ///
     /// - Parameters:
-    ///   - scopeComponents: Capture components ordered from broad to specific.
+    ///   - scopeComponents: The capture components ordered from broad to specific.
     ///   - range: The UTF-16 source range covered by the capture.
     public init(scopeComponents: [String], range: UTF16Range) {
         self.scopeComponents = scopeComponents
