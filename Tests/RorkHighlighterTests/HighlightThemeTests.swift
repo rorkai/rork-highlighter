@@ -162,7 +162,7 @@ struct HighlightThemeTests {
         }
     }
 
-    /// Confirms bundled themes provide distinct bases and common scope rules.
+    /// Confirms bundled themes omit base backgrounds and share scope rules.
     @Test
     func providesBundledLightAndDarkThemes() {
         let lightKeyword = HighlightTheme.rorkLight.style(
@@ -171,15 +171,10 @@ struct HighlightThemeTests {
         let darkKeyword = HighlightTheme.rorkDark.style(
             for: "keyword.function"
         )
+        let darkNumber = HighlightTheme.rorkDark.style(for: "number")
 
-        #expect(
-            HighlightTheme.rorkLight.baseStyle.backgroundColor
-                == HighlightColor(rgb: 0xFF_FF_FF)
-        )
-        #expect(
-            HighlightTheme.rorkDark.baseStyle.backgroundColor
-                == HighlightColor(rgb: 0x1E_22_2A)
-        )
+        #expect(HighlightTheme.rorkLight.baseStyle.backgroundColor == nil)
+        #expect(HighlightTheme.rorkDark.baseStyle.backgroundColor == nil)
         #expect(
             lightKeyword.foregroundColor
                 != HighlightTheme.rorkLight.baseStyle.foregroundColor
@@ -189,6 +184,10 @@ struct HighlightThemeTests {
                 != HighlightTheme.rorkDark.baseStyle.foregroundColor
         )
         #expect(lightKeyword != darkKeyword)
+        #expect(
+            darkNumber.foregroundColor
+                == HighlightColor(rgb: 0xD0_BF_69)
+        )
         #expect(
             Set(HighlightTheme.rorkLight.styles.keys)
                 == Set(HighlightTheme.rorkDark.styles.keys)

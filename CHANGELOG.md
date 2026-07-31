@@ -9,6 +9,16 @@ release.
 
 - Added renderer-neutral light and dark themes with hierarchical Tree-sitter
   capture matching.
+- Added native SwiftUI `AttributedString` and TextKit `NSAttributedString`
+  rendering with caller-selected fonts, typed range errors, and Unicode-safe
+  UTF-16 conversion.
+
+### Changed
+
+- Built-in themes now leave attributed text backgrounds unset so the
+  surrounding editor or view controls its canvas.
+- The Rork Dark numeric-literal color now uses a quieter gold that sits
+  naturally beside the surrounding syntax.
 
 ## 0.1.0 - 2026-07-31
 

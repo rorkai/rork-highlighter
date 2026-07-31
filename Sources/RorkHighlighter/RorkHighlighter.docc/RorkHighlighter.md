@@ -9,8 +9,9 @@ Open ``HighlightSession`` when an editor needs to preserve its syntax tree
 across text edits.
 
 The library exposes capture scopes and UTF-16 ranges together with
-renderer-neutral themes. Raw spans remain available to SwiftUI, TextKit,
-terminal, and server clients that need custom rendering.
+renderer-neutral themes. Apple clients can render snapshots into native
+`AttributedString` or `NSAttributedString` values. Raw spans remain available
+to custom editors, terminal clients, and servers that need complete control.
 
 ## Topics
 
@@ -24,10 +25,12 @@ terminal, and server clients that need custom rendering.
 ### Themes
 
 - <doc:Theming>
+- <doc:RenderingAttributedCode>
 - ``HighlightTheme``
 - ``HighlightStyle``
 - ``HighlightColor``
 - ``HighlightTextTrait``
+- ``HighlightRenderingError``
 
 ### Incremental documents
 

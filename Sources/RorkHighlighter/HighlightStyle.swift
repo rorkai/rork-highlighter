@@ -2,23 +2,23 @@
 ///
 /// Optional values support hierarchical theme inheritance. A missing value
 /// preserves the broader style, while an empty ``textTraits`` set explicitly
-/// removes inherited typography.
+/// removes traits inherited from broader theme rules.
 public struct HighlightStyle: Hashable, Sendable, Codable {
-    /// Holds the requested foreground color.
+    /// Holds the foreground color supplied by this style.
     public let foregroundColor: HighlightColor?
 
-    /// Holds the requested background color.
+    /// Holds the background color supplied by this style.
     public let backgroundColor: HighlightColor?
 
-    /// Holds typography that replaces inherited text traits when present.
+    /// Holds the text traits supplied by this style.
     public let textTraits: Set<HighlightTextTrait>?
 
     /// Creates a renderer-neutral highlight style.
     ///
     /// - Parameters:
-    ///   - foregroundColor: The requested foreground color.
-    ///   - backgroundColor: The requested background color.
-    ///   - textTraits: Typography that replaces inherited text traits.
+    ///   - foregroundColor: The foreground color supplied by the style.
+    ///   - backgroundColor: The background color supplied by the style.
+    ///   - textTraits: The text traits supplied by the style.
     public init(
         foregroundColor: HighlightColor? = nil,
         backgroundColor: HighlightColor? = nil,

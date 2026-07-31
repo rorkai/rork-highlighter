@@ -58,7 +58,7 @@ public enum HighlighterError: Error, Equatable, Sendable {
     /// A UTF-16 range extends beyond the current text.
     case rangeOutOfBounds(range: UTF16Range, textLength: Int)
 
-    /// A UTF-16 range splits a Unicode scalar and cannot edit a Swift string.
+    /// A UTF-16 range does not align with Swift character boundaries.
     case invalidUTF16Boundary(UTF16Range)
 
     /// The document exceeds the offset width supported by Tree-sitter.
@@ -104,7 +104,7 @@ extension HighlighterError: LocalizedError {
         case .rangeOutOfBounds(let range, let textLength):
             "The UTF-16 range \(range) exceeds the document length of \(textLength)."
         case .invalidUTF16Boundary(let range):
-            "The UTF-16 range \(range) splits a Unicode scalar."
+            "The UTF-16 range \(range) does not align with Swift character boundaries."
         case .documentTooLarge:
             "The document is too large for Tree-sitter's 32-bit offsets."
         }

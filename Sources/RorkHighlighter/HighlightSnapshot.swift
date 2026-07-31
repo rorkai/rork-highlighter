@@ -18,7 +18,7 @@ public struct HighlightSnapshot: Hashable, Sendable {
     ///   - text: The source text represented by the snapshot.
     ///   - language: The root language used to parse the text.
     ///   - revision: The document revision represented by the snapshot.
-    ///   - highlights: Highlight spans in deterministic application order.
+    ///   - highlights: The highlight spans in deterministic application order.
     public init(
         text: String,
         language: LanguageID,

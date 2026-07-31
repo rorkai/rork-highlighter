@@ -18,7 +18,7 @@ public struct HighlightTheme: Hashable, Sendable, Codable {
     /// - Parameters:
     ///   - name: The human-readable theme name.
     ///   - baseStyle: The style applied before scope-specific refinements.
-    ///   - styles: Style refinements keyed by dotted capture scope.
+    ///   - styles: The style refinements keyed by dotted capture scope.
     public init(
         name: String,
         baseStyle: HighlightStyle = HighlightStyle(),
@@ -59,7 +59,7 @@ public struct HighlightTheme: Hashable, Sendable, Codable {
     /// Applies matching rules from the broadest component to the most
     /// specific component.
     ///
-    /// - Parameter components: Capture components ordered by specificity.
+    /// - Parameter components: The capture components ordered by specificity.
     /// - Returns: The fully resolved style.
     private func resolvedStyle(
         for components: [String]

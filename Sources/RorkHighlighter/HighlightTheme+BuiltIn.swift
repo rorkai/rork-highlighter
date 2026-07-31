@@ -26,7 +26,7 @@ extension HighlightTheme {
             foregroundColor: HighlightColor(rgb: 0xD9_9B_FF)
         )
         let number = HighlightStyle(
-            foregroundColor: HighlightColor(rgb: 0xF7_8C_6C)
+            foregroundColor: HighlightColor(rgb: 0xD0_BF_69)
         )
         let punctuation = HighlightStyle(
             foregroundColor: HighlightColor(rgb: 0x8B_93_A7)
@@ -42,7 +42,6 @@ extension HighlightTheme {
             name: "Rork Dark",
             baseStyle: HighlightStyle(
                 foregroundColor: HighlightColor(rgb: 0xD8_DE_E9),
-                backgroundColor: HighlightColor(rgb: 0x1E_22_2A),
                 textTraits: []
             ),
             styles: [
@@ -220,7 +219,6 @@ extension HighlightTheme {
             name: "Rork Light",
             baseStyle: HighlightStyle(
                 foregroundColor: HighlightColor(rgb: 0x24_29_2F),
-                backgroundColor: HighlightColor(rgb: 0xFF_FF_FF),
                 textTraits: []
             ),
             styles: [

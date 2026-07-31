@@ -1,0 +1,13 @@
+import SwiftUI
+
+struct WelcomeView: View {
+    let name: String
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "sparkles")
+            Text("Hello, \(name)!")
+                .font(.title.bold())
+        }
+    }
+}

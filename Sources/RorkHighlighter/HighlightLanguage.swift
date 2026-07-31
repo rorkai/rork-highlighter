@@ -34,9 +34,9 @@ public struct HighlightLanguage: Identifiable, Sendable {
     /// - Parameters:
     ///   - id: The canonical language identifier.
     ///   - displayName: The human-readable language name.
-    ///   - aliases: Alternate names accepted by the language catalog.
-    ///   - fileExtensions: File extensions associated with the language.
-    ///   - filenames: Exact filenames associated with the language.
+    ///   - aliases: The alternate names accepted by the language catalog.
+    ///   - fileExtensions: The file extensions associated with the language.
+    ///   - filenames: The exact filenames associated with the language.
     ///   - treeSitterLanguage: The pointer returned by a generated parser.
     ///   - highlightsQuery: The query that produces syntax captures.
     ///   - injectionsQuery: The optional query that locates nested languages.

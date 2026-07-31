@@ -27,6 +27,16 @@ TEST_SOURCE_DIRECTORY = (
     REPOSITORY_ROOT / "Tests" / f"{MODULE_NAME}Tests"
 )
 
+# Preview tool declarations follow the same documentation policy as library
+# code.
+PREVIEW_TOOL_SOURCE_DIRECTORY = (
+    REPOSITORY_ROOT
+    / "Tools"
+    / "PreviewGenerator"
+    / "Sources"
+    / "PreviewGenerator"
+)
+
 # Authored C declarations use the same line-oriented documentation style.
 C_HEADER_DIRECTORY = (
     REPOSITORY_ROOT
@@ -60,13 +70,33 @@ EXTENSION_DECLARATION = re.compile(
     r"extension\b"
 )
 
-# Swift-format keeps suite and test declarations at zero or four spaces, while
-# local bindings begin at a deeper indentation level.
-TEST_DECLARATION = re.compile(
-    r"^(?: {0}| {4})(?:@\S+\s+)*"
-    r"(?:(?:public|package|internal|fileprivate|private|final|indirect)\s+)*"
-    r"(?:actor|class|enum|struct|protocol|extension|typealias|"
-    r"associatedtype|init|subscript|func|var|let)\b"
+# Supporting sources can be indented by conditional compilation blocks, so
+# declaration scope is considered separately from raw indentation.
+SUPPORTING_SWIFT_DECLARATION = re.compile(
+    r"^(?P<indent> *)(?:@\S+\s+)*"
+    r"(?:(?:public|open|(?:package|internal|fileprivate|private)"
+    r"(?:\(set\))?|final|"
+    r"indirect|static|class|override|required|convenience|mutating|"
+    r"nonmutating|nonisolated|isolated|lazy)\s+)*"
+    r"(?P<kind>actor|class|enum|struct|protocol|extension|typealias|"
+    r"associatedtype|init|deinit|subscript|func|var|let|case)\b"
+)
+
+# These declarations establish a scope whose direct members need
+# documentation.
+SUPPORTING_SWIFT_TYPE_KINDS = frozenset(
+    {"actor", "class", "enum", "struct", "protocol", "extension"}
+)
+
+# Multiline fixture contents are excluded before declaration matching.
+SWIFT_MULTILINE_STRING_OPENING = re.compile(
+    r'(?P<hashes>#+)?"""'
+)
+
+# Conditional compilation branches establish an indentation baseline without
+# introducing a declaration scope.
+SWIFT_CONDITIONAL_COMPILATION_BRANCH = re.compile(
+    r"^(?P<indent> *)#(?:if|elseif|else)\b"
 )
 
 # Public C declarations are confined to authored headers outside vendor trees.
@@ -155,6 +185,11 @@ def swift_test_paths() -> list[Path]:
     return sorted(TEST_SOURCE_DIRECTORY.rglob("*.swift"))
 
 
+def swift_preview_tool_paths() -> list[Path]:
+    """Returns maintained Swift source files in the preview tool."""
+    return sorted(PREVIEW_TOOL_SOURCE_DIRECTORY.rglob("*.swift"))
+
+
 def c_header_paths() -> list[Path]:
     """Returns authored C headers exposed by the parser target."""
     return sorted(C_HEADER_DIRECTORY.rglob("*.h"))
@@ -179,6 +214,64 @@ def has_leading_doc_comment(lines: list[str], index: int) -> bool:
     return False
 
 
+def is_supporting_swift_declaration(
+    lines: list[str],
+    index: int,
+) -> bool:
+    """Returns whether a supporting declaration is outside local scope."""
+    match = SUPPORTING_SWIFT_DECLARATION.match(lines[index])
+    if match is None:
+        return False
+
+    indentation = len(match.group("indent"))
+    for preceding_line in reversed(lines[:index]):
+        branch_match = SWIFT_CONDITIONAL_COMPILATION_BRANCH.match(
+            preceding_line
+        )
+        if branch_match is not None:
+            branch_indentation = len(branch_match.group("indent"))
+            if branch_indentation < indentation:
+                indentation = branch_indentation
+            continue
+
+        enclosing_match = SUPPORTING_SWIFT_DECLARATION.match(
+            preceding_line
+        )
+        if enclosing_match is None:
+            continue
+        enclosing_indentation = len(enclosing_match.group("indent"))
+        if enclosing_indentation >= indentation:
+            continue
+        if enclosing_match.group("kind") not in SUPPORTING_SWIFT_TYPE_KINDS:
+            return False
+        indentation = enclosing_indentation
+    return True
+
+
+def swift_multiline_string_content_lines(
+    lines: list[str],
+) -> set[int]:
+    """Returns source lines that belong to multiline string contents."""
+    content_lines: set[int] = set()
+    closing_delimiter: str | None = None
+    for index, line in enumerate(lines):
+        if closing_delimiter is not None:
+            content_lines.add(index)
+            if closing_delimiter in line:
+                closing_delimiter = None
+            continue
+
+        opening_match = SWIFT_MULTILINE_STRING_OPENING.search(line)
+        if opening_match is None:
+            continue
+        hashes = opening_match.group("hashes") or ""
+        candidate_closing_delimiter = f'"""{hashes}'
+        remaining_line = line[opening_match.end() :]
+        if candidate_closing_delimiter not in remaining_line:
+            closing_delimiter = candidate_closing_delimiter
+    return content_lines
+
+
 def undocumented_source_declarations() -> list[str]:
     """Returns source-level declarations without leading DocC comments."""
     missing: list[str] = []
@@ -195,10 +288,17 @@ def undocumented_source_declarations() -> list[str]:
             relative_path = path.relative_to(REPOSITORY_ROOT)
             missing.append(f"{relative_path}:{index + 1}")
 
-    for path in swift_test_paths():
+    supporting_paths = [
+        *swift_test_paths(),
+        *swift_preview_tool_paths(),
+    ]
+    for path in supporting_paths:
         lines = path.read_text(encoding="utf-8").splitlines()
-        for index, line in enumerate(lines):
-            if not TEST_DECLARATION.match(line):
+        multiline_string_lines = swift_multiline_string_content_lines(lines)
+        for index in range(len(lines)):
+            if index in multiline_string_lines:
+                continue
+            if not is_supporting_swift_declaration(lines, index):
                 continue
             if has_leading_doc_comment(lines, index):
                 continue
@@ -306,7 +406,7 @@ def main() -> int:
 
     validate_docc(paths)
     print(
-        f"Every maintained {MODULE_NAME} declaration and authored C file has documentation."
+        f"Every maintained {MODULE_NAME}, preview tool, and authored C declaration has documentation."
     )
     return 0
 

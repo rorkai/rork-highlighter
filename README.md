@@ -4,6 +4,11 @@ Rork Highlighter is a SwiftPM-first syntax-highlighting library built on
 Tree-sitter. It provides a small Swift API for immutable source strings and an
 actor-isolated session API for documents that change over time.
 
+![Rork Highlighter rendering Swift with native attributed output.](Sources/RorkHighlighter/RorkHighlighter.docc/Resources/swift-attributed-output.png)
+
+The preview uses the bundled Swift parser and `.rorkDark` theme. The editor
+chrome is illustrative.
+
 The package currently bundles a common pack with 36 language definitions. Apps
 resolve one Swift package and import one public module instead of managing a
 separate SwiftPM dependency for every Tree-sitter grammar.
@@ -16,6 +21,7 @@ separate SwiftPM dependency for every Tree-sitter grammar.
 - Incremental parsing inside one actor per document.
 - Explicit UTF-16 ranges that match Foundation text systems.
 - Renderer-neutral light and dark themes with hierarchical scope matching.
+- Native SwiftUI `AttributedString` and TextKit `NSAttributedString` output.
 - Deterministic aliases, filenames, and file-extension discovery.
 - Nested-language infrastructure through SwiftTreeSitterLayer.
 - A parser-neutral registry for custom and generated language packs.
@@ -107,7 +113,6 @@ let theme = HighlightTheme(
     name: "Brand",
     baseStyle: HighlightStyle(
         foregroundColor: HighlightColor(rgb: 0xE6_E6_E6),
-        backgroundColor: HighlightColor(rgb: 0x18_18_18),
         textTraits: []
     ),
     styles: [
@@ -125,6 +130,76 @@ let theme = HighlightTheme(
 Scope matching proceeds from broad captures to specific captures. A
 `string.special.key` span inherits `string` and `string.special` refinements
 before its exact rule is applied.
+
+## Native attributed output
+
+Highlight Swift source and render the snapshot directly in SwiftUI:
+
+```swift
+import RorkHighlighter
+import SwiftUI
+
+let source = #"""
+import SwiftUI
+
+struct WelcomeView: View {
+    let name: String
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "sparkles")
+            Text("Hello, \(name)!")
+                .font(.title.bold())
+        }
+    }
+}
+"""#
+
+let highlighter = try Highlighter()
+let snapshot = try highlighter.highlight(source, as: .swift)
+let rendered = try snapshot.attributedString(
+    theme: .rorkDark,
+    font: .system(size: 15, design: .monospaced)
+)
+
+let code = Text(rendered)
+    .textSelection(.enabled)
+    .padding()
+    .background(Color.black)
+```
+
+The bundled themes leave `HighlightStyle.backgroundColor` unset. Set the canvas
+on the containing view or editor so attributed text does not paint background
+strips behind individual text runs.
+
+The renderer uses a monospaced system font by default. Supply any SwiftUI font
+when the surrounding interface owns typography:
+
+```swift
+let rendered = try snapshot.attributedString(
+    theme: .rorkLight,
+    font: .system(size: 14, design: .monospaced)
+)
+```
+
+UIKit and AppKit clients can request an `NSAttributedString` with native
+platform colors, fonts, and TextKit keys:
+
+```swift
+let rendered = try snapshot.nsAttributedString(
+    theme: .rorkDark,
+    font: .monospacedSystemFont(ofSize: 14, weight: .regular)
+)
+```
+
+Assign the result directly to APIs such as `UILabel.attributedText` or
+`NSTextStorage.setAttributedString(_:)`.
+
+Rendering preserves the snapshot's UTF-16 ranges and overlap order. Invalid
+ranges throw `HighlightRenderingError` instead of being rounded or trapping.
+The native APIs are available when SwiftUI, UIKit, or AppKit is present.
+Renderer-neutral themes and raw spans remain available on Linux and other
+Swift platforms.
 
 ## Bundled languages
 

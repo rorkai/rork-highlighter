@@ -21,8 +21,10 @@ for span in snapshot.highlights {
 }
 ```
 
-The base style describes the surrounding document. Each highlighted span
-receives the base style followed by every matching scope refinement.
+The base style supplies defaults for rendered text. The bundled themes leave
+their text background unset so the surrounding editor or view controls its
+canvas. Each highlighted span receives the base style followed by every
+matching scope refinement.
 
 ## Define a custom theme
 
@@ -34,7 +36,6 @@ let theme = HighlightTheme(
     name: "Brand",
     baseStyle: HighlightStyle(
         foregroundColor: HighlightColor(rgb: 0xE6_E6_E6),
-        backgroundColor: HighlightColor(rgb: 0x18_18_18),
         textTraits: []
     ),
     styles: [
@@ -53,6 +54,9 @@ Colors use eight-bit sRGB channels and remain independent of UIKit, AppKit, and
 SwiftUI. Text traits describe bold, italic, underline, and strikethrough
 presentation without selecting a platform font.
 
+``HighlightStyle/backgroundColor`` paints only the attributed text range. Set
+the editor canvas on the containing SwiftUI view, `UITextView`, or `NSTextView`.
+
 Integer literals passed to ``HighlightColor/init(rgb:alpha:)`` are checked as
 24-bit values. Validate colors obtained from files or network responses with
 ``HighlightColor/RGB/init(rawValue:)`` before constructing a color.
@@ -64,7 +68,8 @@ Tree-sitter capture names become more specific from left to right. Resolving
 `string.special.key` rules in that order.
 
 A missing style value preserves the broader value. An empty
-``HighlightStyle/textTraits`` set removes inherited typography:
+``HighlightStyle/textTraits`` set removes traits inherited from broader theme
+rules:
 
 ```swift
 let theme = HighlightTheme(
