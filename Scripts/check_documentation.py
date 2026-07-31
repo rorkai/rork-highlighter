@@ -30,7 +30,11 @@ TEST_SOURCE_DIRECTORY = (
 # Preview tool declarations follow the same documentation policy as library
 # code.
 PREVIEW_TOOL_SOURCE_DIRECTORY = (
-    REPOSITORY_ROOT / "Tools" / "PreviewGenerator" / "Sources"
+    REPOSITORY_ROOT
+    / "Tools"
+    / "PreviewGenerator"
+    / "Sources"
+    / "PreviewGenerator"
 )
 
 # Authored C declarations use the same line-oriented documentation style.
@@ -70,7 +74,8 @@ EXTENSION_DECLARATION = re.compile(
 # declaration scope is considered separately from raw indentation.
 SUPPORTING_SWIFT_DECLARATION = re.compile(
     r"^(?P<indent> *)(?:@\S+\s+)*"
-    r"(?:(?:public|package|internal|fileprivate|private|open|final|"
+    r"(?:(?:public|open|(?:package|internal|fileprivate|private)"
+    r"(?:\(set\))?|final|"
     r"indirect|static|class|override|required|convenience|mutating|"
     r"nonmutating|nonisolated|isolated|lazy)\s+)*"
     r"(?P<kind>actor|class|enum|struct|protocol|extension|typealias|"
@@ -86,6 +91,12 @@ SUPPORTING_SWIFT_TYPE_KINDS = frozenset(
 # Multiline fixture contents are excluded before declaration matching.
 SWIFT_MULTILINE_STRING_OPENING = re.compile(
     r'(?P<hashes>#+)?"""'
+)
+
+# Conditional compilation branches establish an indentation baseline without
+# introducing a declaration scope.
+SWIFT_CONDITIONAL_COMPILATION_BRANCH = re.compile(
+    r"^(?P<indent> *)#(?:if|elseif|else)\b"
 )
 
 # Public C declarations are confined to authored headers outside vendor trees.
@@ -214,6 +225,15 @@ def is_supporting_swift_declaration(
 
     indentation = len(match.group("indent"))
     for preceding_line in reversed(lines[:index]):
+        branch_match = SWIFT_CONDITIONAL_COMPILATION_BRANCH.match(
+            preceding_line
+        )
+        if branch_match is not None:
+            branch_indentation = len(branch_match.group("indent"))
+            if branch_indentation < indentation:
+                indentation = branch_indentation
+            continue
+
         enclosing_match = SUPPORTING_SWIFT_DECLARATION.match(
             preceding_line
         )
@@ -222,9 +242,9 @@ def is_supporting_swift_declaration(
         enclosing_indentation = len(enclosing_match.group("indent"))
         if enclosing_indentation >= indentation:
             continue
-        return (
-            enclosing_match.group("kind") in SUPPORTING_SWIFT_TYPE_KINDS
-        )
+        if enclosing_match.group("kind") not in SUPPORTING_SWIFT_TYPE_KINDS:
+            return False
+        indentation = enclosing_indentation
     return True
 
 
@@ -275,7 +295,7 @@ def undocumented_source_declarations() -> list[str]:
     for path in supporting_paths:
         lines = path.read_text(encoding="utf-8").splitlines()
         multiline_string_lines = swift_multiline_string_content_lines(lines)
-        for index, line in enumerate(lines):
+        for index in range(len(lines)):
             if index in multiline_string_lines:
                 continue
             if not is_supporting_swift_declaration(lines, index):

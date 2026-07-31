@@ -26,6 +26,7 @@ check-languages:
 	python3 Scripts/vendor_languages.py
 
 check-documentation:
+	python3 -m unittest discover -s Scripts/tests -p "test_*.py"
 	python3 Scripts/check_documentation.py
 
 ifeq ($(shell uname -s),Darwin)
