@@ -45,6 +45,21 @@ system, and Swift toolchain. The first benchmark PR deliberately records no
 regression thresholds because a stable baseline must come from repeated runs on
 a consistent host.
 
+## Cross-library comparisons
+
+The opt-in comparison package runs Rork Highlighter and other implementations
+against byte-identical generated Swift documents. It remains separate from this
+regression suite so ordinary builds do not resolve competitor dependencies.
+
+```sh
+make benchmark-comparison \
+  COMPARISON_BENCHMARK_ARGUMENTS="--metric wallClock --time-units microseconds --no-progress"
+```
+
+The [comparison guide](Comparison/README.md) documents dependency pins, shared
+fixture integrity, JavaScript measurements, workload boundaries, focused runs,
+and reporting constraints.
+
 ## Distribution measurements
 
 Measure a clean release build and its source, object, executable, and resource

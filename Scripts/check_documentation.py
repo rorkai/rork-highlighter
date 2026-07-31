@@ -45,6 +45,16 @@ BENCHMARK_SOURCE_DIRECTORY = (
     / "RorkHighlighterBenchmarks"
 )
 
+# Comparison benchmark declarations remain maintained despite their opt-in
+# dependency graph.
+COMPARISON_BENCHMARK_SOURCE_DIRECTORY = (
+    REPOSITORY_ROOT
+    / "Benchmarks"
+    / "Comparison"
+    / "Benchmarks"
+    / "HighlighterComparisonBenchmarks"
+)
+
 # Distribution probe declarations remain maintained even though they are
 # outside the public package.
 DISTRIBUTION_PROBE_SOURCE_DIRECTORY = (
@@ -213,6 +223,11 @@ def swift_benchmark_paths() -> list[Path]:
     return sorted(BENCHMARK_SOURCE_DIRECTORY.rglob("*.swift"))
 
 
+def swift_comparison_benchmark_paths() -> list[Path]:
+    """Returns maintained Swift sources in the comparison benchmark."""
+    return sorted(COMPARISON_BENCHMARK_SOURCE_DIRECTORY.rglob("*.swift"))
+
+
 def swift_distribution_probe_paths() -> list[Path]:
     """Returns maintained Swift source files in the distribution probe."""
     return sorted(DISTRIBUTION_PROBE_SOURCE_DIRECTORY.rglob("*.swift"))
@@ -320,6 +335,7 @@ def undocumented_source_declarations() -> list[str]:
         *swift_test_paths(),
         *swift_preview_tool_paths(),
         *swift_benchmark_paths(),
+        *swift_comparison_benchmark_paths(),
         *swift_distribution_probe_paths(),
     ]
     for path in supporting_paths:

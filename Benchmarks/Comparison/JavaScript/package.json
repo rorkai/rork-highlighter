@@ -1,0 +1,16 @@
+{
+  "name": "rork-highlighter-javascript-comparison",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "benchmark": "node benchmark.mjs",
+    "test": "node --test benchmark.test.mjs"
+  },
+  "dependencies": {
+    "highlight.js": "11.11.1"
+  }
+}
