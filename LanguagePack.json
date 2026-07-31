@@ -1,0 +1,949 @@
+{
+  "schemaVersion": 1,
+  "repositories": {
+    "astro": {
+      "name": "tree-sitter-astro",
+      "url": "https://github.com/virchau13/tree-sitter-astro",
+      "reference": "master",
+      "revision": "213f6e6973d9b456c6e50e86f19f66877e7ef0ee",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "bash": {
+      "name": "tree-sitter-bash",
+      "url": "https://github.com/tree-sitter/tree-sitter-bash",
+      "reference": "v0.25.1",
+      "revision": "a06c2e4415e9bc0346c6b86d401879ffb44058f7",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "c": {
+      "name": "tree-sitter-c",
+      "url": "https://github.com/tree-sitter/tree-sitter-c",
+      "reference": "v0.24.2",
+      "revision": "b780e47fc780ddc8da13afa35a3f4ed5c157823d",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "cpp": {
+      "name": "tree-sitter-cpp",
+      "url": "https://github.com/tree-sitter/tree-sitter-cpp",
+      "reference": "v0.23.4",
+      "revision": "f41e1a044c8a84ea9fa8577fdd2eab92ec96de02",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "css": {
+      "name": "tree-sitter-css",
+      "url": "https://github.com/tree-sitter/tree-sitter-css",
+      "reference": "v0.25.0",
+      "revision": "dda5cfc5722c429eaba1c910ca32c2c0c5bb1a3f",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "dockerfile": {
+      "name": "tree-sitter-dockerfile",
+      "url": "https://github.com/camdencheek/tree-sitter-dockerfile",
+      "reference": "v0.2.0",
+      "revision": "868e44ce378deb68aac902a9db68ff82d2299dd0",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "dotenv": {
+      "name": "tree-sitter-dotenv",
+      "url": "https://github.com/pnx/tree-sitter-dotenv",
+      "reference": "v1.1.1",
+      "revision": "8b1dad881974a7c1a7e3cb1f55b3a9b38ddec3ec",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "go": {
+      "name": "tree-sitter-go",
+      "url": "https://github.com/tree-sitter/tree-sitter-go",
+      "reference": "v0.25.0",
+      "revision": "1547678a9da59885853f5f5cc8a99cc203fa2e2c",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "graphql": {
+      "name": "tree-sitter-graphql",
+      "url": "https://github.com/joowani/tree-sitter-graphql",
+      "reference": "v0.1.0",
+      "revision": "46ccd8e114739a158e3e38e7e372803b17a9e7da",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "graphql-queries": {
+      "name": "tree-sitter-graphql queries",
+      "url": "https://github.com/bkegley/tree-sitter-graphql",
+      "reference": "master",
+      "revision": "5e66e961eee421786bdda8495ed1db045e06b5fe",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "groovy": {
+      "name": "tree-sitter-groovy",
+      "url": "https://github.com/murtaza64/tree-sitter-groovy",
+      "reference": "main",
+      "revision": "deb0dcf8c4544f07564060f6e9b9f6e4b0bfc27d",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "html": {
+      "name": "tree-sitter-html",
+      "url": "https://github.com/tree-sitter/tree-sitter-html",
+      "reference": "v0.23.2",
+      "revision": "5a5ca8551a179998360b4a4ca2c0f366a35acc03",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "java": {
+      "name": "tree-sitter-java",
+      "url": "https://github.com/tree-sitter/tree-sitter-java",
+      "reference": "v0.23.5",
+      "revision": "94703d5a6bed02b98e438d7cad1136c01a60ba2c",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "javascript": {
+      "name": "tree-sitter-javascript",
+      "url": "https://github.com/tree-sitter/tree-sitter-javascript",
+      "reference": "v0.25.0",
+      "revision": "44c892e0be055ac465d5eeddae6d3e194424e7de",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "javascript-typescript-queries": {
+      "name": "tree-sitter-javascript",
+      "url": "https://github.com/tree-sitter/tree-sitter-javascript",
+      "reference": "v0.23.1",
+      "revision": "3a837b6f3658ca3618f2022f8707e29739c91364",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "jsdoc": {
+      "name": "tree-sitter-jsdoc",
+      "url": "https://github.com/tree-sitter/tree-sitter-jsdoc",
+      "reference": "v0.25.0",
+      "revision": "658d18dcdddb75c760363faa4963427a7c6b52db",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "json": {
+      "name": "tree-sitter-json",
+      "url": "https://github.com/tree-sitter/tree-sitter-json",
+      "reference": "v0.24.8",
+      "revision": "ee35a6ebefcef0c5c416c0d1ccec7370cfca5a24",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "json5": {
+      "name": "tree-sitter-json5",
+      "url": "https://github.com/Joakker/tree-sitter-json5",
+      "reference": "v0.1.0",
+      "revision": "8cb4114a4d7e5bab75d74466422e032de31d83df",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "kotlin": {
+      "name": "tree-sitter-kotlin",
+      "url": "https://github.com/fwcd/tree-sitter-kotlin",
+      "reference": "0.3.8",
+      "revision": "e1a2d5ad1f61f5740677183cd4125bb071cd2f30",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "markdown": {
+      "name": "tree-sitter-markdown",
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-markdown",
+      "reference": "v0.5.3",
+      "revision": "f969cd3ae3f9fbd4e43205431d0ae286014c05b5",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "mdx": {
+      "name": "tree-sitter-mdx",
+      "url": "https://github.com/srazzak/tree-sitter-mdx",
+      "reference": "main",
+      "revision": "3aa29e8de1bf0213948a04fe953039b6ab73777b",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "objc": {
+      "name": "tree-sitter-objc",
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-objc",
+      "reference": "v3.0.2",
+      "revision": "18802acf31d0b5c1c1d50bdbc9eb0e1636cab9ed",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "properties": {
+      "name": "tree-sitter-properties",
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-properties",
+      "reference": "v0.3.0",
+      "revision": "579b62f5ad8d96c2bb331f07d1408c92767531d9",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "python": {
+      "name": "tree-sitter-python",
+      "url": "https://github.com/tree-sitter/tree-sitter-python",
+      "reference": "v0.25.0",
+      "revision": "293fdc02038ee2bf0e2e206711b69c90ac0d413f",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "regex": {
+      "name": "tree-sitter-regex",
+      "url": "https://github.com/tree-sitter/tree-sitter-regex",
+      "reference": "v0.25.0",
+      "revision": "b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "ruby": {
+      "name": "tree-sitter-ruby",
+      "url": "https://github.com/tree-sitter/tree-sitter-ruby",
+      "reference": "v0.23.1",
+      "revision": "71bd32fb7607035768799732addba884a37a6210",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "rust": {
+      "name": "tree-sitter-rust",
+      "url": "https://github.com/tree-sitter/tree-sitter-rust",
+      "reference": "v0.24.2",
+      "revision": "77a3747266f4d621d0757825e6b11edcbf991ca5",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "scss": {
+      "name": "tree-sitter-scss",
+      "url": "https://github.com/cortexkit/tree-sitter-scss",
+      "reference": "v1.0.1",
+      "revision": "0254de4cfbf81d152447aa14285d931adf4ab0f3",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "sql": {
+      "name": "tree-sitter-sql",
+      "url": "https://github.com/DerekStride/tree-sitter-sql",
+      "reference": "gh-pages",
+      "revision": "851e9cb257ba7c66cc8c14214a31c44d2f1e954e",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "svelte": {
+      "name": "tree-sitter-svelte",
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-svelte",
+      "reference": "v1.0.2",
+      "revision": "774a65aea563accc35f5d45fafa4d96ec5761f57",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "swift": {
+      "name": "tree-sitter-swift",
+      "url": "https://github.com/alex-pinkus/tree-sitter-swift",
+      "reference": "0.7.3-with-generated-files",
+      "revision": "31d17fe7e818a2048c808b5c6fdc2dc792f4f5b5",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "toml": {
+      "name": "tree-sitter-toml",
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-toml",
+      "reference": "v0.7.0",
+      "revision": "64b56832c2cffe41758f28e05c756a3a98d16f41",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "typescript": {
+      "name": "tree-sitter-typescript",
+      "url": "https://github.com/tree-sitter/tree-sitter-typescript",
+      "reference": "v0.23.2",
+      "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "vue": {
+      "name": "tree-sitter-vue",
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-vue",
+      "reference": "main",
+      "revision": "ce8011a414fdf8091f4e4071752efc376f4afb08",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "xml": {
+      "name": "tree-sitter-xml",
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-xml",
+      "reference": "v0.7.0",
+      "revision": "4b64dd3a03ec002258d6268d712fd93716d6ab57",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    },
+    "yaml": {
+      "name": "tree-sitter-yaml",
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-yaml",
+      "reference": "v0.7.2",
+      "revision": "7708026449bed86239b1cd5bce6e3c34dbca6415",
+      "license": "MIT",
+      "licenseFile": "LICENSE"
+    }
+  },
+  "languages": [
+    {
+      "id": "astro",
+      "swiftName": "astro",
+      "displayName": "Astro",
+      "repository": "astro",
+      "entryPoint": "tree_sitter_astro",
+      "aliases": [],
+      "fileExtensions": ["astro"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "astro/parser.c"},
+        {"source": "src/scanner.c", "destination": "astro/scanner.c"},
+        {"source": "src/tag.h", "destination": "astro/tag.h"},
+        {"source": "src/tree_sitter", "destination": "astro/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"},
+        {"kind": "injections", "source": "queries/injections.scm", "destination": "injections.scm"}
+      ]
+    },
+    {
+      "id": "bash",
+      "swiftName": "bash",
+      "displayName": "Bash",
+      "repository": "bash",
+      "entryPoint": "tree_sitter_bash",
+      "aliases": ["sh", "shell"],
+      "fileExtensions": ["bash", "bats", "sh", "zsh"],
+      "filenames": [".bash_profile", ".bashrc", ".profile", ".zprofile", ".zshrc"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "bash/parser.c"},
+        {"source": "src/scanner.c", "destination": "bash/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "bash/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "c",
+      "swiftName": "c",
+      "displayName": "C",
+      "repository": "c",
+      "entryPoint": "tree_sitter_c",
+      "aliases": [],
+      "fileExtensions": ["c", "h"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "c/parser.c"},
+        {"source": "src/tree_sitter", "destination": "c/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "cpp",
+      "swiftName": "cpp",
+      "displayName": "C++",
+      "repository": "cpp",
+      "entryPoint": "tree_sitter_cpp",
+      "aliases": ["c++", "cplusplus", "cxx"],
+      "fileExtensions": ["cc", "cpp", "cxx", "hh", "hpp", "hxx", "ipp", "tpp"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "cpp/parser.c"},
+        {"source": "src/scanner.c", "destination": "cpp/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "cpp/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"},
+        {"kind": "injections", "source": "queries/injections.scm", "destination": "injections.scm"}
+      ]
+    },
+    {
+      "id": "css",
+      "swiftName": "css",
+      "displayName": "CSS",
+      "repository": "css",
+      "entryPoint": "tree_sitter_css",
+      "aliases": [],
+      "fileExtensions": ["css"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "css/parser.c"},
+        {"source": "src/scanner.c", "destination": "css/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "css/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "dockerfile",
+      "swiftName": "dockerfile",
+      "displayName": "Dockerfile",
+      "repository": "dockerfile",
+      "entryPoint": "tree_sitter_dockerfile",
+      "aliases": ["docker"],
+      "fileExtensions": [],
+      "filenames": ["Containerfile", "Dockerfile"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "dockerfile/parser.c"},
+        {"source": "src/scanner.c", "destination": "dockerfile/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "dockerfile/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "dotenv",
+      "swiftName": "dotenv",
+      "displayName": "dotenv",
+      "repository": "dotenv",
+      "entryPoint": "tree_sitter_dotenv",
+      "aliases": ["env"],
+      "fileExtensions": ["env"],
+      "filenames": [".env", ".env.development", ".env.example", ".env.local", ".env.production", ".env.test"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "dotenv/parser.c"},
+        {"source": "src/scanner.c", "destination": "dotenv/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "dotenv/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "go",
+      "swiftName": "go",
+      "displayName": "Go",
+      "repository": "go",
+      "entryPoint": "tree_sitter_go",
+      "aliases": ["golang"],
+      "fileExtensions": ["go"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "go/parser.c"},
+        {"source": "src/tree_sitter", "destination": "go/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "graphql",
+      "swiftName": "graphql",
+      "displayName": "GraphQL",
+      "repository": "graphql",
+      "entryPoint": "tree_sitter_graphql",
+      "aliases": ["gql"],
+      "fileExtensions": ["gql", "graphql", "graphqls"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "graphql/parser.c"},
+        {"source": "src/tree_sitter", "destination": "graphql/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "repository": "graphql-queries", "source": "queries/graphql/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "groovy",
+      "swiftName": "groovy",
+      "displayName": "Groovy",
+      "repository": "groovy",
+      "entryPoint": "tree_sitter_groovy",
+      "aliases": [],
+      "fileExtensions": ["gradle", "groovy", "gsh", "gvy", "gy"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "groovy/parser.c"},
+        {"source": "src/tree_sitter", "destination": "groovy/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"},
+        {"kind": "locals", "source": "queries/locals.scm", "destination": "locals.scm"}
+      ]
+    },
+    {
+      "id": "html",
+      "swiftName": "html",
+      "displayName": "HTML",
+      "repository": "html",
+      "entryPoint": "tree_sitter_html",
+      "aliases": ["htm"],
+      "fileExtensions": ["htm", "html", "xhtml"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "html/parser.c"},
+        {"source": "src/scanner.c", "destination": "html/scanner.c"},
+        {"source": "src/tag.h", "destination": "html/tag.h"},
+        {"source": "src/tree_sitter", "destination": "html/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"},
+        {"kind": "injections", "source": "queries/injections.scm", "destination": "injections.scm"}
+      ]
+    },
+    {
+      "id": "java",
+      "swiftName": "java",
+      "displayName": "Java",
+      "repository": "java",
+      "entryPoint": "tree_sitter_java",
+      "aliases": [],
+      "fileExtensions": ["java"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "java/parser.c"},
+        {"source": "src/tree_sitter", "destination": "java/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "javascript",
+      "swiftName": "javascript",
+      "displayName": "JavaScript",
+      "repository": "javascript",
+      "entryPoint": "tree_sitter_javascript",
+      "aliases": ["js", "jsx", "node"],
+      "fileExtensions": ["cjs", "js", "jsx", "mjs"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "javascript/parser.c"},
+        {"source": "src/scanner.c", "destination": "javascript/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "javascript/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"},
+        {"kind": "highlights", "source": "queries/highlights-jsx.scm", "destination": "highlights-jsx.scm"},
+        {"kind": "highlights", "source": "queries/highlights-params.scm", "destination": "highlights-params.scm"},
+        {"kind": "injections", "source": "queries/injections.scm", "destination": "injections.scm"},
+        {"kind": "locals", "source": "queries/locals.scm", "destination": "locals.scm"}
+      ]
+    },
+    {
+      "id": "jsdoc",
+      "swiftName": "jsdoc",
+      "displayName": "JSDoc",
+      "repository": "jsdoc",
+      "entryPoint": "tree_sitter_jsdoc",
+      "aliases": ["js-doc"],
+      "fileExtensions": [],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "jsdoc/parser.c"},
+        {"source": "src/scanner.c", "destination": "jsdoc/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "jsdoc/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "json",
+      "swiftName": "json",
+      "displayName": "JSON",
+      "repository": "json",
+      "entryPoint": "tree_sitter_json",
+      "aliases": [],
+      "fileExtensions": ["geojson", "json"],
+      "filenames": ["Package.resolved"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "json/parser.c"},
+        {"source": "src/tree_sitter", "destination": "json/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "json5",
+      "swiftName": "json5",
+      "displayName": "JSON5",
+      "repository": "json5",
+      "entryPoint": "tree_sitter_json5",
+      "aliases": ["jsonc"],
+      "fileExtensions": ["json5", "jsonc"],
+      "filenames": ["jsconfig.json", "tsconfig.json"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "json5/parser.c"},
+        {"source": "src/tree_sitter", "destination": "json5/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "kotlin",
+      "swiftName": "kotlin",
+      "displayName": "Kotlin",
+      "repository": "kotlin",
+      "entryPoint": "tree_sitter_kotlin",
+      "aliases": ["kt", "kts"],
+      "fileExtensions": ["kt", "kts"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "kotlin/parser.c"},
+        {"source": "src/scanner.c", "destination": "kotlin/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "kotlin/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "markdown",
+      "swiftName": "markdown",
+      "displayName": "Markdown",
+      "repository": "markdown",
+      "entryPoint": "tree_sitter_markdown",
+      "aliases": ["md"],
+      "fileExtensions": ["markdown", "md", "mdown", "mkd", "mkdn"],
+      "nativeCopies": [
+        {"source": "tree-sitter-markdown/src/parser.c", "destination": "markdown/parser.c"},
+        {"source": "tree-sitter-markdown/src/scanner.c", "destination": "markdown/scanner.c"},
+        {"source": "tree-sitter-markdown/src/tree_sitter", "destination": "markdown/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "tree-sitter-markdown/queries/highlights.scm", "destination": "highlights.scm"},
+        {"kind": "injections", "source": "tree-sitter-markdown/queries/injections.scm", "destination": "injections.scm"}
+      ]
+    },
+    {
+      "id": "markdown-inline",
+      "swiftName": "markdownInline",
+      "displayName": "Markdown Inline",
+      "repository": "markdown",
+      "entryPoint": "tree_sitter_markdown_inline",
+      "aliases": ["markdown_inline"],
+      "fileExtensions": [],
+      "nativeCopies": [
+        {"source": "tree-sitter-markdown-inline/src/parser.c", "destination": "markdown-inline/parser.c"},
+        {"source": "tree-sitter-markdown-inline/src/scanner.c", "destination": "markdown-inline/scanner.c"},
+        {"source": "tree-sitter-markdown-inline/src/tree_sitter", "destination": "markdown-inline/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "tree-sitter-markdown-inline/queries/highlights.scm", "destination": "highlights.scm"},
+        {"kind": "injections", "source": "tree-sitter-markdown-inline/queries/injections.scm", "destination": "injections.scm"}
+      ]
+    },
+    {
+      "id": "mdx",
+      "swiftName": "mdx",
+      "displayName": "MDX",
+      "repository": "mdx",
+      "entryPoint": "tree_sitter_mdx",
+      "aliases": [],
+      "fileExtensions": ["mdx"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "mdx/parser.c"},
+        {"source": "src/scanner.c", "destination": "mdx/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "mdx/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"},
+        {"kind": "highlights", "source": "queries/highlights-jsx.scm", "destination": "highlights-jsx.scm"},
+        {"kind": "highlights", "source": "queries/highlights-params.scm", "destination": "highlights-params.scm"},
+        {"kind": "injections", "source": "queries/injections.scm", "destination": "injections.scm"},
+        {"kind": "locals", "source": "queries/locals.scm", "destination": "locals.scm"}
+      ]
+    },
+    {
+      "id": "objective-c",
+      "swiftName": "objectiveC",
+      "displayName": "Objective-C",
+      "repository": "objc",
+      "entryPoint": "tree_sitter_objc",
+      "aliases": ["obj-c", "objc"],
+      "fileExtensions": ["m", "mm"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "objective-c/parser.c"},
+        {"source": "src/tree_sitter", "destination": "objective-c/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "repository": "c", "source": "queries/highlights.scm", "destination": "highlights-c.scm"},
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights-objective-c.scm"},
+        {"kind": "locals", "source": "queries/locals.scm", "destination": "locals.scm"}
+      ]
+    },
+    {
+      "id": "properties",
+      "swiftName": "properties",
+      "displayName": "Java Properties",
+      "repository": "properties",
+      "entryPoint": "tree_sitter_properties",
+      "aliases": ["java-properties"],
+      "fileExtensions": ["properties"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "properties/parser.c"},
+        {"source": "src/scanner.c", "destination": "properties/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "properties/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "python",
+      "swiftName": "python",
+      "displayName": "Python",
+      "repository": "python",
+      "entryPoint": "tree_sitter_python",
+      "aliases": ["py"],
+      "fileExtensions": ["py", "pyi", "pyw"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "python/parser.c"},
+        {"source": "src/scanner.c", "destination": "python/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "python/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "regex",
+      "swiftName": "regex",
+      "displayName": "Regular Expression",
+      "repository": "regex",
+      "entryPoint": "tree_sitter_regex",
+      "aliases": ["regexp"],
+      "fileExtensions": [],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "regex/parser.c"},
+        {"source": "src/tree_sitter", "destination": "regex/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "ruby",
+      "swiftName": "ruby",
+      "displayName": "Ruby",
+      "repository": "ruby",
+      "entryPoint": "tree_sitter_ruby",
+      "aliases": ["rb"],
+      "fileExtensions": ["gemspec", "podspec", "rake", "rb"],
+      "filenames": ["Brewfile", "Fastfile", "Gemfile", "Podfile", "Rakefile"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "ruby/parser.c"},
+        {"source": "src/scanner.c", "destination": "ruby/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "ruby/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"},
+        {"kind": "locals", "source": "queries/locals.scm", "destination": "locals.scm"}
+      ]
+    },
+    {
+      "id": "rust",
+      "swiftName": "rust",
+      "displayName": "Rust",
+      "repository": "rust",
+      "entryPoint": "tree_sitter_rust",
+      "aliases": ["rs"],
+      "fileExtensions": ["rs"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "rust/parser.c"},
+        {"source": "src/scanner.c", "destination": "rust/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "rust/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"},
+        {"kind": "injections", "source": "queries/injections.scm", "destination": "injections.scm"}
+      ]
+    },
+    {
+      "id": "scss",
+      "swiftName": "scss",
+      "displayName": "SCSS",
+      "repository": "scss",
+      "entryPoint": "tree_sitter_scss",
+      "aliases": [],
+      "fileExtensions": ["scss"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "scss/parser.c"},
+        {"source": "src/scanner.c", "destination": "scss/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "scss/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "sql",
+      "swiftName": "sql",
+      "displayName": "SQL",
+      "repository": "sql",
+      "entryPoint": "tree_sitter_sql",
+      "aliases": [],
+      "fileExtensions": ["sql"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "sql/parser.c"},
+        {"source": "src/scanner.c", "destination": "sql/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "sql/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "svelte",
+      "swiftName": "svelte",
+      "displayName": "Svelte",
+      "repository": "svelte",
+      "entryPoint": "tree_sitter_svelte",
+      "aliases": [],
+      "fileExtensions": ["svelte"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "svelte/parser.c"},
+        {"source": "src/scanner.c", "destination": "svelte/scanner.c"},
+        {"source": "src/tag.h", "destination": "svelte/tag.h"},
+        {"source": "src/tree_sitter", "destination": "svelte/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "repository": "html", "source": "queries/highlights.scm", "destination": "highlights-html.scm"},
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights-svelte.scm"},
+        {"kind": "injections", "repository": "html", "source": "queries/injections.scm", "destination": "injections-html.scm"},
+        {"kind": "injections", "source": "queries/injections.scm", "destination": "injections-svelte.scm"},
+        {"kind": "locals", "source": "queries/locals.scm", "destination": "locals.scm"}
+      ]
+    },
+    {
+      "id": "swift",
+      "swiftName": "swift",
+      "displayName": "Swift",
+      "repository": "swift",
+      "entryPoint": "tree_sitter_swift",
+      "aliases": ["swiftlang"],
+      "fileExtensions": ["swift"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "swift/parser.c"},
+        {"source": "src/scanner.c", "destination": "swift/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "swift/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"},
+        {"kind": "injections", "source": "queries/injections.scm", "destination": "injections.scm"},
+        {"kind": "locals", "source": "queries/locals.scm", "destination": "locals.scm"}
+      ]
+    },
+    {
+      "id": "toml",
+      "swiftName": "toml",
+      "displayName": "TOML",
+      "repository": "toml",
+      "entryPoint": "tree_sitter_toml",
+      "aliases": [],
+      "fileExtensions": ["toml"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "toml/parser.c"},
+        {"source": "src/scanner.c", "destination": "toml/scanner.c"},
+        {"source": "src/tree_sitter", "destination": "toml/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "tsx",
+      "swiftName": "tsx",
+      "displayName": "TSX",
+      "repository": "typescript",
+      "entryPoint": "tree_sitter_tsx",
+      "aliases": ["react-typescript"],
+      "fileExtensions": ["tsx"],
+      "nativeCopies": [
+        {"source": "tsx/src/parser.c", "destination": "typescript/tsx/src/parser.c"},
+        {"source": "tsx/src/scanner.c", "destination": "typescript/tsx/src/scanner.c"},
+        {"source": "tsx/src/tree_sitter", "destination": "typescript/tsx/src/tree_sitter"},
+        {"source": "common/scanner.h", "destination": "typescript/common/scanner.h"},
+        {"source": "tsx/src/tree_sitter/parser.h", "destination": "typescript/common/tree_sitter/parser.h"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights-typescript.scm"},
+        {"kind": "highlights", "repository": "javascript-typescript-queries", "source": "queries/highlights-jsx.scm", "destination": "highlights-jsx.scm"},
+        {"kind": "highlights", "repository": "javascript-typescript-queries", "source": "queries/highlights.scm", "destination": "highlights-javascript.scm"},
+        {"kind": "injections", "repository": "javascript-typescript-queries", "source": "queries/injections.scm", "destination": "injections.scm"},
+        {"kind": "locals", "repository": "javascript-typescript-queries", "source": "queries/locals.scm", "destination": "locals.scm"}
+      ]
+    },
+    {
+      "id": "typescript",
+      "swiftName": "typescript",
+      "displayName": "TypeScript",
+      "repository": "typescript",
+      "entryPoint": "tree_sitter_typescript",
+      "aliases": ["ts"],
+      "fileExtensions": ["cts", "mts", "ts"],
+      "nativeCopies": [
+        {"source": "typescript/src/parser.c", "destination": "typescript/typescript/src/parser.c"},
+        {"source": "typescript/src/scanner.c", "destination": "typescript/typescript/src/scanner.c"},
+        {"source": "typescript/src/tree_sitter", "destination": "typescript/typescript/src/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights-typescript.scm"},
+        {"kind": "highlights", "repository": "javascript-typescript-queries", "source": "queries/highlights.scm", "destination": "highlights-javascript.scm"},
+        {"kind": "injections", "repository": "javascript-typescript-queries", "source": "queries/injections.scm", "destination": "injections.scm"},
+        {"kind": "locals", "source": "queries/locals.scm", "destination": "locals-typescript.scm"},
+        {"kind": "locals", "repository": "javascript-typescript-queries", "source": "queries/locals.scm", "destination": "locals-javascript.scm"}
+      ]
+    },
+    {
+      "id": "vue",
+      "swiftName": "vue",
+      "displayName": "Vue",
+      "repository": "vue",
+      "entryPoint": "tree_sitter_vue",
+      "aliases": [],
+      "fileExtensions": ["vue"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "vue/parser.c"},
+        {"source": "src/scanner.c", "destination": "vue/scanner.c"},
+        {"source": "src/tag.h", "destination": "vue/tag.h"},
+        {"source": "src/tree_sitter", "destination": "vue/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/html_tags/highlights.scm", "destination": "highlights-html.scm"},
+        {"kind": "highlights", "source": "queries/vue/highlights.scm", "destination": "highlights-vue.scm"},
+        {"kind": "injections", "repository": "html", "source": "queries/injections.scm", "destination": "injections-html.scm"},
+        {"kind": "injections", "source": "queries/vue/injections.scm", "destination": "injections-vue.scm"}
+      ]
+    },
+    {
+      "id": "xml",
+      "swiftName": "xml",
+      "displayName": "XML",
+      "repository": "xml",
+      "entryPoint": "tree_sitter_xml",
+      "aliases": [],
+      "fileExtensions": ["plist", "storyboard", "svg", "xib", "xml"],
+      "nativeCopies": [
+        {"source": "common/scanner.h", "destination": "xml/common/scanner.h"},
+        {"source": "xml/src/tree_sitter", "destination": "xml/common/tree_sitter"},
+        {"source": "xml/src/parser.c", "destination": "xml/xml/src/parser.c"},
+        {"source": "xml/src/scanner.c", "destination": "xml/xml/src/scanner.c"},
+        {"source": "xml/src/tree_sitter", "destination": "xml/xml/src/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/xml/highlights.scm", "destination": "highlights.scm"}
+      ]
+    },
+    {
+      "id": "yaml",
+      "swiftName": "yaml",
+      "displayName": "YAML",
+      "repository": "yaml",
+      "entryPoint": "tree_sitter_yaml",
+      "aliases": ["yml"],
+      "fileExtensions": ["yaml", "yml"],
+      "filenames": ["Podfile.lock"],
+      "nativeCopies": [
+        {"source": "src/parser.c", "destination": "yaml/parser.c"},
+        {"source": "src/scanner.c", "destination": "yaml/scanner.c"},
+        {"source": "src/schema.core.c", "destination": "yaml/schema.core.c"},
+        {"source": "src/tree_sitter", "destination": "yaml/tree_sitter"}
+      ],
+      "queryCopies": [
+        {"kind": "highlights", "source": "queries/highlights.scm", "destination": "highlights.scm"}
+      ]
+    }
+  ]
+}

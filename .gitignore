@@ -1,0 +1,7 @@
+.build/
+.swiftpm/
+.DS_Store
+__pycache__/
+*.pyc
+Package.resolved
+DerivedData/
