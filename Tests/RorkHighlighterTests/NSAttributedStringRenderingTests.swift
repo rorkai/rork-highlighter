@@ -91,12 +91,17 @@
                 theme: theme,
                 font: baseFont
             )
+            var effectiveRange = NSRange(location: 0, length: 0)
             let attributes = rendered.attributes(
                 at: 0,
-                effectiveRange: nil
+                effectiveRange: &effectiveRange
             )
             let renderedFont = attributes[.font] as? TestNativeFont
 
+            #expect(
+                effectiveRange
+                    == NSRange(location: 0, length: rendered.length)
+            )
             #expect(
                 color(
                     attributes[.foregroundColor],
@@ -119,6 +124,33 @@
                 attributes[.strikethroughStyle] as? Int
                     == NSUnderlineStyle.single.rawValue
             )
+        }
+
+        /// Confirms theme traits build on the caller-provided font face.
+        @Test
+        func preservesCallerFontTraits() throws(HighlightRenderingError) {
+            let baseFont = TestNativeFont.monospacedSystemFont(
+                ofSize: 15,
+                weight: .bold
+            )
+            let theme = HighlightTheme(
+                name: "Caller font",
+                baseStyle: HighlightStyle(textTraits: [])
+            )
+            let snapshot = makeSnapshot(text: "let value = 1")
+
+            let rendered = try snapshot.nsAttributedString(
+                theme: theme,
+                font: baseFont
+            )
+            let renderedFont =
+                rendered.attribute(
+                    .font,
+                    at: 0,
+                    effectiveRange: nil
+                ) as? TestNativeFont
+
+            #expect(renderedFont.map(fontIsBold) == true)
         }
 
         /// Confirms later overlapping spans replace colors and remove typography.

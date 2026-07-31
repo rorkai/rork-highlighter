@@ -64,7 +64,8 @@ Tree-sitter capture names become more specific from left to right. Resolving
 `string.special.key` rules in that order.
 
 A missing style value preserves the broader value. An empty
-``HighlightStyle/textTraits`` set removes inherited typography:
+``HighlightStyle/textTraits`` set removes traits inherited from broader theme
+rules:
 
 ```swift
 let theme = HighlightTheme(

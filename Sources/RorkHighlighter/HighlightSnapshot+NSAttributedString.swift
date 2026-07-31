@@ -140,7 +140,7 @@
             theme: HighlightTheme,
             font: NativeHighlightFont
         ) throws(HighlightRenderingError) -> NSAttributedString {
-            _ = try validatedTextIndicesForHighlights()
+            try validateHighlightRanges()
 
             let completeRange = NSRange(
                 location: 0,

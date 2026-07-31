@@ -2,7 +2,7 @@
 ///
 /// Optional values support hierarchical theme inheritance. A missing value
 /// preserves the broader style, while an empty ``textTraits`` set explicitly
-/// removes inherited typography.
+/// removes traits inherited from broader theme rules.
 public struct HighlightStyle: Hashable, Sendable, Codable {
     /// Holds the requested foreground color.
     public let foregroundColor: HighlightColor?

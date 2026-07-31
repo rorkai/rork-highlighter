@@ -31,7 +31,8 @@ let rendered = try snapshot.attributedString(
 ```
 
 Bold and italic traits derive from the supplied font. Underline and
-strikethrough traits become native `AttributedString` line styles.
+strikethrough traits become native `AttributedString` line styles. Existing
+traits in the caller-provided font remain part of the rendering baseline.
 
 ## Render with TextKit
 
@@ -58,7 +59,8 @@ and `NSTextStorage` APIs.
 The renderer applies ``HighlightSnapshot/highlights`` in their stored order.
 Later captures can refine colors or replace typography applied by an earlier
 overlapping capture. An explicitly empty ``HighlightStyle/textTraits`` set
-removes inherited text traits.
+removes traits inherited from broader theme rules while preserving the
+caller-provided base font.
 
 The renderer resolves shared UTF-16 boundaries during one forward traversal of
 the source. It does not rescan the complete document for each capture.
