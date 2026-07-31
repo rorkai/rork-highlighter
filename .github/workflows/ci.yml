@@ -23,6 +23,8 @@ jobs:
         with:
           persist-credentials: false
       - name: Validate the package
+        env:
+          BENCHMARK_DISABLE_JEMALLOC: "true"
         run: make check
       - name: Build for iOS
         run: >-
@@ -45,3 +47,19 @@ jobs:
           persist-credentials: false
       - name: Build and test
         run: swift test
+      - name: Install benchmark prerequisites
+        run: |
+          apt-get update -q
+          apt-get install -y -q libjemalloc-dev
+      - name: Build measurement tools
+        run: |
+          swift build \
+            --package-path Benchmarks \
+            --scratch-path .build/benchmarks \
+            --target RorkHighlighterBenchmarks \
+            -Xswiftc -warnings-as-errors
+          swift build \
+            --package-path Tools/DistributionProbe \
+            --scratch-path .build/distribution-probe \
+            --target DistributionProbe \
+            -Xswiftc -warnings-as-errors

@@ -37,6 +37,24 @@ PREVIEW_TOOL_SOURCE_DIRECTORY = (
     / "PreviewGenerator"
 )
 
+# Benchmark declarations follow the same documentation policy as library code.
+BENCHMARK_SOURCE_DIRECTORY = (
+    REPOSITORY_ROOT
+    / "Benchmarks"
+    / "Benchmarks"
+    / "RorkHighlighterBenchmarks"
+)
+
+# Distribution probe declarations remain maintained even though they are
+# outside the public package.
+DISTRIBUTION_PROBE_SOURCE_DIRECTORY = (
+    REPOSITORY_ROOT
+    / "Tools"
+    / "DistributionProbe"
+    / "Sources"
+    / "DistributionProbe"
+)
+
 # Authored C declarations use the same line-oriented documentation style.
 C_HEADER_DIRECTORY = (
     REPOSITORY_ROOT
@@ -190,6 +208,16 @@ def swift_preview_tool_paths() -> list[Path]:
     return sorted(PREVIEW_TOOL_SOURCE_DIRECTORY.rglob("*.swift"))
 
 
+def swift_benchmark_paths() -> list[Path]:
+    """Returns maintained Swift source files in the benchmark suite."""
+    return sorted(BENCHMARK_SOURCE_DIRECTORY.rglob("*.swift"))
+
+
+def swift_distribution_probe_paths() -> list[Path]:
+    """Returns maintained Swift source files in the distribution probe."""
+    return sorted(DISTRIBUTION_PROBE_SOURCE_DIRECTORY.rglob("*.swift"))
+
+
 def c_header_paths() -> list[Path]:
     """Returns authored C headers exposed by the parser target."""
     return sorted(C_HEADER_DIRECTORY.rglob("*.h"))
@@ -291,6 +319,8 @@ def undocumented_source_declarations() -> list[str]:
     supporting_paths = [
         *swift_test_paths(),
         *swift_preview_tool_paths(),
+        *swift_benchmark_paths(),
+        *swift_distribution_probe_paths(),
     ]
     for path in supporting_paths:
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -406,7 +436,7 @@ def main() -> int:
 
     validate_docc(paths)
     print(
-        f"Every maintained {MODULE_NAME}, preview tool, and authored C declaration has documentation."
+        f"Every maintained {MODULE_NAME}, supporting tool, and authored C declaration has documentation."
     )
     return 0
 

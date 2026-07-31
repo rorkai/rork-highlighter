@@ -327,7 +327,23 @@ make format
 
 `make check` builds with warnings treated as errors, runs the tests, lints
 Swift formatting, verifies the language pack lock, and checks documentation for
-Swift and authored C declarations.
+Swift and authored C declarations. It also compiles the private benchmark and
+distribution-measurement tools.
+
+Run the public-workflow performance suite:
+
+```bash
+make benchmark
+```
+
+Measure a clean release build and its parser, executable, and resource sizes:
+
+```bash
+make measure-distribution
+```
+
+The [benchmark guide](Benchmarks/README.md) describes the workloads, reported
+metrics, focused runs, and machine-comparison constraints.
 
 Update every bundled parser from its pinned revision:
 
