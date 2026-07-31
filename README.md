@@ -4,6 +4,11 @@ Rork Highlighter is a SwiftPM-first syntax-highlighting library built on
 Tree-sitter. It provides a small Swift API for immutable source strings and an
 actor-isolated session API for documents that change over time.
 
+![Rork Highlighter rendering Swift with native attributed output.](Sources/RorkHighlighter/RorkHighlighter.docc/Resources/swift-attributed-output.png)
+
+The preview uses the bundled Swift parser and `.rorkDark` theme. The editor
+chrome is illustrative.
+
 The package currently bundles a common pack with 36 language definitions. Apps
 resolve one Swift package and import one public module instead of managing a
 separate SwiftPM dependency for every Tree-sitter grammar.
@@ -162,11 +167,6 @@ let code = Text(rendered)
     .padding()
     .background(Color.black)
 ```
-
-The syntax colors below come directly from `.rorkDark`. The surrounding editor
-chrome is illustrative.
-
-![Swift source highlighted with the Rork Dark theme.](Sources/RorkHighlighter/RorkHighlighter.docc/Resources/swift-attributed-output.png)
 
 The bundled themes leave `HighlightStyle.backgroundColor` unset. Set the canvas
 on the containing view or editor so attributed text does not paint background
