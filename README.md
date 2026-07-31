@@ -34,13 +34,12 @@ platforms.
 
 ## Installation
 
-Add the package dependency while the project is awaiting its first tagged
-release:
+Add the package dependency:
 
 ```swift
 .package(
     url: "https://github.com/rorkai/rork-highlighter.git",
-    branch: "main"
+    .upToNextMinor(from: "0.1.0")
 )
 ```
 
@@ -227,7 +226,8 @@ Swift catalog, copies exact upstream files, and refreshes
 See the package's DocC catalog for API guidance, the
 [architecture](Docs/Architecture.md) for the distribution design, the
 [roadmap](Docs/Roadmap.md) for planned work, and the
-[contribution guide](CONTRIBUTING.md) for maintenance rules.
+[contribution guide](CONTRIBUTING.md) for maintenance rules. The
+[changelog](CHANGELOG.md) records each published release.
 
 ## License
 
