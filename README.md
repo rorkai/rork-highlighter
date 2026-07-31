@@ -129,15 +129,43 @@ before its exact rule is applied.
 
 ## Native attributed output
 
-Render a snapshot directly into SwiftUI:
+Highlight Swift source and render the snapshot directly in SwiftUI:
 
 ```swift
 import RorkHighlighter
 import SwiftUI
 
-let rendered = try snapshot.attributedString(theme: .rorkDark)
+let source = #"""
+import SwiftUI
+
+struct WelcomeView: View {
+    let name: String
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "sparkles")
+            Text("Hello, \(name)!")
+                .font(.title.bold())
+        }
+    }
+}
+"""#
+
+let highlighter = try Highlighter()
+let snapshot = try highlighter.highlight(source, as: .swift)
+let rendered = try snapshot.attributedString(
+    theme: .rorkDark,
+    font: .system(size: 15, design: .monospaced)
+)
+
 let code = Text(rendered)
+    .textSelection(.enabled)
 ```
+
+The syntax colors below come directly from `.rorkDark`. The surrounding editor
+chrome is illustrative.
+
+![Swift source highlighted with the Rork Dark theme.](Sources/RorkHighlighter/RorkHighlighter.docc/Resources/swift-attributed-output.png)
 
 The renderer uses a monospaced system font by default. Supply any SwiftUI font
 when the surrounding interface owns typography:

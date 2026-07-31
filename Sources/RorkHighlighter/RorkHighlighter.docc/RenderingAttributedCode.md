@@ -10,15 +10,37 @@ Highlight source text, select a theme, and render the immutable snapshot:
 import RorkHighlighter
 import SwiftUI
 
+let source = #"""
+import SwiftUI
+
+struct WelcomeView: View {
+    let name: String
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "sparkles")
+            Text("Hello, \(name)!")
+                .font(.title.bold())
+        }
+    }
+}
+"""#
+
 let highlighter = try Highlighter()
-let snapshot = try highlighter.highlight(
-    #"let greeting = "Hello""#,
-    as: .swift
+let snapshot = try highlighter.highlight(source, as: .swift)
+let rendered = try snapshot.attributedString(
+    theme: .rorkDark,
+    font: .system(size: 15, design: .monospaced)
 )
-let rendered = try snapshot.attributedString(theme: .rorkDark)
 
 let code = Text(rendered)
+    .textSelection(.enabled)
 ```
+
+The syntax colors below come directly from `.rorkDark`. The surrounding editor
+chrome is illustrative.
+
+![Swift source highlighted with the Rork Dark theme.](swift-attributed-output.png)
 
 The default font is the monospaced system body font. Pass a font when an editor
 or design system owns the typography:
