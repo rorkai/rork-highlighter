@@ -1,0 +1,315 @@
+#!/usr/bin/env python3
+"""Verifies documentation for maintained Swift and authored C declarations."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+from typing import Any
+
+
+# The repository root is the parent of the Scripts directory.
+REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
+
+# Only the maintained Swift module participates in documentation coverage.
+MODULE_NAME = "RorkHighlighter"
+
+# Emitted declarations must originate in this directory to be maintained code.
+SOURCE_DIRECTORY = REPOSITORY_ROOT / "Sources" / MODULE_NAME
+
+# Test declarations follow the same documentation policy as library code.
+TEST_SOURCE_DIRECTORY = (
+    REPOSITORY_ROOT / "Tests" / f"{MODULE_NAME}Tests"
+)
+
+# Authored C declarations use the same line-oriented documentation style.
+C_HEADER_DIRECTORY = (
+    REPOSITORY_ROOT
+    / "Sources"
+    / "CRorkHighlighterParsers"
+    / "include"
+)
+
+# Authored C translation units explain their purpose before implementation.
+C_SOURCE_DIRECTORY = (
+    REPOSITORY_ROOT
+    / "Sources"
+    / "CRorkHighlighterParsers"
+    / "wrappers"
+)
+
+# The package's DocC catalog is converted on hosts that provide Xcode.
+DOCC_CATALOG = SOURCE_DIRECTORY / f"{MODULE_NAME}.docc"
+
+# Private declarations lose DocC metadata in Swift symbol graphs, so their
+# source spelling is checked separately.
+PRIVATE_DECLARATION = re.compile(
+    r"^\s*(?:@\S+\s+)*(?:private|fileprivate)\b.*"
+    r"\b(?:actor|class|enum|struct|protocol|extension|typealias|"
+    r"associatedtype|init|subscript|func|var|let)\b"
+)
+
+# Extension blocks do not appear as ordinary symbol graph declarations.
+EXTENSION_DECLARATION = re.compile(
+    r"^(?:(?:public|package|internal|fileprivate|private)\s+)?"
+    r"extension\b"
+)
+
+# Swift-format keeps suite and test declarations at zero or four spaces, while
+# local bindings begin at a deeper indentation level.
+TEST_DECLARATION = re.compile(
+    r"^(?: {0}| {4})(?:@\S+\s+)*"
+    r"(?:(?:public|package|internal|fileprivate|private|final|indirect)\s+)*"
+    r"(?:actor|class|enum|struct|protocol|extension|typealias|"
+    r"associatedtype|init|subscript|func|var|let)\b"
+)
+
+# Public C declarations are confined to authored headers outside vendor trees.
+C_DECLARATION = re.compile(
+    r"^\s*(?:typedef\s+.+;|.+\([^;{}]*\);)\s*$"
+)
+
+
+def dump_symbol_graph() -> None:
+    """Builds a private-access symbol graph for the package."""
+    subprocess.run(
+        [
+            "swift",
+            "package",
+            "dump-symbol-graph",
+            "--minimum-access-level",
+            "private",
+            "--skip-synthesized-members",
+        ],
+        cwd=REPOSITORY_ROOT,
+        check=True,
+    )
+
+
+def symbol_graph_paths() -> list[Path]:
+    """Returns every emitted graph fragment for the maintained module."""
+    build_directory = REPOSITORY_ROOT / ".build"
+    return sorted(
+        build_directory.glob(
+            f"**/symbolgraph/{MODULE_NAME}*.symbols.json"
+        )
+    )
+
+
+def load_symbols(paths: list[Path]) -> list[dict[str, Any]]:
+    """Loads unique declarations from emitted symbol graph fragments."""
+    symbols_by_identifier: dict[str, dict[str, Any]] = {}
+    for path in paths:
+        with path.open(encoding="utf-8") as file:
+            graph = json.load(file)
+        for symbol in graph.get("symbols", []):
+            precise_identifier = symbol["identifier"]["precise"]
+            symbols_by_identifier[precise_identifier] = symbol
+    return list(symbols_by_identifier.values())
+
+
+def has_documentation(symbol: dict[str, Any]) -> bool:
+    """Returns whether a declaration has at least one nonempty DocC line."""
+    lines = symbol.get("docComment", {}).get("lines", [])
+    return any(line.get("text", "").strip() for line in lines)
+
+
+def display_name(symbol: dict[str, Any]) -> str:
+    """Returns a readable declaration path for diagnostics."""
+    path_components = symbol.get("pathComponents", [])
+    if path_components:
+        return ".".join(path_components)
+    return symbol.get("names", {}).get("title", "<unknown declaration>")
+
+
+def undocumented_symbols(
+    symbols: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Returns emitted declarations that should have DocC comments."""
+    return sorted(
+        (
+            symbol
+            for symbol in symbols
+            if symbol.get("accessLevel") not in {"private", "fileprivate"}
+            and symbol.get("location", {})
+            .get("uri", "")
+            .startswith(SOURCE_DIRECTORY.as_uri())
+            and not has_documentation(symbol)
+        ),
+        key=display_name,
+    )
+
+
+def swift_source_paths() -> list[Path]:
+    """Returns maintained Swift source files in the library target."""
+    return sorted(SOURCE_DIRECTORY.rglob("*.swift"))
+
+
+def swift_test_paths() -> list[Path]:
+    """Returns maintained Swift source files in the test target."""
+    return sorted(TEST_SOURCE_DIRECTORY.rglob("*.swift"))
+
+
+def c_header_paths() -> list[Path]:
+    """Returns authored C headers exposed by the parser target."""
+    return sorted(C_HEADER_DIRECTORY.rglob("*.h"))
+
+
+def c_source_paths() -> list[Path]:
+    """Returns authored C translation units outside the vendor tree."""
+    return sorted(C_SOURCE_DIRECTORY.rglob("*.c"))
+
+
+def has_leading_doc_comment(lines: list[str], index: int) -> bool:
+    """Checks the declaration's nearest meaningful preceding source line."""
+    preceding_index = index - 1
+    while preceding_index >= 0:
+        stripped = lines[preceding_index].strip()
+        if not stripped:
+            return False
+        if stripped.startswith("@") or stripped.startswith("#"):
+            preceding_index -= 1
+            continue
+        return stripped.startswith("///") or stripped.endswith("*/")
+    return False
+
+
+def undocumented_source_declarations() -> list[str]:
+    """Returns source-level declarations without leading DocC comments."""
+    missing: list[str] = []
+    for path in swift_source_paths():
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for index, line in enumerate(lines):
+            if not (
+                PRIVATE_DECLARATION.match(line)
+                or EXTENSION_DECLARATION.match(line)
+            ):
+                continue
+            if has_leading_doc_comment(lines, index):
+                continue
+            relative_path = path.relative_to(REPOSITORY_ROOT)
+            missing.append(f"{relative_path}:{index + 1}")
+
+    for path in swift_test_paths():
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for index, line in enumerate(lines):
+            if not TEST_DECLARATION.match(line):
+                continue
+            if has_leading_doc_comment(lines, index):
+                continue
+            relative_path = path.relative_to(REPOSITORY_ROOT)
+            missing.append(f"{relative_path}:{index + 1}")
+    return missing
+
+
+def undocumented_c_declarations() -> list[str]:
+    """Returns authored C declarations without leading triple-slash docs."""
+    missing: list[str] = []
+    for path in c_header_paths():
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for index, line in enumerate(lines):
+            if not C_DECLARATION.match(line):
+                continue
+            if index > 0 and lines[index - 1].strip().startswith("///"):
+                continue
+            relative_path = path.relative_to(REPOSITORY_ROOT)
+            missing.append(f"{relative_path}:{index + 1}")
+    return missing
+
+
+def undocumented_c_sources() -> list[str]:
+    """Returns authored C files without consecutive triple-slash summaries."""
+    missing: list[str] = []
+    for path in c_source_paths():
+        lines = path.read_text(encoding="utf-8").splitlines()
+        if (
+            len(lines) >= 2
+            and lines[0].startswith("///")
+            and lines[1].startswith("///")
+        ):
+            continue
+        relative_path = path.relative_to(REPOSITORY_ROOT)
+        missing.append(f"{relative_path}:1")
+    return missing
+
+
+def validate_docc(paths: list[Path]) -> None:
+    """Converts the DocC catalog and treats link warnings as failures."""
+    if shutil.which("xcrun") is None:
+        print("DocC conversion was skipped because xcrun is unavailable.")
+        return
+
+    with tempfile.TemporaryDirectory(
+        prefix="rork-highlighter-docc-"
+    ) as temporary_directory:
+        temporary_path = Path(temporary_directory)
+        symbol_directory = temporary_path / "symbols"
+        symbol_directory.mkdir()
+        for path in paths:
+            shutil.copy2(path, symbol_directory / path.name)
+
+        subprocess.run(
+            [
+                "xcrun",
+                "docc",
+                "convert",
+                str(DOCC_CATALOG),
+                "--additional-symbol-graph-dir",
+                str(symbol_directory),
+                "--output-path",
+                str(temporary_path / f"{MODULE_NAME}.doccarchive"),
+                "--fallback-display-name",
+                MODULE_NAME,
+                "--fallback-bundle-identifier",
+                "com.rork.highlighter",
+                "--fallback-bundle-version",
+                "0.1.0",
+                "--warnings-as-errors",
+            ],
+            cwd=REPOSITORY_ROOT,
+            check=True,
+        )
+
+
+def main() -> int:
+    """Runs documentation coverage and returns a process exit status."""
+    dump_symbol_graph()
+    paths = symbol_graph_paths()
+    if not paths:
+        print(
+            f"No symbol graph was emitted for {MODULE_NAME}.",
+            file=sys.stderr,
+        )
+        return 1
+
+    missing_symbols = undocumented_symbols(load_symbols(paths))
+    missing_source = undocumented_source_declarations()
+    missing_c = undocumented_c_declarations()
+    missing_c_sources = undocumented_c_sources()
+    if missing_symbols or missing_source or missing_c or missing_c_sources:
+        print("The following declarations need documentation:")
+        for symbol in missing_symbols:
+            access_level = symbol.get("accessLevel", "unknown")
+            print(f"  {display_name(symbol)} [{access_level}]")
+        for location in missing_source:
+            print(f"  {location} [source declaration]")
+        for location in missing_c:
+            print(f"  {location} [authored C declaration]")
+        for location in missing_c_sources:
+            print(f"  {location} [authored C translation unit]")
+        return 1
+
+    validate_docc(paths)
+    print(
+        f"Every maintained {MODULE_NAME} declaration and authored C file has documentation."
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

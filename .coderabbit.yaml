@@ -1,0 +1,7 @@
+reviews:
+  path_filters:
+    - "!LanguagePack.lock.json"
+    - "!Sources/CRorkHighlighterParsers/languages/**"
+    - "!Sources/RorkHighlighter/BundledLanguages.generated.swift"
+    - "!Sources/RorkHighlighter/Resources/Languages/**"
+    - "!ThirdPartyLicenses/**"

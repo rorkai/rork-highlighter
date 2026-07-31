@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    name: macOS
+    runs-on: macos-15
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Validate the package
+        run: make check
+      - name: Build for iOS
+        run: >-
+          xcodebuild
+          -scheme rork-highlighter
+          -destination 'generic/platform=iOS'
+          -derivedDataPath "${RUNNER_TEMP}/rork-highlighter-ios"
+          CODE_SIGNING_ALLOWED=NO
+          build
+          -quiet
+
+  linux:
+    name: Linux
+    runs-on: ubuntu-24.04
+    container: swift:6.0-noble
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Build and test
+        run: swift test
