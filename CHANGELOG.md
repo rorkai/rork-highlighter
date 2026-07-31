@@ -3,6 +3,13 @@
 This document records the user-visible changes in each Rork Highlighter
 release.
 
+## Unreleased
+
+### Added
+
+- Added renderer-neutral light and dark themes with hierarchical Tree-sitter
+  capture matching.
+
 ## 0.1.0 - 2026-07-31
 
 ### Added

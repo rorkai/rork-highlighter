@@ -8,9 +8,9 @@ Create ``Highlighter`` when source text is immutable or changes infrequently.
 Open ``HighlightSession`` when an editor needs to preserve its syntax tree
 across text edits.
 
-The library exposes capture scopes and UTF-16 ranges without imposing a theme
-or rendering framework. This keeps the parser useful to SwiftUI, TextKit,
-terminal, and server clients.
+The library exposes capture scopes and UTF-16 ranges together with
+renderer-neutral themes. Raw spans remain available to SwiftUI, TextKit,
+terminal, and server clients that need custom rendering.
 
 ## Topics
 
@@ -20,6 +20,14 @@ terminal, and server clients.
 - ``Highlighter``
 - ``HighlightSnapshot``
 - ``HighlightSpan``
+
+### Themes
+
+- <doc:Theming>
+- ``HighlightTheme``
+- ``HighlightStyle``
+- ``HighlightColor``
+- ``HighlightTextTrait``
 
 ### Incremental documents
 
