@@ -1,6 +1,6 @@
 # Rendering Attributed Code
 
-Create a native `AttributedString` for SwiftUI on Apple platforms.
+Create native attributed output for SwiftUI, UIKit, and AppKit.
 
 ## Render a snapshot
 
@@ -33,6 +33,26 @@ let rendered = try snapshot.attributedString(
 Bold and italic traits derive from the supplied font. Underline and
 strikethrough traits become native `AttributedString` line styles.
 
+## Render with TextKit
+
+UIKit and AppKit clients can request an `NSAttributedString`:
+
+```swift
+let rendered = try snapshot.nsAttributedString(
+    theme: .rorkDark,
+    font: .monospacedSystemFont(ofSize: 15, weight: .regular)
+)
+```
+
+The font parameter is a `UIFont` on UIKit platforms and an `NSFont` on AppKit.
+The renderer uses the platform's monospaced system font when the parameter is
+omitted.
+
+Colors become `UIColor` or `NSColor` values in the sRGB color space. Typography
+uses the standard `.font`, `.underlineStyle`, and `.strikethroughStyle` keys, so
+the result can be assigned directly to `UILabel`, `UITextView`, `NSTextView`,
+and `NSTextStorage` APIs.
+
 ## Preserve capture precedence
 
 The renderer applies ``HighlightSnapshot/highlights`` in their stored order.
@@ -50,6 +70,7 @@ snapshot contains an out-of-bounds range or a boundary inside a Swift
 character. Ranges are never rounded because rounding could color source text
 outside the Tree-sitter capture.
 
-The attributed renderer is available when SwiftUI is present. The raw
+The Swift value renderer is available when SwiftUI is present. The TextKit
+renderer is available when UIKit or AppKit is present. The raw
 ``HighlightSnapshot`` and renderer-neutral theme APIs remain available on
-non-Apple platforms.
+other platforms.

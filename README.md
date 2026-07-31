@@ -16,7 +16,7 @@ separate SwiftPM dependency for every Tree-sitter grammar.
 - Incremental parsing inside one actor per document.
 - Explicit UTF-16 ranges that match Foundation text systems.
 - Renderer-neutral light and dark themes with hierarchical scope matching.
-- Native SwiftUI `AttributedString` output on Apple platforms.
+- Native SwiftUI `AttributedString` and TextKit `NSAttributedString` output.
 - Deterministic aliases, filenames, and file-extension discovery.
 - Nested-language infrastructure through SwiftTreeSitterLayer.
 - A parser-neutral registry for custom and generated language packs.
@@ -149,10 +149,24 @@ let rendered = try snapshot.attributedString(
 )
 ```
 
+UIKit and AppKit clients can request an `NSAttributedString` with native
+platform colors, fonts, and TextKit keys:
+
+```swift
+let rendered = try snapshot.nsAttributedString(
+    theme: .rorkDark,
+    font: .monospacedSystemFont(ofSize: 14, weight: .regular)
+)
+```
+
+Assign the result directly to APIs such as `UILabel.attributedText` or
+`NSTextStorage.setAttributedString(_:)`.
+
 Rendering preserves the snapshot's UTF-16 ranges and overlap order. Invalid
 ranges throw `HighlightRenderingError` instead of being rounded or trapping.
-The native API is available on Apple platforms. Renderer-neutral themes and
-raw spans remain available on Linux and other Swift platforms.
+The native APIs are available when SwiftUI, UIKit, or AppKit is present.
+Renderer-neutral themes and raw spans remain available on Linux and other
+Swift platforms.
 
 ## Bundled languages
 

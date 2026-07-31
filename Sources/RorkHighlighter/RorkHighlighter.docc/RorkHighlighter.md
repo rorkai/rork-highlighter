@@ -10,8 +10,8 @@ across text edits.
 
 The library exposes capture scopes and UTF-16 ranges together with
 renderer-neutral themes. Apple clients can render snapshots into native
-`AttributedString` values. Raw spans remain available to TextKit, terminal,
-and server clients that need custom rendering.
+`AttributedString` or `NSAttributedString` values. Raw spans remain available
+to custom editors, terminal clients, and servers that need complete control.
 
 ## Topics
 

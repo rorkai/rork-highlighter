@@ -52,32 +52,27 @@
         private func attributedRanges(
             in attributedString: AttributedString
         ) throws(HighlightRenderingError) -> [Range<AttributedString.Index>] {
-            let textLength = text.utf16.count
-            for highlight in highlights {
-                guard highlight.range.upperBound <= textLength else {
-                    throw HighlightRenderingError.rangeOutOfBounds(
-                        range: highlight.range,
-                        textLength: textLength
-                    )
+            let textIndices = try validatedTextIndicesForHighlights()
+            var attributedIndices: [Int: AttributedString.Index] = [:]
+            attributedIndices.reserveCapacity(textIndices.count)
+
+            for (offset, textIndex) in textIndices {
+                if let attributedIndex = AttributedString.Index(
+                    textIndex,
+                    within: attributedString
+                ) {
+                    attributedIndices[offset] = attributedIndex
                 }
             }
-
-            let offsets = Set(
-                highlights.flatMap {
-                    [$0.range.location, $0.range.upperBound]
-                }
-            ).sorted()
-            let indices = attributedIndices(
-                at: offsets,
-                in: attributedString
-            )
 
             var ranges: [Range<AttributedString.Index>] = []
             ranges.reserveCapacity(highlights.count)
             for highlight in highlights {
                 guard
-                    let lowerBound = indices[highlight.range.location],
-                    let upperBound = indices[highlight.range.upperBound]
+                    let lowerBound =
+                        attributedIndices[highlight.range.location],
+                    let upperBound =
+                        attributedIndices[highlight.range.upperBound]
                 else {
                     throw HighlightRenderingError.invalidUTF16Boundary(
                         highlight.range
@@ -86,47 +81,6 @@
                 ranges.append(lowerBound..<upperBound)
             }
             return ranges
-        }
-
-        /// Resolves sorted UTF-16 offsets during one forward traversal.
-        ///
-        /// Invalid character boundaries are omitted so the caller can associate a
-        /// failure with its complete highlight range.
-        ///
-        /// - Parameters:
-        ///   - offsets: Unique in-bounds offsets sorted in ascending order.
-        ///   - attributedString: The attributed copy of ``text``.
-        /// - Returns: Valid attributed indices keyed by UTF-16 offset.
-        private func attributedIndices(
-            at offsets: [Int],
-            in attributedString: AttributedString
-        ) -> [Int: AttributedString.Index] {
-            let utf16 = text.utf16
-            var utf16Index = utf16.startIndex
-            var previousOffset = 0
-            var indices: [Int: AttributedString.Index] = [:]
-            indices.reserveCapacity(offsets.count)
-
-            for offset in offsets {
-                utf16Index = utf16.index(
-                    utf16Index,
-                    offsetBy: offset - previousOffset
-                )
-                previousOffset = offset
-
-                guard
-                    let textIndex = String.Index(utf16Index, within: text),
-                    let attributedIndex = AttributedString.Index(
-                        textIndex,
-                        within: attributedString
-                    )
-                else {
-                    continue
-                }
-                indices[offset] = attributedIndex
-            }
-
-            return indices
         }
     }
 
