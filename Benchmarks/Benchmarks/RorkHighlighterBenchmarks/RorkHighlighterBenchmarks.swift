@@ -61,6 +61,25 @@ private enum BenchmarkSetup {
             )
         }
     }
+
+    /// Applies an incremental edit while isolated to the session actor.
+    ///
+    /// - Parameters:
+    ///   - range: The fixed-width range changed by the benchmark.
+    ///   - replacement: The replacement text for the measured iteration.
+    ///   - session: The persistent highlighting session under measurement.
+    /// - Returns: The complete update produced by the edit.
+    /// - Throws: ``HighlighterError`` when the edit cannot be applied.
+    static func replaceCharacters(
+        in range: UTF16Range,
+        with replacement: String,
+        using session: isolated HighlightSession
+    ) throws(HighlighterError) -> HighlightUpdate {
+        try session.replaceCharacters(
+            in: range,
+            with: replacement
+        )
+    }
 }
 
 /// Registers benchmarks for the public highlighting and rendering workflows.
@@ -128,9 +147,10 @@ let benchmarks: @Sendable () -> Void = {
             ? "2000"
             : BenchmarkFixtures.revisionMarker
         blackHole(
-            try await session.replaceCharacters(
+            try await BenchmarkSetup.replaceCharacters(
                 in: markerRange,
-                with: replacement
+                with: replacement,
+                using: session
             )
         )
     }
