@@ -23,9 +23,8 @@ public struct HighlighterConfiguration: Hashable, Sendable, Codable {
 
     /// Decodes a configuration after validating its public invariants.
     ///
-    /// - Parameter decoder: The decoder containing the serialized
-    ///   configuration.
-    /// - Throws: `DecodingError` when the injection depth is negative.
+    /// The decoder must contain a serialized injection depth. Decoding throws
+    /// `DecodingError` when the value is negative.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let maximumInjectionDepth = try container.decode(

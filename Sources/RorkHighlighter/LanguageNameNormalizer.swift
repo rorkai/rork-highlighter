@@ -4,8 +4,8 @@ import Foundation
 enum LanguageNameNormalizer {
     /// Removes spelling variations that should not affect extension lookup.
     ///
-    /// - Parameter value: The extension supplied by a definition or caller.
-    /// - Returns: A lowercase extension without surrounding periods or spaces.
+    /// The value may come from a language definition or a caller. The result is
+    /// lowercase and has no surrounding periods or spaces.
     static func fileExtension(from value: String) -> String {
         value
             .trimmingCharacters(in: CharacterSet(charactersIn: ". \t\r\n"))
@@ -14,8 +14,8 @@ enum LanguageNameNormalizer {
 
     /// Removes spelling variations that should not affect filename lookup.
     ///
-    /// - Parameter value: The filename supplied by a definition or caller.
-    /// - Returns: A lowercase filename without surrounding whitespace.
+    /// The value may come from a language definition or a caller. The result is
+    /// lowercase and has no surrounding whitespace.
     static func filename(from value: String) -> String {
         value
             .trimmingCharacters(in: .whitespacesAndNewlines)

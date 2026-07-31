@@ -69,8 +69,8 @@ struct HighlighterTests {
         #expect(!range.overlaps(UTF16Range(location: 4, length: 0)))
     }
 
-    /// Confirms spans with equal ranges and specificity have a stable lexical
-    /// order.
+    /// Confirms spans with equal ranges sort by scope specificity and then
+    /// lexical scope order.
     @Test
     func ordersEqualRangeHighlightSpansDeterministically() {
         let range = UTF16Range(location: 2, length: 4)

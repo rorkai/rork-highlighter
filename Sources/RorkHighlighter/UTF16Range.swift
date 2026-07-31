@@ -53,9 +53,9 @@ public struct UTF16Range:
 
     /// Decodes a range after validating its public invariants.
     ///
-    /// - Parameter decoder: The decoder containing the serialized range.
-    /// - Throws: `DecodingError` when either value is negative or their sum
-    ///   exceeds the platform integer width.
+    /// The decoder must contain a serialized location and length. Decoding
+    /// throws `DecodingError` when either value is negative or their sum
+    /// exceeds the platform integer width.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let location = try container.decode(
