@@ -211,39 +211,30 @@ public struct Highlighter: Sendable {
         }
 
         do {
-            let matches = try layer.executeQuery(
-                .highlights,
-                in: range
+            let queryRange = IndexSet(
+                integersIn: range.location..<(range.location + range.length)
             )
-            let resolvedMatches = matches.resolve(
-                with: Predicate.Context(string: text)
-            )
-            var highlights: [HighlightSpan] = []
-            var previousHighlight: HighlightSpan?
-            var requiresSorting = false
-
-            for match in resolvedMatches {
-                for capture in match.captures
-                where !capture.nameComponents.isEmpty {
-                    let highlight = HighlightSpan(
-                        scopeComponents: capture.nameComponents,
-                        range: UTF16Range(
-                            location: capture.range.location,
-                            length: capture.range.length
-                        )
-                    )
-                    if let previousHighlight, highlight < previousHighlight {
-                        requiresSorting = true
-                    }
-                    highlights.append(highlight)
-                    previousHighlight = highlight
-                }
+            guard let snapshot = layer.snapshot(in: queryRange) else {
+                throw LanguageLayerError.noRootNode
             }
 
-            if requiresSorting {
-                highlights.sort()
+            if snapshot.sublayerSnapshots.isEmpty {
+                return makeHighlights(
+                    from: try snapshot.rootSnapshot.executeQuery(
+                        .highlights,
+                        in: queryRange
+                    ),
+                    text: text
+                )
             }
-            return highlights
+
+            return makeHighlights(
+                from: try snapshot.executeQuery(
+                    .highlights,
+                    in: queryRange
+                ),
+                text: text
+            )
         } catch LanguageLayerError.noRootNode {
             throw HighlighterError.parsingFailed(
                 language: language,
@@ -255,6 +246,47 @@ public struct Highlighter: Sendable {
                 message: String(describing: error)
             )
         }
+    }
+
+    /// Converts resolved query captures into ordered public spans.
+    ///
+    /// - Parameters:
+    ///   - matches: The query matches produced by one or more language layers.
+    ///   - text: The source used to evaluate query predicates.
+    /// - Returns: Highlight spans in deterministic application order.
+    private func makeHighlights(
+        from matches: some Sequence<QueryMatch>,
+        text: String
+    ) -> [HighlightSpan] {
+        let resolvedMatches = matches.resolve(
+            with: Predicate.Context(string: text)
+        )
+        var highlights: [HighlightSpan] = []
+        var previousHighlight: HighlightSpan?
+        var requiresSorting = false
+
+        for match in resolvedMatches {
+            for capture in match.captures
+            where !capture.nameComponents.isEmpty {
+                let highlight = HighlightSpan(
+                    scopeComponents: capture.nameComponents,
+                    range: UTF16Range(
+                        location: capture.range.location,
+                        length: capture.range.length
+                    )
+                )
+                if let previousHighlight, highlight < previousHighlight {
+                    requiresSorting = true
+                }
+                highlights.append(highlight)
+                previousHighlight = highlight
+            }
+        }
+
+        if requiresSorting {
+            highlights.sort()
+        }
+        return highlights
     }
 
     /// Ensures UTF-16 offsets fit the width used by Tree-sitter.
