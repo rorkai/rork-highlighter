@@ -35,10 +35,30 @@ catalog initialization, one-shot Swift highlighting, HTML with JavaScript and
 CSS injections, a fixed-width incremental edit, hierarchical theme resolution,
 and native attributed rendering where those frameworks are available.
 
+Incremental coverage includes fixed-width replacements near both ends of the
+document and edits that alternate between shorter and longer text. The
+variable-width workload exercises range rebasing for every retained capture
+after the edit.
+
 Performance results should only be compared on the same hardware, operating
 system, and Swift toolchain. The first benchmark PR deliberately records no
 regression thresholds because a stable baseline must come from repeated runs on
 a consistent host.
+
+## Cross-library comparisons
+
+The opt-in comparison package runs Rork Highlighter and other implementations
+against byte-identical generated Swift documents. It remains separate from this
+regression suite so ordinary builds do not resolve competitor dependencies.
+
+```sh
+make benchmark-comparison \
+  COMPARISON_BENCHMARK_ARGUMENTS="--metric wallClock --time-units microseconds --no-progress"
+```
+
+The [comparison guide](Comparison/README.md) documents dependency pins, shared
+fixture integrity, JavaScript measurements, workload boundaries, focused runs,
+and reporting constraints.
 
 ## Distribution measurements
 

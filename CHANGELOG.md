@@ -12,6 +12,15 @@ release.
 - Added clean-build and distribution-size measurement for generated parser
   sources, compiled objects, linked code, and query resources.
 
+### Changed
+
+- Incremental sessions now retain unaffected captures and query only
+  Tree-sitter's invalidated syntax region while preserving complete snapshots.
+- One-shot highlighting now converts captures directly and avoids redundant
+  intermediate arrays and sorting.
+- Native attributed rendering now reuses resolved styles, colors, and font
+  faces and recognizes parser-produced ranges.
+
 ## 0.2.0 - 2026-07-31
 
 ### Added

@@ -28,7 +28,12 @@ let update = try await session.replaceCharacters(
 ``HighlightUpdate/invalidatedRanges`` identifies regions whose syntax or
 highlighting may have changed.
 
+The session retains captures outside Tree-sitter's invalidated region. It
+rebases captures after the edit and queries only the changed syntax before
+assembling the complete snapshot. Consumers therefore keep the simple complete
+snapshot contract without paying for another full-document query after every
+edit.
+
 The session rejects ranges outside the current revision and ranges that split a
 Unicode scalar. Read ``HighlightSession/currentRevision`` when coordinating
 edits from a versioned text buffer.
-

@@ -4,10 +4,15 @@ PREVIEW_OUTPUT := Sources/RorkHighlighter/RorkHighlighter.docc/Resources/swift-a
 BENCHMARK_PACKAGE := Benchmarks
 BENCHMARK_SCRATCH := .build/benchmarks
 BENCHMARK_ARGUMENTS ?=
+COMPARISON_PACKAGE := Benchmarks/Comparison
+COMPARISON_SCRATCH := .build/comparison-benchmarks
+COMPARISON_JAVASCRIPT := $(COMPARISON_PACKAGE)/JavaScript
+COMPARISON_BENCHMARK_ARGUMENTS ?=
+JAVASCRIPT_BENCHMARK_ARGUMENTS ?=
 DISTRIBUTION_PROBE_PACKAGE := Tools/DistributionProbe
 DISTRIBUTION_PROBE_SCRATCH := .build/distribution-probe
 
-.PHONY: build test format lint preview benchmark measure-distribution vendor-languages check-languages check-documentation check-preview check-benchmarks check
+.PHONY: build test format lint preview benchmark comparison-fixtures comparison-javascript-dependencies benchmark-comparison benchmark-comparison-swift benchmark-comparison-javascript check-comparison measure-distribution vendor-languages check-languages check-documentation check-preview check-benchmarks check
 
 build:
 	swift build -Xswiftc -warnings-as-errors
@@ -16,16 +21,34 @@ test:
 	swift test
 
 format:
-	swift format format --recursive --in-place Package.swift Sources/RorkHighlighter Tests $(PREVIEW_PACKAGE)/Package.swift $(PREVIEW_PACKAGE)/Sources $(BENCHMARK_PACKAGE)/Package.swift $(BENCHMARK_PACKAGE)/Benchmarks $(DISTRIBUTION_PROBE_PACKAGE)/Package.swift $(DISTRIBUTION_PROBE_PACKAGE)/Sources
+	swift format format --recursive --in-place Package.swift Sources/RorkHighlighter Tests $(PREVIEW_PACKAGE)/Package.swift $(PREVIEW_PACKAGE)/Sources $(BENCHMARK_PACKAGE)/Package.swift $(BENCHMARK_PACKAGE)/Benchmarks $(COMPARISON_PACKAGE)/Package.swift $(COMPARISON_PACKAGE)/Benchmarks $(DISTRIBUTION_PROBE_PACKAGE)/Package.swift $(DISTRIBUTION_PROBE_PACKAGE)/Sources
 
 lint:
-	swift format lint --recursive --strict Package.swift Sources/RorkHighlighter Tests $(PREVIEW_PACKAGE)/Package.swift $(PREVIEW_PACKAGE)/Sources $(BENCHMARK_PACKAGE)/Package.swift $(BENCHMARK_PACKAGE)/Benchmarks $(DISTRIBUTION_PROBE_PACKAGE)/Package.swift $(DISTRIBUTION_PROBE_PACKAGE)/Sources
+	swift format lint --recursive --strict Package.swift Sources/RorkHighlighter Tests $(PREVIEW_PACKAGE)/Package.swift $(PREVIEW_PACKAGE)/Sources $(BENCHMARK_PACKAGE)/Package.swift $(BENCHMARK_PACKAGE)/Benchmarks $(COMPARISON_PACKAGE)/Package.swift $(COMPARISON_PACKAGE)/Benchmarks $(DISTRIBUTION_PROBE_PACKAGE)/Package.swift $(DISTRIBUTION_PROBE_PACKAGE)/Sources
 
 preview:
 	swift run --package-path $(PREVIEW_PACKAGE) --scratch-path $(PREVIEW_SCRATCH) PreviewGenerator "$(PREVIEW_OUTPUT)"
 
 benchmark:
 	swift package --package-path $(BENCHMARK_PACKAGE) --scratch-path $(BENCHMARK_SCRATCH) benchmark --target RorkHighlighterBenchmarks $(BENCHMARK_ARGUMENTS)
+
+comparison-fixtures:
+	python3 Scripts/generate_comparison_fixtures.py
+
+comparison-javascript-dependencies:
+	npm --prefix $(COMPARISON_JAVASCRIPT) ci --ignore-scripts --no-audit --no-fund
+
+benchmark-comparison: benchmark-comparison-swift benchmark-comparison-javascript
+
+benchmark-comparison-swift: comparison-fixtures
+	swift package --package-path $(COMPARISON_PACKAGE) --scratch-path $(COMPARISON_SCRATCH) benchmark --target HighlighterComparisonBenchmarks $(COMPARISON_BENCHMARK_ARGUMENTS)
+
+benchmark-comparison-javascript: comparison-fixtures comparison-javascript-dependencies
+	npm --prefix $(COMPARISON_JAVASCRIPT) run benchmark -- $(JAVASCRIPT_BENCHMARK_ARGUMENTS)
+
+check-comparison: comparison-fixtures comparison-javascript-dependencies
+	swift build --package-path $(COMPARISON_PACKAGE) --scratch-path $(COMPARISON_SCRATCH) --target HighlighterComparisonBenchmarks -Xswiftc -warnings-as-errors
+	npm --prefix $(COMPARISON_JAVASCRIPT) test
 
 measure-distribution:
 	python3 Scripts/measure_distribution.py

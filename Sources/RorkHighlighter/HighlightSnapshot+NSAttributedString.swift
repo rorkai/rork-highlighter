@@ -142,111 +142,147 @@
         ) throws(HighlightRenderingError) -> NSAttributedString {
             try validateHighlightRanges()
 
-            let completeRange = NSRange(
-                location: 0,
-                length: text.utf16.count
-            )
-            let result = NSMutableAttributedString(string: text)
-            result.addAttribute(
-                .font,
-                value: font as AnyObject,
-                range: completeRange
-            )
-            result.apply(
-                theme.baseStyle,
-                to: completeRange,
+            var attributeCache = NativeHighlightAttributeCache(
                 relativeTo: font
             )
+            let baseAttributes = attributeCache.attributes(
+                for: theme.baseStyle,
+                includingBaseFont: true
+            )
+            let result = NSMutableAttributedString(
+                string: text,
+                attributes: baseAttributes.values
+            )
+            var styleCache = HighlightStyleCache(theme: theme)
 
+            result.beginEditing()
             for highlight in highlights {
                 result.apply(
-                    theme.style(for: highlight),
+                    attributeCache.attributes(
+                        for: styleCache.style(for: highlight),
+                        includingBaseFont: false
+                    ),
                     to: NSRange(
                         location: highlight.range.location,
                         length: highlight.range.length
-                    ),
-                    relativeTo: font
+                    )
                 )
             }
+            result.endEditing()
 
             return NSAttributedString(attributedString: result)
         }
     }
 
-    /// Applies resolved theme styles through TextKit attribute keys.
-    private extension NSMutableAttributedString {
-        /// Applies present colors and replaces typography when traits are present.
+    /// Caches native attributes derived from repeated renderer-neutral styles.
+    private struct NativeHighlightAttributeCache {
+        /// Holds the caller-provided base font.
+        private let font: NativeHighlightFont
+
+        /// Stores attributes that refine an existing base font.
+        private var refinements: [HighlightStyle: NativeHighlightAttributes]
+
+        /// Creates an empty attribute cache for one rendering operation.
         ///
-        /// - Parameters:
-        ///   - style: The resolved renderer-neutral style.
-        ///   - range: The UTF-16 range receiving the style.
-        ///   - font: The base font used to derive bold and italic faces.
-        func apply(
-            _ style: HighlightStyle,
-            to range: NSRange,
-            relativeTo font: NativeHighlightFont
-        ) {
-            if let foregroundColor = style.foregroundColor {
-                addAttribute(
-                    .foregroundColor,
-                    value:
-                        foregroundColor.nativeHighlightColor
-                        as AnyObject,
-                    range: range
-                )
-            }
-            if let backgroundColor = style.backgroundColor {
-                addAttribute(
-                    .backgroundColor,
-                    value:
-                        backgroundColor.nativeHighlightColor
-                        as AnyObject,
-                    range: range
-                )
-            }
-            if let textTraits = style.textTraits {
-                addAttribute(
-                    .font,
-                    value: font.applying(textTraits) as AnyObject,
-                    range: range
-                )
-                applyLineStyle(
-                    .underlineStyle,
-                    when: textTraits.contains(.underline),
-                    to: range
-                )
-                applyLineStyle(
-                    .strikethroughStyle,
-                    when: textTraits.contains(.strikethrough),
-                    to: range
-                )
-            }
+        /// - Parameter font: The base font used to derive text traits.
+        init(relativeTo font: NativeHighlightFont) {
+            self.font = font
+            self.refinements = [:]
         }
 
-        /// Adds or removes one TextKit line style over a range.
-        ///
-        /// Removing the key allows an explicit empty trait set to clear an earlier
-        /// overlapping capture.
+        /// Returns cached native attributes for one resolved style.
         ///
         /// - Parameters:
-        ///   - key: The underline or strikethrough attribute key.
-        ///   - isEnabled: Whether the line should be visible.
-        ///   - range: The UTF-16 range receiving the change.
-        func applyLineStyle(
-            _ key: NSAttributedString.Key,
-            when isEnabled: Bool,
+        ///   - style: The renderer-neutral style to convert.
+        ///   - includingBaseFont: Whether an otherwise absent font should be
+        ///     included for the complete source range.
+        /// - Returns: Native values and explicit line-style removals.
+        mutating func attributes(
+            for style: HighlightStyle,
+            includingBaseFont: Bool
+        ) -> NativeHighlightAttributes {
+            if !includingBaseFont, let cached = refinements[style] {
+                return cached
+            }
+
+            var values: [NSAttributedString.Key: Any] = [:]
+            if includingBaseFont {
+                values[.font] = font
+            }
+            if let foregroundColor = style.foregroundColor {
+                values[.foregroundColor] =
+                    foregroundColor.nativeHighlightColor
+            }
+            if let backgroundColor = style.backgroundColor {
+                values[.backgroundColor] =
+                    backgroundColor.nativeHighlightColor
+            }
+
+            let removesUnderline: Bool
+            let removesStrikethrough: Bool
+            if let textTraits = style.textTraits {
+                values[.font] = font.applying(textTraits)
+                if textTraits.contains(.underline) {
+                    values[.underlineStyle] = NSUnderlineStyle.single.rawValue
+                    removesUnderline = false
+                } else {
+                    removesUnderline = true
+                }
+                if textTraits.contains(.strikethrough) {
+                    values[.strikethroughStyle] =
+                        NSUnderlineStyle.single.rawValue
+                    removesStrikethrough = false
+                } else {
+                    removesStrikethrough = true
+                }
+            } else {
+                removesUnderline = false
+                removesStrikethrough = false
+            }
+
+            let attributes = NativeHighlightAttributes(
+                values: values,
+                removesUnderline: removesUnderline,
+                removesStrikethrough: removesStrikethrough
+            )
+            if !includingBaseFont {
+                refinements[style] = attributes
+            }
+            return attributes
+        }
+    }
+
+    /// Holds one reusable native attribute refinement.
+    private struct NativeHighlightAttributes {
+        /// Holds values added together through TextKit.
+        let values: [NSAttributedString.Key: Any]
+
+        /// Records whether an inherited underline must be removed.
+        let removesUnderline: Bool
+
+        /// Records whether an inherited strikethrough must be removed.
+        let removesStrikethrough: Bool
+    }
+
+    /// Applies resolved theme styles through TextKit attribute keys.
+    private extension NSMutableAttributedString {
+        /// Applies cached values and explicit line-style removals.
+        ///
+        /// - Parameters:
+        ///   - attributes: The native refinement to apply.
+        ///   - range: The UTF-16 range receiving the style.
+        func apply(
+            _ attributes: NativeHighlightAttributes,
             to range: NSRange
         ) {
-            if isEnabled {
-                addAttribute(
-                    key,
-                    value: NSNumber(
-                        value: NSUnderlineStyle.single.rawValue
-                    ),
-                    range: range
-                )
-            } else {
-                removeAttribute(key, range: range)
+            if !attributes.values.isEmpty {
+                addAttributes(attributes.values, range: range)
+            }
+            if attributes.removesUnderline {
+                removeAttribute(.underlineStyle, range: range)
+            }
+            if attributes.removesStrikethrough {
+                removeAttribute(.strikethroughStyle, range: range)
             }
         }
     }

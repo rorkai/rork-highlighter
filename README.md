@@ -336,14 +336,23 @@ Run the public-workflow performance suite:
 make benchmark
 ```
 
+Run the opt-in same-corpus comparison with HighlightKit, swift-highlight, and
+highlight.js:
+
+```bash
+make benchmark-comparison \
+  COMPARISON_BENCHMARK_ARGUMENTS="--metric wallClock --time-units microseconds --no-progress"
+```
+
 Measure a clean release build and its parser, executable, and resource sizes:
 
 ```bash
 make measure-distribution
 ```
 
-The [benchmark guide](Benchmarks/README.md) describes the workloads, reported
-metrics, focused runs, and machine-comparison constraints.
+The [benchmark guide](Benchmarks/README.md) describes the regression workloads,
+reported metrics, focused runs, cross-library comparison suite, and
+machine-comparison constraints.
 
 Update every bundled parser from its pinned revision:
 

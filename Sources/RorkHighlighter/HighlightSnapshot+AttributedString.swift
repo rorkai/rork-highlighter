@@ -21,19 +21,25 @@
             font: Font = .system(.body, design: .monospaced)
         ) throws(HighlightRenderingError) -> AttributedString {
             var result = AttributedString(text)
-            result.font = font
-            result.apply(
-                theme.baseStyle,
-                to: result.startIndex..<result.endIndex,
+            var attributeCache = SwiftUIHighlightAttributeCache(
                 relativeTo: font
+            )
+            result.setAttributes(
+                attributeCache.attributes(
+                    for: theme.baseStyle,
+                    includingBaseFont: true
+                ).values
             )
 
             let ranges = try attributedRanges(in: result)
+            var styleCache = HighlightStyleCache(theme: theme)
             for (highlight, range) in zip(highlights, ranges) {
                 result.apply(
-                    theme.style(for: highlight),
-                    to: range,
-                    relativeTo: font
+                    attributeCache.attributes(
+                        for: styleCache.style(for: highlight),
+                        includingBaseFont: false
+                    ),
+                    to: range
                 )
             }
 
@@ -84,39 +90,112 @@
         }
     }
 
-    /// Applies resolved theme styles to native attributed ranges.
-    private extension AttributedString {
-        /// Applies the values present in a style without clearing omitted colors.
+    /// Caches SwiftUI attributes derived from repeated resolved styles.
+    private struct SwiftUIHighlightAttributeCache {
+        /// Holds the caller-provided base font.
+        private let font: Font
+
+        /// Stores refinements that build on the complete source attributes.
+        private var refinements: [HighlightStyle: SwiftUIHighlightAttributes]
+
+        /// Creates an empty attribute cache for one rendering operation.
         ///
-        /// A present text trait set replaces typography completely. This makes an
-        /// empty set capable of removing traits inherited from an earlier
-        /// overlapping capture.
+        /// - Parameter font: The base font used to derive text traits.
+        init(relativeTo font: Font) {
+            self.font = font
+            self.refinements = [:]
+        }
+
+        /// Returns cached SwiftUI attributes for one resolved style.
         ///
         /// - Parameters:
-        ///   - style: The resolved renderer-neutral style.
-        ///   - range: The attributed range receiving the style.
-        ///   - font: The base font used to derive bold and italic faces.
-        mutating func apply(
-            _ style: HighlightStyle,
-            to range: Range<Index>,
-            relativeTo font: Font
-        ) {
+        ///   - style: The renderer-neutral style to convert.
+        ///   - includingBaseFont: Whether an otherwise absent font should be
+        ///     included for the complete source range.
+        /// - Returns: Native values and explicit line-style removals.
+        mutating func attributes(
+            for style: HighlightStyle,
+            includingBaseFont: Bool
+        ) -> SwiftUIHighlightAttributes {
+            if !includingBaseFont, let cached = refinements[style] {
+                return cached
+            }
+
+            var values = AttributeContainer()
+            if includingBaseFont {
+                values.font = font
+            }
             if let foregroundColor = style.foregroundColor {
-                self[range].foregroundColor = foregroundColor.swiftUIColor
+                values.foregroundColor = foregroundColor.swiftUIColor
             }
             if let backgroundColor = style.backgroundColor {
-                self[range].backgroundColor = backgroundColor.swiftUIColor
+                values.backgroundColor = backgroundColor.swiftUIColor
             }
+
+            let removesUnderline: Bool
+            let removesStrikethrough: Bool
             if let textTraits = style.textTraits {
-                self[range].font = font.applying(textTraits)
-                self[range].underlineStyle =
-                    textTraits.contains(.underline)
-                    ? Text.LineStyle(pattern: .solid)
-                    : nil
-                self[range].strikethroughStyle =
-                    textTraits.contains(.strikethrough)
-                    ? Text.LineStyle(pattern: .solid)
-                    : nil
+                values.font = font.applying(textTraits)
+                if textTraits.contains(.underline) {
+                    values.underlineStyle = Text.LineStyle(pattern: .solid)
+                    removesUnderline = false
+                } else {
+                    removesUnderline = true
+                }
+                if textTraits.contains(.strikethrough) {
+                    values.strikethroughStyle = Text.LineStyle(
+                        pattern: .solid
+                    )
+                    removesStrikethrough = false
+                } else {
+                    removesStrikethrough = true
+                }
+            } else {
+                removesUnderline = false
+                removesStrikethrough = false
+            }
+
+            let attributes = SwiftUIHighlightAttributes(
+                values: values,
+                removesUnderline: removesUnderline,
+                removesStrikethrough: removesStrikethrough
+            )
+            if !includingBaseFont {
+                refinements[style] = attributes
+            }
+            return attributes
+        }
+    }
+
+    /// Holds one reusable SwiftUI attribute refinement.
+    private struct SwiftUIHighlightAttributes {
+        /// Holds values merged together on an attributed range.
+        let values: AttributeContainer
+
+        /// Records whether an inherited underline must be removed.
+        let removesUnderline: Bool
+
+        /// Records whether an inherited strikethrough must be removed.
+        let removesStrikethrough: Bool
+    }
+
+    /// Applies resolved theme styles to native attributed ranges.
+    private extension AttributedString {
+        /// Applies cached values and explicit line-style removals.
+        ///
+        /// - Parameters:
+        ///   - attributes: The SwiftUI refinement to apply.
+        ///   - range: The attributed range receiving the style.
+        mutating func apply(
+            _ attributes: SwiftUIHighlightAttributes,
+            to range: Range<Index>
+        ) {
+            self[range].mergeAttributes(attributes.values)
+            if attributes.removesUnderline {
+                self[range].underlineStyle = nil
+            }
+            if attributes.removesStrikethrough {
+                self[range].strikethroughStyle = nil
             }
         }
     }

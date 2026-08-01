@@ -1,4 +1,5 @@
 import Foundation
+import SwiftTreeSitter
 import Testing
 
 @testable import RorkHighlighter
@@ -23,6 +24,47 @@ struct HighlighterTests {
         #expect(scopes.contains("number"))
         #expect(scopes.contains("constant.builtin"))
         #expect(snapshot.highlights == snapshot.highlights.sorted())
+    }
+
+    /// Confirms the optimized root query matches the general layered cursor.
+    @Test
+    func matchesLayeredCursorForDocumentsWithoutInjections() throws {
+        let highlighter = try Highlighter()
+        let source = """
+            struct WelcomeView {
+                let title = "Hello"
+                let count = 42
+            }
+            """
+        let language = try highlighter.languageDefinition(for: .swift)
+        let layer = try highlighter.makeLanguageLayer(for: language)
+        layer.replaceContent(with: source)
+        let range = NSRange(location: 0, length: source.utf16.count)
+        let matches = try layer.executeQuery(
+            .highlights,
+            in: range
+        ).resolve(with: Predicate.Context(string: source))
+        var layeredHighlights: [HighlightSpan] = []
+
+        for match in matches {
+            for capture in match.captures
+            where !capture.nameComponents.isEmpty {
+                layeredHighlights.append(
+                    HighlightSpan(
+                        scopeComponents: capture.nameComponents,
+                        range: UTF16Range(
+                            location: capture.range.location,
+                            length: capture.range.length
+                        )
+                    )
+                )
+            }
+        }
+        layeredHighlights.sort()
+
+        let optimized = try highlighter.highlight(source, as: .swift)
+
+        #expect(optimized.highlights == layeredHighlights)
     }
 
     /// Confirms public ranges use Foundation-compatible UTF-16 offsets.
@@ -94,6 +136,26 @@ struct HighlighterTests {
                     "variable.property",
                 ]
         )
+    }
+
+    /// Confirms internal range provenance does not change public snapshot
+    /// equality or hashing.
+    @Test
+    func ignoresRangeProvenanceInSnapshotValueSemantics() throws {
+        let highlighter = try Highlighter()
+        let parsed = try highlighter.highlight(
+            "let value = 1",
+            as: .swift
+        )
+        let reconstructed = HighlightSnapshot(
+            text: parsed.text,
+            language: parsed.language,
+            revision: parsed.revision,
+            highlights: parsed.highlights
+        )
+
+        #expect(parsed == reconstructed)
+        #expect(Set([parsed, reconstructed]).count == 1)
     }
 
     /// Confirms Codable round trips preserve validated public value types.

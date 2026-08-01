@@ -5,3 +5,4 @@ ThirdPartyLicenses/** linguist-vendored
 LanguagePack.lock.json linguist-generated
 Sources/CRorkHighlighterParsers/include/CRorkHighlighterParsers.h linguist-generated
 Sources/RorkHighlighter/BundledLanguages.generated.swift linguist-generated
+Benchmarks/Comparison/JavaScript/package-lock.json linguist-generated

@@ -8,6 +8,10 @@ extension HighlightSnapshot {
     /// - Throws: ``HighlightRenderingError`` when a range is outside the text
     ///   or does not align with Swift character boundaries.
     func validateHighlightRanges() throws(HighlightRenderingError) {
+        guard !hasParserProducedHighlightRanges else {
+            return
+        }
+
         let offsets = try highlightBoundaryOffsets()
         let utf16 = text.utf16
         var utf16Index = utf16.startIndex
