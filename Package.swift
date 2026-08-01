@@ -21,10 +21,10 @@ let package = Package(
         )
     ],
     dependencies: [
-        // This preview supplies capture-name caching until an upstream release includes it.
+        // This preview supplies ordered predicate-aware captures until an upstream release includes them.
         .package(
             url: "https://github.com/rorkai/swift-tree-sitter.git",
-            exact: "0.25.1-rork.1"
+            exact: "0.25.1-rork.2"
         )
     ],
     targets: [

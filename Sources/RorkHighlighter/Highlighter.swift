@@ -218,13 +218,14 @@ public struct Highlighter: Sendable {
                 throw LanguageLayerError.noRootNode
             }
 
-            if snapshot.sublayerSnapshots.isEmpty {
-                return makeHighlights(
-                    from: try snapshot.rootSnapshot.executeQuery(
-                        .highlights,
-                        in: queryRange
-                    ),
-                    text: text
+            if snapshot.sublayerSnapshots.isEmpty,
+                range.location == 0,
+                range.length == text.utf16.count
+            {
+                return try makeRootHighlights(
+                    from: snapshot.rootSnapshot,
+                    text: text,
+                    in: range
                 )
             }
 
@@ -248,6 +249,58 @@ public struct Highlighter: Sendable {
         }
     }
 
+    /// Streams a complete root query without allocating intermediate matches.
+    ///
+    /// Tree-sitter's ordered capture cursor omits captures outside a bounded
+    /// query range. This path therefore handles complete documents only, while
+    /// bounded incremental refreshes retain the general match cursor.
+    ///
+    /// - Parameters:
+    ///   - snapshot: The root language snapshot containing the parsed tree.
+    ///   - text: The complete source text used to resolve query predicates.
+    ///   - range: The complete UTF-16 document range.
+    /// - Returns: Highlight spans in deterministic application order.
+    /// - Throws: ``LanguageLayerError`` when the highlight query is unavailable.
+    private func makeRootHighlights(
+        from snapshot: LanguageLayerSnapshot,
+        text: String,
+        in range: NSRange
+    ) throws(LanguageLayerError) -> [HighlightSpan] {
+        guard let query = snapshot.data.queries[.highlights] else {
+            throw LanguageLayerError.queryUnavailable(
+                snapshot.data.name,
+                .highlights
+            )
+        }
+
+        let cursor = query.execute(
+            in: snapshot.tree,
+            depth: snapshot.depth
+        )
+        cursor.setRange(range)
+        return makeHighlights(
+            from: cursor.resolveCaptures(
+                with: Predicate.Context(string: text)
+            )
+        )
+    }
+
+    /// Converts ordered query captures into public highlight spans.
+    ///
+    /// - Parameter captures: The predicate-filtered captures in source order.
+    /// - Returns: Highlight spans in deterministic application order.
+    private func makeHighlights(
+        from captures: some Sequence<QueryCapture>
+    ) -> [HighlightSpan] {
+        var collector = HighlightCollector()
+
+        for capture in captures {
+            collector.append(capture)
+        }
+
+        return collector.finalize()
+    }
+
     /// Converts resolved query captures into ordered public spans.
     ///
     /// - Parameters:
@@ -261,32 +314,15 @@ public struct Highlighter: Sendable {
         let resolvedMatches = matches.resolve(
             with: Predicate.Context(string: text)
         )
-        var highlights: [HighlightSpan] = []
-        var previousHighlight: HighlightSpan?
-        var requiresSorting = false
+        var collector = HighlightCollector()
 
         for match in resolvedMatches {
-            for capture in match.captures
-            where !capture.nameComponents.isEmpty {
-                let highlight = HighlightSpan(
-                    scopeComponents: capture.nameComponents,
-                    range: UTF16Range(
-                        location: capture.range.location,
-                        length: capture.range.length
-                    )
-                )
-                if let previousHighlight, highlight < previousHighlight {
-                    requiresSorting = true
-                }
-                highlights.append(highlight)
-                previousHighlight = highlight
+            for capture in match.captures {
+                collector.append(capture)
             }
         }
 
-        if requiresSorting {
-            highlights.sort()
-        }
-        return highlights
+        return collector.finalize()
     }
 
     /// Ensures UTF-16 offsets fit the width used by Tree-sitter.
@@ -305,4 +341,49 @@ public struct Highlighter: Sendable {
     /// Holds the largest UTF-16 length representable as Tree-sitter byte
     /// offsets.
     private static let maximumUTF16Length = Int(UInt32.max) / 2
+}
+
+/// Collects query captures into one deterministically ordered span buffer.
+private struct HighlightCollector {
+    /// Holds the converted public spans.
+    private var highlights: [HighlightSpan] = []
+
+    /// Holds the previously appended span for the ordering check.
+    private var previousHighlight: HighlightSpan?
+
+    /// Records whether Tree-sitter emitted spans outside public ordering.
+    private var requiresSorting = false
+
+    /// Appends one query capture when it has a usable scope name.
+    ///
+    /// - Parameter capture: The Tree-sitter capture to convert.
+    mutating func append(_ capture: QueryCapture) {
+        guard !capture.nameComponents.isEmpty else {
+            return
+        }
+
+        let captureRange = capture.range
+        let highlight = HighlightSpan(
+            scopeComponents: capture.nameComponents,
+            range: UTF16Range(
+                location: captureRange.location,
+                length: captureRange.length
+            )
+        )
+        if let previousHighlight, highlight < previousHighlight {
+            requiresSorting = true
+        }
+        highlights.append(highlight)
+        previousHighlight = highlight
+    }
+
+    /// Returns the collected spans in deterministic application order.
+    ///
+    /// - Returns: The collected spans, sorted only when capture order requires it.
+    mutating func finalize() -> [HighlightSpan] {
+        if requiresSorting {
+            highlights.sort()
+        }
+        return highlights
+    }
 }
