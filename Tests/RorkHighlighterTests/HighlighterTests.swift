@@ -34,6 +34,11 @@ struct HighlighterTests {
             struct WelcomeView {
                 let title = "Hello"
                 let count = 42
+
+                func render() {
+                    _ = Screen.title
+                    _ = screen.title
+                }
             }
             """
         let language = try highlighter.languageDefinition(for: .swift)
@@ -63,8 +68,31 @@ struct HighlighterTests {
         layeredHighlights.sort()
 
         let optimized = try highlighter.highlight(source, as: .swift)
+        let sourceText = source as NSString
+        let acceptedTypeRange = sourceText.range(of: "Screen")
+        let rejectedTypeRange = sourceText.range(of: "screen")
 
         #expect(optimized.highlights == layeredHighlights)
+        #expect(
+            optimized.highlights.contains {
+                $0.scope == "type"
+                    && $0.range
+                        == UTF16Range(
+                            location: acceptedTypeRange.location,
+                            length: acceptedTypeRange.length
+                        )
+            }
+        )
+        #expect(
+            !optimized.highlights.contains {
+                $0.scope == "type"
+                    && $0.range
+                        == UTF16Range(
+                            location: rejectedTypeRange.location,
+                            length: rejectedTypeRange.length
+                        )
+            }
+        )
     }
 
     /// Confirms public ranges use Foundation-compatible UTF-16 offsets.
