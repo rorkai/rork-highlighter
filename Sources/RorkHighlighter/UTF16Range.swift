@@ -53,6 +53,18 @@ public struct UTF16Range:
         treeSitterLocation: Int,
         treeSitterLength: Int
     ) {
+        assert(
+            treeSitterLocation >= 0,
+            "UTF-16 locations cannot be negative."
+        )
+        assert(
+            treeSitterLength >= 0,
+            "UTF-16 lengths cannot be negative."
+        )
+        assert(
+            treeSitterLocation <= Int.max - treeSitterLength,
+            "UTF-16 ranges cannot overflow."
+        )
         self.location = treeSitterLocation
         self.length = treeSitterLength
     }
