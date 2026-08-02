@@ -52,6 +52,18 @@ struct LanguageCatalogTests {
         #expect(catalog.language(forFileExtension: ".MM")?.id == .objectiveC)
     }
 
+    /// Confirms audited Swift metadata skips injection work only when comments
+    /// and regular-expression literals are impossible.
+    @Test
+    func preflightsBundledSwiftInjections() throws {
+        let catalog = try LanguageCatalog.standard()
+        let swift = try #require(catalog.language(for: .swift))
+
+        #expect(swift.canSkipInjections(in: "let value = 42"))
+        #expect(!swift.canSkipInjections(in: "// A comment"))
+        #expect(!swift.canSkipInjections(in: #"let value = /a+/"#))
+    }
+
     /// Confirms ambiguous canonical definitions fail during catalog
     /// construction.
     @Test

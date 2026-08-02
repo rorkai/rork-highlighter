@@ -87,6 +87,37 @@ struct BundledLanguageTests {
         #expect(snapshot.highlights.contains { $0.scope == fixture.expectedScope })
     }
 
+    /// Confirms the optimized one-shot pipeline matches the complete layered
+    /// pipeline for every bundled language.
+    ///
+    /// - Parameter fixture: The language and source text to highlight.
+    /// - Throws: ``HighlighterError`` when either pipeline cannot highlight the
+    ///   fixture.
+    @Test(arguments: bundledLanguageFixtures)
+    private func matchesLayeredHighlighting(
+        _ fixture: BundledLanguageFixture
+    ) throws {
+        let highlighter = try Highlighter()
+        let definition = try highlighter.languageDefinition(
+            for: fixture.language
+        )
+        let layer = try highlighter.makeLanguageLayer(for: definition)
+        layer.replaceContent(with: fixture.source)
+
+        let optimized = try highlighter.highlight(
+            fixture.source,
+            as: fixture.language
+        )
+        let layered = try highlighter.makeSnapshot(
+            text: fixture.source,
+            language: fixture.language,
+            revision: 0,
+            layer: layer
+        )
+
+        #expect(optimized == layered)
+    }
+
     /// Confirms HTML script elements are highlighted with the JavaScript parser.
     @Test
     func highlightsJavaScriptInjectedIntoHTML() throws {

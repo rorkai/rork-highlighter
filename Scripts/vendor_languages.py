@@ -191,6 +191,17 @@ def validate_languages(
                 "filename",
             )
 
+        injection_trigger_byte = language.get("injectionTriggerByte")
+        if injection_trigger_byte is not None:
+            if (
+                type(injection_trigger_byte) is not int
+                or injection_trigger_byte < 0
+                or injection_trigger_byte > 255
+            ):
+                raise ValueError(
+                    f"Language '{identifier}' has an invalid injection trigger byte."
+                )
+
         native_copies = language.get("nativeCopies")
         query_copies = language.get("queryCopies")
         if not isinstance(native_copies, list) or not native_copies:
@@ -410,6 +421,13 @@ def swift_array(values: list[str]) -> str:
     return "[" + ", ".join(swift_string(value) for value in values) + "]"
 
 
+def swift_optional_integer(value: int | None) -> str:
+    """Returns an optional Swift integer literal for manifest metadata."""
+    if value is None:
+        return "nil"
+    return str(value)
+
+
 def query_filenames(language: dict[str, Any], kind: str) -> list[str]:
     """Returns query resource names in their declared concatenation order."""
     return [
@@ -517,7 +535,11 @@ def render_swift(languages: list[dict[str, Any]]) -> str:
                 ),
                 (
                     "                localsQueries: "
-                    f"{swift_array(query_filenames(language, 'locals'))}"
+                    f"{swift_array(query_filenames(language, 'locals'))},"
+                ),
+                (
+                    "                injectionTriggerByte: "
+                    f"{swift_optional_integer(language.get('injectionTriggerByte'))}"
                 ),
                 "            ),",
             ]
@@ -559,7 +581,8 @@ def render_swift(languages: list[dict[str, Any]]) -> str:
             "            localsQuery: try optionalQuery(",
             "                files: definition.localsQueries,",
             "                directory: definition.resourceDirectory",
-            "            )",
+            "            ),",
+            "            injectionTriggerByte: definition.injectionTriggerByte",
             "        )",
             "    }",
             "",
@@ -670,6 +693,9 @@ def render_swift(languages: list[dict[str, Any]]) -> str:
             "    /// Holds locals query fragments in concatenation order.",
             "    let localsQueries: [String]",
             "",
+            "    /// Holds a byte required by every possible injection match.",
+            "    let injectionTriggerByte: UInt8?",
+            "",
             "    /// Creates generated metadata for one bundled language.",
             "    ///",
             "    /// - Parameters:",
@@ -683,6 +709,7 @@ def render_swift(languages: list[dict[str, Any]]) -> str:
             "    ///   - highlightsQueries: Highlight query fragments in load order.",
             "    ///   - injectionsQueries: Injection query fragments in load order.",
             "    ///   - localsQueries: Locals query fragments in load order.",
+            "    ///   - injectionTriggerByte: A byte required by every injection match.",
             "    init(",
             "        id: LanguageID,",
             "        displayName: String,",
@@ -693,7 +720,8 @@ def render_swift(languages: list[dict[str, Any]]) -> str:
             "        resourceDirectory: String,",
             "        highlightsQueries: [String],",
             "        injectionsQueries: [String],",
-            "        localsQueries: [String]",
+            "        localsQueries: [String],",
+            "        injectionTriggerByte: UInt8?",
             "    ) {",
             "        self.id = id",
             "        self.displayName = displayName",
@@ -705,6 +733,7 @@ def render_swift(languages: list[dict[str, Any]]) -> str:
             "        self.highlightsQueries = highlightsQueries",
             "        self.injectionsQueries = injectionsQueries",
             "        self.localsQueries = localsQueries",
+            "        self.injectionTriggerByte = injectionTriggerByte",
             "    }",
             "}",
             "",
