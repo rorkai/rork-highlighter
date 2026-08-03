@@ -1,6 +1,12 @@
 import Foundation
 import SwiftTreeSitter
 
+#if canImport(Darwin)
+    import Darwin
+#elseif canImport(Glibc)
+    import Glibc
+#endif
+
 /// Describes one parser and the metadata needed to discover and highlight it.
 ///
 /// A definition compiles its query sources during initialization so malformed
@@ -23,6 +29,9 @@ public struct HighlightLanguage: Identifiable, Sendable {
 
     /// Holds the compiled parser and queries used to create language layers.
     let configuration: LanguageConfiguration
+
+    /// Holds a conservative source byte required by every possible injection.
+    let injectionTriggerByte: UInt8?
 
     /// Creates a language definition around a compiled Tree-sitter parser.
     ///
@@ -53,6 +62,52 @@ public struct HighlightLanguage: Identifiable, Sendable {
         highlightsQuery: String,
         injectionsQuery: String? = nil,
         localsQuery: String? = nil
+    ) throws(HighlighterError) {
+        try self.init(
+            id: id,
+            displayName: displayName,
+            aliases: aliases,
+            fileExtensions: fileExtensions,
+            filenames: filenames,
+            treeSitterLanguage: treeSitterLanguage,
+            highlightsQuery: highlightsQuery,
+            injectionsQuery: injectionsQuery,
+            localsQuery: localsQuery,
+            injectionTriggerByte: nil
+        )
+    }
+
+    /// Creates a bundled language with optional injection preflight metadata.
+    ///
+    /// The trigger byte is an internal optimization contract. Every source form
+    /// matched by the injection query must contain that byte.
+    /// Custom public definitions omit this metadata and always evaluate their
+    /// injection queries.
+    ///
+    /// - Parameters:
+    ///   - id: The canonical language identifier.
+    ///   - displayName: The human-readable language name.
+    ///   - aliases: Alternate names accepted by the language catalog.
+    ///   - fileExtensions: File extensions associated with the language.
+    ///   - filenames: Exact filenames associated with the language.
+    ///   - treeSitterLanguage: The pointer returned by a generated parser.
+    ///   - highlightsQuery: The query that produces syntax captures.
+    ///   - injectionsQuery: The optional query that locates nested languages.
+    ///   - localsQuery: The optional query that describes local scopes.
+    ///   - injectionTriggerByte: A byte required by every injection match.
+    /// - Throws: ``HighlighterError`` when the identifier, parser ABI, or query
+    ///   sources are invalid.
+    init(
+        id: LanguageID,
+        displayName: String,
+        aliases: Set<LanguageID>,
+        fileExtensions: Set<String>,
+        filenames: Set<String>,
+        treeSitterLanguage: OpaquePointer?,
+        highlightsQuery: String,
+        injectionsQuery: String?,
+        localsQuery: String?,
+        injectionTriggerByte: UInt8?
     ) throws(HighlighterError) {
         guard !id.rawValue.isEmpty else {
             throw HighlighterError.emptyLanguageIdentifier
@@ -120,6 +175,40 @@ public struct HighlightLanguage: Identifiable, Sendable {
             name: id.rawValue,
             queries: queries
         )
+        self.injectionTriggerByte = injectionTriggerByte
+    }
+
+    /// Determines whether injection parsing is provably unnecessary.
+    ///
+    /// - Parameter text: The complete source text to preflight.
+    /// - Returns: `true` only when audited bundled metadata proves no injection
+    ///   query can match.
+    func canSkipInjections(in text: String) -> Bool {
+        guard let injectionTriggerByte else {
+            return false
+        }
+
+        #if canImport(Darwin) || canImport(Glibc)
+            if let containsTrigger = text.utf8.withContiguousStorageIfAvailable({ bytes in
+                guard let baseAddress = bytes.baseAddress else {
+                    return false
+                }
+                return memchr(
+                    baseAddress,
+                    Int32(injectionTriggerByte),
+                    bytes.count
+                ) != nil
+            }) {
+                return !containsTrigger
+            }
+        #endif
+
+        for byte in text.utf8 {
+            if byte == injectionTriggerByte {
+                return false
+            }
+        }
+        return true
     }
 
     /// Compiles a query and translates low-level diagnostics into package

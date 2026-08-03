@@ -95,6 +95,60 @@ struct HighlighterTests {
         )
     }
 
+    /// Confirms Swift regular-expression literals retain nested regex scopes.
+    @Test
+    func highlightsRegexInjectedIntoSwift() throws {
+        let highlighter = try Highlighter()
+        let source = #"let matcher = /a+/"#
+        let operatorRange = (source as NSString).range(of: "+")
+
+        let snapshot = try highlighter.highlight(source, as: .swift)
+
+        #expect(
+            snapshot.highlights.contains {
+                $0.scope == "operator"
+                    && $0.range
+                        == UTF16Range(
+                            location: operatorRange.location,
+                            length: operatorRange.length
+                        )
+            }
+        )
+    }
+
+    /// Confirms public custom languages cannot inherit bundled preflight data
+    /// by reusing a canonical identifier.
+    @Test
+    func evaluatesCustomSwiftInjectionQueries() throws {
+        let standardCatalog = try LanguageCatalog.standard()
+        let bundledSwift = try #require(
+            standardCatalog.language(for: .swift)
+        )
+        let regex = try #require(
+            standardCatalog.language(for: .regex)
+        )
+        let customSwift = try HighlightLanguage(
+            id: .swift,
+            displayName: "Custom Swift",
+            treeSitterLanguage:
+                bundledSwift.configuration.language.tsLanguage,
+            highlightsQuery: "(simple_identifier) @variable",
+            injectionsQuery: """
+                ((simple_identifier) @injection.content
+                 (#set! injection.language "regex"))
+                """
+        )
+        let catalog = try LanguageCatalog(
+            languages: [customSwift, regex]
+        )
+        let highlighter = Highlighter(catalog: catalog)
+
+        let snapshot = try highlighter.highlight("abc", as: .swift)
+
+        #expect(customSwift.injectionTriggerByte == nil)
+        #expect(snapshot.highlights.contains { $0.scope == "string" })
+    }
+
     /// Confirms public ranges use Foundation-compatible UTF-16 offsets.
     @Test
     func reportsUnicodeRangesInUTF16() throws {

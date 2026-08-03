@@ -41,6 +41,34 @@ public struct UTF16Range:
         self.length = length
     }
 
+    /// Creates a range from offsets already validated by Tree-sitter.
+    ///
+    /// Tree-sitter exposes nonnegative 32-bit byte offsets. The highlighter
+    /// converts those offsets to UTF-16 units before using this initializer.
+    ///
+    /// - Parameters:
+    ///   - treeSitterLocation: The validated starting UTF-16 offset.
+    ///   - treeSitterLength: The validated UTF-16 length.
+    init(
+        treeSitterLocation: Int,
+        treeSitterLength: Int
+    ) {
+        assert(
+            treeSitterLocation >= 0,
+            "UTF-16 locations cannot be negative."
+        )
+        assert(
+            treeSitterLength >= 0,
+            "UTF-16 lengths cannot be negative."
+        )
+        assert(
+            treeSitterLocation <= Int.max - treeSitterLength,
+            "UTF-16 ranges cannot overflow."
+        )
+        self.location = treeSitterLocation
+        self.length = treeSitterLength
+    }
+
     /// Creates a typed range from integer UTF-16 offsets.
     ///
     /// - Parameter range: The nonnegative half-open UTF-16 range.

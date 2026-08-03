@@ -6,8 +6,8 @@ listed below. Each component remains under its original license.
 ## SwiftTreeSitter
 
 Rork Highlighter depends on
-https://github.com/tree-sitter/swift-tree-sitter with a `0.25.x` version
-requirement. SwiftTreeSitter is licensed under BSD-3-Clause.
+https://github.com/rorkai/swift-tree-sitter at `0.25.1-rork.3`.
+SwiftTreeSitter is licensed under BSD-3-Clause.
 
 Copyright (c) 2021, Chime
 
@@ -75,7 +75,7 @@ each revision, and `LanguagePack.lock.json` records their SHA-256 digests.
 | tree-sitter-scss | https://github.com/cortexkit/tree-sitter-scss at `0254de4cfbf81d152447aa14285d931adf4ab0f3` | Copyright (c) 2024 Amaan Qureshi | `ThirdPartyLicenses/scss.txt` |
 | tree-sitter-sql | https://github.com/DerekStride/tree-sitter-sql at `851e9cb257ba7c66cc8c14214a31c44d2f1e954e` | Copyright (c) 2021 Derek Stride | `ThirdPartyLicenses/sql.txt` |
 | tree-sitter-svelte | https://github.com/tree-sitter-grammars/tree-sitter-svelte at `774a65aea563accc35f5d45fafa4d96ec5761f57` | Copyright (c) 2024 Amaan Qureshi | `ThirdPartyLicenses/svelte.txt` |
-| tree-sitter-swift | https://github.com/alex-pinkus/tree-sitter-swift at `31d17fe7e818a2048c808b5c6fdc2dc792f4f5b5` | Copyright (c) 2021 alex-pinkus | `ThirdPartyLicenses/swift.txt` |
+| tree-sitter-swift | https://github.com/rorkai/tree-sitter-swift at `0ed204e83db1ef3c680f0a037bc14919f5cc726f` | Copyright (c) 2021 alex-pinkus | `ThirdPartyLicenses/swift.txt` |
 | tree-sitter-toml | https://github.com/tree-sitter-grammars/tree-sitter-toml at `64b56832c2cffe41758f28e05c756a3a98d16f41` | Copyright (c) Ika | `ThirdPartyLicenses/toml.txt` |
 | tree-sitter-typescript | https://github.com/tree-sitter/tree-sitter-typescript at `f975a621f4e7f532fe322e13c4f79495e0a7b2e7` | Copyright (c) 2017 Max Brunsfeld | `ThirdPartyLicenses/typescript.txt` |
 | tree-sitter-vue | https://github.com/tree-sitter-grammars/tree-sitter-vue at `ce8011a414fdf8091f4e4071752efc376f4afb08` | Copyright (c) 2024 Amaan Qureshi | `ThirdPartyLicenses/vue.txt` |

@@ -46,7 +46,7 @@ public actor HighlightSession {
         text: String,
         language: LanguageID
     ) throws(HighlighterError) {
-        try highlighter.validateDocumentLength(text)
+        _ = try highlighter.validateDocumentLength(text)
         let languageDefinition = try highlighter.languageDefinition(
             for: language
         )
@@ -140,7 +140,7 @@ public actor HighlightSession {
 
         var updatedText = text
         updatedText.replaceSubrange(stringRange, with: replacement)
-        try highlighter.validateDocumentLength(updatedText)
+        _ = try highlighter.validateDocumentLength(updatedText)
 
         let replacementRange = UTF16Range(
             location: range.location,

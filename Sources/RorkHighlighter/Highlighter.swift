@@ -53,8 +53,20 @@ public struct Highlighter: Sendable {
         _ text: String,
         as language: LanguageID
     ) throws(HighlighterError) -> HighlightSnapshot {
-        try validateDocumentLength(text)
+        let documentLength = try validateDocumentLength(text)
         let definition = try languageDefinition(for: language)
+        let supportsNestedLanguages =
+            definition.configuration.queries[.injections] != nil
+            && configuration.maximumInjectionDepth > 0
+        if !supportsNestedLanguages || definition.canSkipInjections(in: text) {
+            return try makeRootSnapshot(
+                text: text,
+                language: definition.id,
+                configuration: definition.configuration,
+                documentLength: documentLength
+            )
+        }
+
         let layer = try makeLanguageLayer(for: definition)
         layer.replaceContent(with: text)
         return try makeSnapshot(
@@ -153,6 +165,67 @@ public struct Highlighter: Sendable {
         }
     }
 
+    /// Parses and queries a document that cannot contain nested languages.
+    ///
+    /// - Parameters:
+    ///   - text: The complete source text.
+    ///   - language: The canonical root language identifier.
+    ///   - configuration: The compiled parser and query collection.
+    ///   - documentLength: The validated UTF-16 source length.
+    /// - Returns: A complete immutable highlighting snapshot.
+    /// - Throws: ``HighlighterError`` when parsing or querying fails.
+    private func makeRootSnapshot(
+        text: String,
+        language: LanguageID,
+        configuration: LanguageConfiguration,
+        documentLength: Int
+    ) throws(HighlighterError) -> HighlightSnapshot {
+        let parser = Parser()
+
+        do {
+            try parser.setLanguage(configuration.language)
+        } catch {
+            throw HighlighterError.parsingFailed(
+                language: language,
+                message: String(describing: error)
+            )
+        }
+        guard
+            let tree = parser.parse(
+                tree: Optional<Tree>.none,
+                string: text,
+                limit: documentLength,
+                chunkSize: Self.oneShotParseChunkSize
+            )
+        else {
+            throw HighlighterError.parsingFailed(
+                language: language,
+                message: "Tree-sitter did not return a syntax tree."
+            )
+        }
+        guard let query = configuration.queries[.highlights] else {
+            throw HighlighterError.missingHighlightsQuery(language)
+        }
+
+        let cursor = query.execute(in: tree)
+        let highlights = makeHighlights(
+            from: cursor.resolveCaptureSpansByMatch(
+                with: Predicate.Context(string: text)
+            ),
+            query: query,
+            estimatedCapacity: min(
+                documentLength / 4,
+                Self.maximumOneShotHighlightCapacity
+            )
+        )
+        return HighlightSnapshot(
+            text: text,
+            language: language,
+            revision: 0,
+            highlights: highlights
+        )
+    }
+
     /// Queries a parsed layer and converts captures into public value types.
     ///
     /// - Parameters:
@@ -224,8 +297,7 @@ public struct Highlighter: Sendable {
             {
                 return try makeRootHighlights(
                     from: snapshot.rootSnapshot,
-                    text: text,
-                    in: range
+                    text: text
                 )
             }
 
@@ -258,13 +330,11 @@ public struct Highlighter: Sendable {
     /// - Parameters:
     ///   - snapshot: The root language snapshot containing the parsed tree.
     ///   - text: The complete source text used to resolve query predicates.
-    ///   - range: The complete UTF-16 document range.
     /// - Returns: Highlight spans in deterministic application order.
     /// - Throws: ``LanguageLayerError`` when the highlight query is unavailable.
     private func makeRootHighlights(
         from snapshot: LanguageLayerSnapshot,
-        text: String,
-        in range: NSRange
+        text: String
     ) throws(LanguageLayerError) -> [HighlightSpan] {
         guard let query = snapshot.data.queries[.highlights] else {
             throw LanguageLayerError.queryUnavailable(
@@ -277,12 +347,35 @@ public struct Highlighter: Sendable {
             in: snapshot.tree,
             depth: snapshot.depth
         )
-        cursor.setRange(range)
         return makeHighlights(
-            from: cursor.resolveCaptures(
+            from: cursor.resolveCaptureSpansByMatch(
                 with: Predicate.Context(string: text)
-            )
+            ),
+            query: query
         )
+    }
+
+    /// Converts ordered lightweight captures into public highlight spans.
+    ///
+    /// - Parameters:
+    ///   - captures: The predicate-filtered capture spans in source order.
+    ///   - query: The query that owns the capture-name table.
+    ///   - estimatedCapacity: The approximate number of output spans.
+    /// - Returns: Highlight spans in deterministic application order.
+    private func makeHighlights(
+        from captures: some Sequence<QueryCaptureSpan>,
+        query: Query,
+        estimatedCapacity: Int = 0
+    ) -> [HighlightSpan] {
+        var collector = HighlightCollector(
+            estimatedCapacity: estimatedCapacity
+        )
+
+        for capture in captures {
+            collector.append(capture, query: query)
+        }
+
+        return collector.finalize()
     }
 
     /// Converts ordered query captures into public highlight spans.
@@ -328,19 +421,28 @@ public struct Highlighter: Sendable {
     /// Ensures UTF-16 offsets fit the width used by Tree-sitter.
     ///
     /// - Parameter text: The document to validate.
+    /// - Returns: The validated document length in UTF-16 code units.
     /// - Throws: ``HighlighterError/documentTooLarge`` when encoded offsets
     ///   would overflow.
     func validateDocumentLength(
         _ text: String
-    ) throws(HighlighterError) {
-        guard text.utf16.count <= Self.maximumUTF16Length else {
+    ) throws(HighlighterError) -> Int {
+        let documentLength = text.utf16.count
+        guard documentLength <= Self.maximumUTF16Length else {
             throw HighlighterError.documentTooLarge
         }
+        return documentLength
     }
 
     /// Holds the largest UTF-16 length representable as Tree-sitter byte
     /// offsets.
     private static let maximumUTF16Length = Int(UInt32.max) / 2
+
+    /// Holds the parser read size tuned for complete immutable documents.
+    private static let oneShotParseChunkSize = 512 * 1024
+
+    /// Caps speculative output storage for dense one-shot query results.
+    private static let maximumOneShotHighlightCapacity = 65_536
 }
 
 /// Collects query captures into one deterministically ordered span buffer.
@@ -348,33 +450,72 @@ private struct HighlightCollector {
     /// Holds the converted public spans.
     private var highlights: [HighlightSpan] = []
 
-    /// Holds the previously appended span for the ordering check.
-    private var previousHighlight: HighlightSpan?
-
     /// Records whether Tree-sitter emitted spans outside public ordering.
     private var requiresSorting = false
+
+    /// Records whether captures at one source location need local ordering.
+    private var requiresLocationGroupOrdering = false
+
+    /// Creates an empty collector with optional storage for expected captures.
+    ///
+    /// - Parameter estimatedCapacity: The number of captures likely to be stored.
+    init(estimatedCapacity: Int = 0) {
+        highlights.reserveCapacity(estimatedCapacity)
+    }
 
     /// Appends one query capture when it has a usable scope name.
     ///
     /// - Parameter capture: The Tree-sitter capture to convert.
     mutating func append(_ capture: QueryCapture) {
-        guard !capture.nameComponents.isEmpty else {
+        append(
+            scopeComponents: capture.nameComponents,
+            range: capture.range
+        )
+    }
+
+    /// Appends one lightweight query capture when it has a usable scope name.
+    ///
+    /// - Parameters:
+    ///   - capture: The Tree-sitter capture span to convert.
+    ///   - query: The query that owns the capture-name table.
+    mutating func append(_ capture: QueryCaptureSpan, query: Query) {
+        append(
+            scopeComponents:
+                query.captureNameComponents(for: capture.index) ?? [],
+            range: capture.range
+        )
+    }
+
+    /// Appends one public highlight value while tracking source order.
+    ///
+    /// - Parameters:
+    ///   - scopeComponents: The semantic hierarchy assigned by the query.
+    ///   - range: The capture location in UTF-16 code units.
+    private mutating func append(
+        scopeComponents: [String],
+        range: NSRange
+    ) {
+        guard !scopeComponents.isEmpty else {
             return
         }
 
-        let captureRange = capture.range
         let highlight = HighlightSpan(
-            scopeComponents: capture.nameComponents,
+            scopeComponents: scopeComponents,
             range: UTF16Range(
-                location: captureRange.location,
-                length: captureRange.length
+                treeSitterLocation: range.location,
+                treeSitterLength: range.length
             )
         )
-        if let previousHighlight, highlight < previousHighlight {
-            requiresSorting = true
+        if let previousHighlight = highlights.last,
+            highlight < previousHighlight
+        {
+            if highlight.range.location < previousHighlight.range.location {
+                requiresSorting = true
+            } else {
+                requiresLocationGroupOrdering = true
+            }
         }
         highlights.append(highlight)
-        previousHighlight = highlight
     }
 
     /// Returns the collected spans in deterministic application order.
@@ -383,7 +524,38 @@ private struct HighlightCollector {
     mutating func finalize() -> [HighlightSpan] {
         if requiresSorting {
             highlights.sort()
+        } else if requiresLocationGroupOrdering {
+            orderLocationGroups()
         }
         return highlights
+    }
+
+    /// Orders captures within source locations using in-place insertion.
+    ///
+    /// Match-order cursors commonly differ only where overlapping captures
+    /// begin together. Keeping those small groups local avoids a complete
+    /// document sort.
+    private mutating func orderLocationGroups() {
+        highlights.withUnsafeMutableBufferPointer { buffer in
+            guard buffer.count > 1 else {
+                return
+            }
+
+            for index in 1..<buffer.count {
+                var currentIndex = index
+                while currentIndex > 0 {
+                    let precedingIndex = currentIndex - 1
+                    guard
+                        buffer[currentIndex].range.location
+                            == buffer[precedingIndex].range.location,
+                        buffer[currentIndex] < buffer[precedingIndex]
+                    else {
+                        break
+                    }
+                    buffer.swapAt(currentIndex, precedingIndex)
+                    currentIndex = precedingIndex
+                }
+            }
+        }
     }
 }

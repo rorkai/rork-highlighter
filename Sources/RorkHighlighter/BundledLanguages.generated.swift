@@ -159,7 +159,8 @@ extension LanguageCatalog {
                 resourceDirectory: "astro",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: ["injections.scm"],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .bash,
@@ -171,7 +172,8 @@ extension LanguageCatalog {
                 resourceDirectory: "bash",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .c,
@@ -183,7 +185,8 @@ extension LanguageCatalog {
                 resourceDirectory: "c",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .cpp,
@@ -195,7 +198,8 @@ extension LanguageCatalog {
                 resourceDirectory: "cpp",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: ["injections.scm"],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .css,
@@ -207,7 +211,8 @@ extension LanguageCatalog {
                 resourceDirectory: "css",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .dockerfile,
@@ -219,7 +224,8 @@ extension LanguageCatalog {
                 resourceDirectory: "dockerfile",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .dotenv,
@@ -234,7 +240,8 @@ extension LanguageCatalog {
                 resourceDirectory: "dotenv",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .go,
@@ -246,7 +253,8 @@ extension LanguageCatalog {
                 resourceDirectory: "go",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .graphql,
@@ -258,7 +266,8 @@ extension LanguageCatalog {
                 resourceDirectory: "graphql",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .groovy,
@@ -270,7 +279,8 @@ extension LanguageCatalog {
                 resourceDirectory: "groovy",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: ["locals.scm"]
+                localsQueries: ["locals.scm"],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .html,
@@ -282,7 +292,8 @@ extension LanguageCatalog {
                 resourceDirectory: "html",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: ["injections.scm"],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .java,
@@ -294,7 +305,8 @@ extension LanguageCatalog {
                 resourceDirectory: "java",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .javascript,
@@ -308,7 +320,8 @@ extension LanguageCatalog {
                     "highlights.scm", "highlights-jsx.scm", "highlights-params.scm",
                 ],
                 injectionsQueries: ["injections.scm"],
-                localsQueries: ["locals.scm"]
+                localsQueries: ["locals.scm"],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .jsdoc,
@@ -320,7 +333,8 @@ extension LanguageCatalog {
                 resourceDirectory: "jsdoc",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .json,
@@ -332,7 +346,8 @@ extension LanguageCatalog {
                 resourceDirectory: "json",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .json5,
@@ -344,7 +359,8 @@ extension LanguageCatalog {
                 resourceDirectory: "json5",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .kotlin,
@@ -356,7 +372,8 @@ extension LanguageCatalog {
                 resourceDirectory: "kotlin",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .markdown,
@@ -368,7 +385,8 @@ extension LanguageCatalog {
                 resourceDirectory: "markdown",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: ["injections.scm"],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .markdownInline,
@@ -380,7 +398,8 @@ extension LanguageCatalog {
                 resourceDirectory: "markdown-inline",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: ["injections.scm"],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .mdx,
@@ -394,7 +413,8 @@ extension LanguageCatalog {
                     "highlights.scm", "highlights-jsx.scm", "highlights-params.scm",
                 ],
                 injectionsQueries: ["injections.scm"],
-                localsQueries: ["locals.scm"]
+                localsQueries: ["locals.scm"],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .objectiveC,
@@ -406,7 +426,8 @@ extension LanguageCatalog {
                 resourceDirectory: "objective-c",
                 highlightsQueries: ["highlights-c.scm", "highlights-objective-c.scm"],
                 injectionsQueries: [],
-                localsQueries: ["locals.scm"]
+                localsQueries: ["locals.scm"],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .properties,
@@ -418,7 +439,8 @@ extension LanguageCatalog {
                 resourceDirectory: "properties",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .python,
@@ -430,7 +452,8 @@ extension LanguageCatalog {
                 resourceDirectory: "python",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .regex,
@@ -442,7 +465,8 @@ extension LanguageCatalog {
                 resourceDirectory: "regex",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .ruby,
@@ -454,7 +478,8 @@ extension LanguageCatalog {
                 resourceDirectory: "ruby",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: ["locals.scm"]
+                localsQueries: ["locals.scm"],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .rust,
@@ -466,7 +491,8 @@ extension LanguageCatalog {
                 resourceDirectory: "rust",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: ["injections.scm"],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .scss,
@@ -478,7 +504,8 @@ extension LanguageCatalog {
                 resourceDirectory: "scss",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .sql,
@@ -490,7 +517,8 @@ extension LanguageCatalog {
                 resourceDirectory: "sql",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .svelte,
@@ -502,7 +530,8 @@ extension LanguageCatalog {
                 resourceDirectory: "svelte",
                 highlightsQueries: ["highlights-html.scm", "highlights-svelte.scm"],
                 injectionsQueries: ["injections-html.scm", "injections-svelte.scm"],
-                localsQueries: ["locals.scm"]
+                localsQueries: ["locals.scm"],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .swift,
@@ -514,7 +543,8 @@ extension LanguageCatalog {
                 resourceDirectory: "swift",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: ["injections.scm"],
-                localsQueries: ["locals.scm"]
+                localsQueries: ["locals.scm"],
+                injectionTriggerByte: 47
             ),
             BundledLanguageDefinition(
                 id: .toml,
@@ -526,7 +556,8 @@ extension LanguageCatalog {
                 resourceDirectory: "toml",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .tsx,
@@ -540,7 +571,8 @@ extension LanguageCatalog {
                     "highlights-typescript.scm", "highlights-jsx.scm", "highlights-javascript.scm",
                 ],
                 injectionsQueries: ["injections.scm"],
-                localsQueries: ["locals.scm"]
+                localsQueries: ["locals.scm"],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .typescript,
@@ -552,7 +584,8 @@ extension LanguageCatalog {
                 resourceDirectory: "typescript",
                 highlightsQueries: ["highlights-typescript.scm", "highlights-javascript.scm"],
                 injectionsQueries: ["injections.scm"],
-                localsQueries: ["locals-typescript.scm", "locals-javascript.scm"]
+                localsQueries: ["locals-typescript.scm", "locals-javascript.scm"],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .vue,
@@ -564,7 +597,8 @@ extension LanguageCatalog {
                 resourceDirectory: "vue",
                 highlightsQueries: ["highlights-html.scm", "highlights-vue.scm"],
                 injectionsQueries: ["injections-html.scm", "injections-vue.scm"],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .xml,
@@ -576,7 +610,8 @@ extension LanguageCatalog {
                 resourceDirectory: "xml",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
             BundledLanguageDefinition(
                 id: .yaml,
@@ -588,7 +623,8 @@ extension LanguageCatalog {
                 resourceDirectory: "yaml",
                 highlightsQueries: ["highlights.scm"],
                 injectionsQueries: [],
-                localsQueries: []
+                localsQueries: [],
+                injectionTriggerByte: nil
             ),
         ]
         var languages: [HighlightLanguage] = []
@@ -625,7 +661,8 @@ extension LanguageCatalog {
             localsQuery: try optionalQuery(
                 files: definition.localsQueries,
                 directory: definition.resourceDirectory
-            )
+            ),
+            injectionTriggerByte: definition.injectionTriggerByte
         )
     }
 
@@ -733,6 +770,9 @@ private struct BundledLanguageDefinition {
     /// Holds locals query fragments in concatenation order.
     let localsQueries: [String]
 
+    /// Holds a byte required by every possible injection match.
+    let injectionTriggerByte: UInt8?
+
     /// Creates generated metadata for one bundled language.
     ///
     /// - Parameters:
@@ -746,6 +786,7 @@ private struct BundledLanguageDefinition {
     ///   - highlightsQueries: Highlight query fragments in load order.
     ///   - injectionsQueries: Injection query fragments in load order.
     ///   - localsQueries: Locals query fragments in load order.
+    ///   - injectionTriggerByte: A byte required by every injection match.
     init(
         id: LanguageID,
         displayName: String,
@@ -756,7 +797,8 @@ private struct BundledLanguageDefinition {
         resourceDirectory: String,
         highlightsQueries: [String],
         injectionsQueries: [String],
-        localsQueries: [String]
+        localsQueries: [String],
+        injectionTriggerByte: UInt8?
     ) {
         self.id = id
         self.displayName = displayName
@@ -768,5 +810,6 @@ private struct BundledLanguageDefinition {
         self.highlightsQueries = highlightsQueries
         self.injectionsQueries = injectionsQueries
         self.localsQueries = localsQueries
+        self.injectionTriggerByte = injectionTriggerByte
     }
 }

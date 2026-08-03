@@ -243,9 +243,9 @@
     },
     "swift": {
       "name": "tree-sitter-swift",
-      "url": "https://github.com/alex-pinkus/tree-sitter-swift",
-      "reference": "0.7.3-with-generated-files",
-      "revision": "31d17fe7e818a2048c808b5c6fdc2dc792f4f5b5",
+      "url": "https://github.com/rorkai/tree-sitter-swift",
+      "reference": "0.7.3-rork.1-with-generated-files",
+      "revision": "0ed204e83db1ef3c680f0a037bc14919f5cc726f",
       "license": "MIT",
       "licenseFile": "LICENSE"
     },
@@ -814,6 +814,7 @@
       "entryPoint": "tree_sitter_swift",
       "aliases": ["swiftlang"],
       "fileExtensions": ["swift"],
+      "injectionTriggerByte": 47,
       "nativeCopies": [
         {"source": "src/parser.c", "destination": "swift/parser.c"},
         {"source": "src/scanner.c", "destination": "swift/scanner.c"},
