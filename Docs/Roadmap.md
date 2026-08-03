@@ -31,6 +31,9 @@ the initial API and correctness guarantees.
 
 ## Pack tooling
 
-- Generate Apple XCFramework slices for clients that prefer binary parsers.
+- Maintain reproducible Apple XCFramework generation for the bundled parser
+  module.
+- Publish the common parser artifact behind the existing package product and
+  import.
 - Add a tool that builds a custom pack from a selected language list.
 - Publish common, domain, and all-language artifacts with measured size data.
