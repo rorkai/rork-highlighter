@@ -26,7 +26,6 @@ separate SwiftPM dependency for every Tree-sitter grammar.
 - Nested-language infrastructure through SwiftTreeSitterLayer.
 - A parser-neutral registry for custom and generated language packs.
 - One generated Clang target containing all common parser implementations.
-- Precompiled parser delivery for Apple builds with a source fallback elsewhere.
 - Reproducible grammar updates through exact revisions and locked file hashes.
 - Apache-2.0 project code with audited third-party notices.
 
@@ -59,11 +58,6 @@ Add the library product to your target:
     package: "rork-highlighter"
 )
 ```
-
-That is the complete integration. Apple builds select the precompiled parser
-pack automatically, while non-Apple hosts compile the same locked parsers from
-source. The package URL, product name, and `import RorkHighlighter` remain the
-same.
 
 ## One-shot highlighting
 
@@ -325,10 +319,6 @@ Run the complete validation:
 make check
 ```
 
-Fresh checkouts need network access while SwiftPM resolves dependencies and the
-parser artifact. Maintained Python tooling limits each external command to 15
-minutes so CI fails instead of waiting indefinitely.
-
 Format maintained Swift sources:
 
 ```bash
@@ -359,35 +349,6 @@ Measure a clean release build and its parser, executable, and resource sizes:
 ```bash
 make measure-distribution
 ```
-
-Compare that default delivery with a forced source build on macOS:
-
-```bash
-make measure-distribution \
-  DISTRIBUTION_ARGUMENTS="--source-parsers --scratch-path .build/distribution-source"
-```
-
-On macOS, build a host-only parser XCFramework and verify it through a local
-SwiftPM binary consumer. Non-macOS hosts skip this check:
-
-```bash
-make check-parser-xcframework
-```
-
-From a clean macOS checkout, build the release artifact with every supported
-Apple device and Simulator slice:
-
-```bash
-make parser-xcframework
-```
-
-The generated XCFramework, deterministic ZIP, and provenance manifest stay
-under `.build/parser-pack`. The manifest records the SwiftPM checksum as
-`swiftPMChecksum`, and the archive retains every parser license and notice.
-Published Apple builds resolve the immutable artifact recorded in
-`ParserArtifact.lock.json`. Set
-`RORK_HIGHLIGHTER_BUILD_PARSERS_FROM_SOURCE=1` when artifact tooling or a
-macOS-hosted cross-compilation needs the source target instead.
 
 The [benchmark guide](Benchmarks/README.md) describes the regression workloads,
 reported metrics, focused runs, cross-library comparison suite, and

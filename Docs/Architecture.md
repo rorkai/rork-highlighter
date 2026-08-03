@@ -1,8 +1,7 @@
 # Architecture
 
-Rork Highlighter separates parser distribution from document highlighting.
-The public API should remain stable as the bundled catalog grows and parser
-sources move between source and binary distribution.
+Rork Highlighter separates parser ownership from document highlighting. The
+public API remains stable as the bundled catalog and its tooling grow.
 
 ## Public values
 
@@ -47,6 +46,14 @@ The public `RorkHighlighter` target contains query resources and generated Swift
 catalog wiring. SwiftPM therefore compiles C and Swift in their appropriate
 targets while consumers receive one `RorkHighlighter` product and import.
 
+The common pack remains source-based on every supported platform. Consumer
+benchmarks found that a precompiled parser artifact did not materially improve
+fresh or incremental builds once its resolution cost was included. Source
+delivery also keeps the package portable and avoids a separate release,
+platform-slice, checksum, and fallback pipeline. The distribution benchmark
+continues to track clean-build time so this decision can be revisited if the
+catalog grows enough to change the tradeoff.
+
 `LanguagePack.json` records upstream repositories, exact revisions, parser entry
 points, aliases, filenames, extensions, native files, and query composition.
 The update script generates the documented C header and Swift catalog from this
@@ -67,41 +74,6 @@ Apple application builds must compile and sign parser code at build time.
 Downloaded native grammar libraries are not part of the iOS distribution
 model. Queries, themes, and other non-executable metadata can have a separate
 update policy when compatibility is validated.
-
-## Binary parser artifacts
-
-The Apple binary boundary contains only `CRorkHighlighterParsers`. The stable C
-module exposes process-lifetime parser constructors, while the public Swift
-API, query resources, themes, and documentation remain source-based. This
-avoids rebuilding generated parser tables without coupling clients to a
-precompiled Swift toolchain.
-
-`Scripts/build_parser_xcframework.py` compiles the exact C translation units
-selected by `Package.swift`. It validates `LanguagePack.lock.json`, builds
-static libraries for every supported Apple device and Simulator variant, and
-combines them into one XCFramework. The deterministic ZIP is accompanied by a
-SwiftPM checksum and a provenance manifest that records its source, toolchain,
-platform matrix, and size.
-
-On macOS hosts, `Package.swift` selects the immutable artifact URL and checksum
-recorded in `ParserArtifact.lock.json`. Other hosts compile the source target.
-Artifact generation and macOS-hosted cross-compilation can request the same
-source target with `RORK_HIGHLIGHTER_BUILD_PARSERS_FROM_SOURCE=1`. This switch
-does not alter the public package product or Swift import.
-
-The first common pack archive is 60.2 MB. SwiftPM expands its complete
-multi-platform XCFramework to about 624 MiB so one resolved package can build
-for every supported Apple destination and architecture. SwiftPM artifact
-indexes select by build-host triple rather than app destination, so splitting
-the archive would either retain the same Apple payload or remove legitimate
-cross-compilation slices.
-
-The artifact retains the package license, third-party notice, and every pinned
-grammar license. A local SwiftPM smoke package imports the binary module and
-loads all parser constructors before an artifact is accepted. Binary delivery
-is a build-time optimization. It does not permit executable parser downloads
-after an Apple application has been signed, and non-Apple platforms continue
-to require source parsers.
 
 ## Licensing
 

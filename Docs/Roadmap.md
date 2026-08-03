@@ -31,9 +31,8 @@ the initial API and correctness guarantees.
 
 ## Pack tooling
 
-- Maintain reproducible Apple XCFramework generation for the bundled parser
-  module.
-- Keep the published common parser artifact behind the existing package
-  product and import while retaining source builds on other hosts.
+- Keep the common parser pack source-based and track its consumer build cost.
+- Revisit precompiled delivery only when repeatable consumer benchmarks justify
+  its download footprint and release complexity.
 - Add a tool that builds a custom pack from a selected language list.
-- Publish common, domain, and all-language artifacts with measured size data.
+- Publish common, domain, and all-language packs with measured size data.
