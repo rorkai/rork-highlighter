@@ -3,12 +3,14 @@
 This document records the user-visible changes in each Rork Highlighter
 release.
 
-## Unreleased
+## 0.2.1 - 2026-08-03
 
 ### Added
 
 - Added public-workflow performance benchmarks for parsing, incremental edits,
   injections, theme resolution, and native attributed rendering.
+- Added opt-in same-corpus comparisons with HighlightKit, swift-highlight, and
+  highlight.js.
 - Added clean-build and distribution-size measurement for generated parser
   sources, compiled objects, linked code, and query resources.
 
@@ -16,8 +18,10 @@ release.
 
 - Incremental sessions now retain unaffected captures and query only
   Tree-sitter's invalidated syntax region while preserving complete snapshots.
-- One-shot highlighting now converts captures directly and avoids redundant
-  intermediate arrays and sorting.
+- One-shot highlighting now skips nested-language traversal when bundled
+  metadata proves no injection can match. It consumes lightweight
+  predicate-aware captures with cached names and avoids unnecessary
+  whole-result sorting.
 - Native attributed rendering now reuses resolved styles, colors, and font
   faces and recognizes parser-produced ranges.
 
