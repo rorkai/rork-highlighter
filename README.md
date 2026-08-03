@@ -325,6 +325,10 @@ Run the complete validation:
 make check
 ```
 
+Fresh checkouts need network access while SwiftPM resolves dependencies and the
+parser artifact. Maintained Python tooling limits each external command to 15
+minutes so CI fails instead of waiting indefinitely.
+
 Format maintained Swift sources:
 
 ```bash

@@ -6,13 +6,17 @@ from __future__ import annotations
 import argparse
 from dataclasses import asdict, dataclass
 import json
-import os
 from pathlib import Path
 import platform
 import subprocess
 import sys
 import time
 from typing import Sequence
+
+if __package__:
+    from ._command import run_command as _run_command
+else:
+    from _command import run_command as _run_command
 
 
 # The repository root contains the package and private probe.
@@ -111,17 +115,10 @@ def run_command(
     environment: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Runs a command and captures text output for clean JSON reporting."""
-    command_environment = None
-    if environment is not None:
-        command_environment = os.environ.copy()
-        command_environment.update(environment)
-    return subprocess.run(
-        list(command),
+    return _run_command(
+        command,
         cwd=cwd,
-        check=True,
-        capture_output=True,
-        text=True,
-        env=command_environment,
+        environment=environment,
     )
 
 
@@ -367,6 +364,12 @@ def main() -> int:
         if error.stderr:
             print(error.stderr, file=sys.stderr)
         return error.returncode
+    except subprocess.TimeoutExpired as error:
+        print(
+            f"An external command exceeded {error.timeout} seconds.",
+            file=sys.stderr,
+        )
+        return 124
     except (FileNotFoundError, RuntimeError) as error:
         print(error, file=sys.stderr)
         return 1
