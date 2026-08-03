@@ -4,5 +4,5 @@
 /// or to open an incremental ``HighlightSession``.
 public enum RorkHighlighter {
     /// Identifies the source-compatible package version.
-    public static let version = "0.2.0"
+    public static let version = "0.2.1"
 }

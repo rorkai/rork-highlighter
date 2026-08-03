@@ -46,7 +46,7 @@ Add the package dependency:
 ```swift
 .package(
     url: "https://github.com/rorkai/rork-highlighter.git",
-    .upToNextMinor(from: "0.2.0")
+    .upToNextMinor(from: "0.2.1")
 )
 ```
 
