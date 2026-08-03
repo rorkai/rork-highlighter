@@ -11,6 +11,7 @@ COMPARISON_BENCHMARK_ARGUMENTS ?=
 JAVASCRIPT_BENCHMARK_ARGUMENTS ?=
 DISTRIBUTION_PROBE_PACKAGE := Tools/DistributionProbe
 DISTRIBUTION_PROBE_SCRATCH := .build/distribution-probe
+DISTRIBUTION_ARGUMENTS ?=
 PARSER_PACK_OUTPUT ?= .build/parser-pack
 PARSER_PACK_ARGUMENTS ?=
 
@@ -53,7 +54,7 @@ check-comparison: comparison-fixtures comparison-javascript-dependencies
 	npm --prefix $(COMPARISON_JAVASCRIPT) test
 
 measure-distribution:
-	python3 Scripts/measure_distribution.py
+	python3 Scripts/measure_distribution.py $(DISTRIBUTION_ARGUMENTS)
 
 parser-xcframework:
 	python3 Scripts/build_parser_xcframework.py --output-directory "$(PARSER_PACK_OUTPUT)" $(PARSER_PACK_ARGUMENTS)

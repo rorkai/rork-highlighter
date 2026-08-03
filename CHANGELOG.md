@@ -11,6 +11,12 @@ release.
   platform coverage, deterministic archives, SwiftPM checksums, retained
   licenses, exported-symbol validation, and a real binary-consumer smoke test.
 
+### Changed
+
+- Apple builds now consume the common parser pack as a precompiled static
+  XCFramework without changing the package product or Swift import. Other
+  hosts continue to compile the locked parser sources.
+
 ## 0.2.1 - 2026-08-03
 
 ### Added

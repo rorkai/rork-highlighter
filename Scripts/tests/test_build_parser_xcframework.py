@@ -104,6 +104,48 @@ class ParserXCFrameworkBuilderTests(unittest.TestCase):
         self.assertIn("-O2", command)
         self.assertEqual(command[-2:], ["-o", str(destination)])
 
+    def test_requests_source_metadata_for_parser_discovery(self) -> None:
+        """Selects the source manifest branch while resolving artifact inputs."""
+        source = "wrappers/python_scanner.c"
+        description = {
+            "targets": [
+                {
+                    "name": build_parser_xcframework.PARSER_TARGET_NAME,
+                    "path": "Sources/CRorkHighlighterParsers",
+                    "sources": [source],
+                }
+            ]
+        }
+        result = Mock(stdout=json.dumps(description))
+        source_environment = {
+            build_parser_xcframework.PARSER_SOURCE_ENVIRONMENT_VARIABLE: "1"
+        }
+
+        with patch.object(
+            build_parser_xcframework,
+            "run_command",
+            return_value=result,
+        ) as run_command:
+            sources = build_parser_xcframework.parser_sources()
+
+        self.assertEqual(
+            sources,
+            [
+                build_parser_xcframework.REPOSITORY_ROOT
+                / "Sources"
+                / "CRorkHighlighterParsers"
+                / source
+            ],
+        )
+        run_command.assert_called_once_with(
+            ["swift", "package", "describe", "--type", "json"],
+            environment=source_environment,
+        )
+
+    def test_adopted_artifact_matches_locked_parser_sources(self) -> None:
+        """Keeps the published parser binary aligned with its source inputs."""
+        build_parser_xcframework.validate_adopted_artifact_lock()
+
     def test_writes_reproducible_archive(self) -> None:
         """Produces identical ZIP bytes after source modification times change."""
         with tempfile.TemporaryDirectory() as directory:

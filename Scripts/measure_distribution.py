@@ -13,6 +13,11 @@ import sys
 import time
 from typing import Sequence
 
+if __package__:
+    from ._command import run_command as _run_command
+else:
+    from _command import run_command as _run_command
+
 
 # The repository root contains the package and private probe.
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
@@ -37,6 +42,11 @@ QUERY_SOURCE_DIRECTORY = (
     / "Languages"
 )
 
+# This switch asks Package.swift to compile parser sources on macOS.
+SOURCE_PARSER_ENVIRONMENT_VARIABLE = (
+    "RORK_HIGHLIGHTER_BUILD_PARSERS_FROM_SOURCE"
+)
+
 
 @dataclass(frozen=True)
 class FileMeasurements:
@@ -57,6 +67,7 @@ class DistributionMeasurements:
     platform: str
     architecture: str
     swift_version: str
+    parser_delivery: str
     build_seconds: float
     parser_source_files: int
     parser_source_bytes: int
@@ -64,6 +75,8 @@ class DistributionMeasurements:
     query_source_files: int
     query_source_bytes: int
     parser_object_bytes: int
+    parser_artifact_bytes: int
+    selected_parser_library_bytes: int
     executable_bytes: int
     resource_bundle_bytes: int
     linked_product_bytes: int
@@ -87,6 +100,11 @@ def parse_arguments() -> argparse.Namespace:
         type=Path,
         help="Optional path that also receives the JSON result.",
     )
+    parser.add_argument(
+        "--source-parsers",
+        action="store_true",
+        help="Compile parser sources instead of using the Apple artifact.",
+    )
     return parser.parse_args()
 
 
@@ -94,14 +112,13 @@ def run_command(
     command: Sequence[str],
     *,
     cwd: Path = REPOSITORY_ROOT,
+    environment: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Runs a command and captures text output for clean JSON reporting."""
-    return subprocess.run(
-        list(command),
+    return _run_command(
+        command,
         cwd=cwd,
-        check=True,
-        capture_output=True,
-        text=True,
+        environment=environment,
     )
 
 
@@ -142,6 +159,23 @@ def parser_object_bytes(scratch_path: Path) -> int:
         for path in scratch_path.rglob("*.o")
         if "CRorkHighlighterParsers.build" in path.parts
     )
+
+
+def parser_artifact_bytes(scratch_path: Path) -> int:
+    """Returns the extracted size of the resolved parser XCFramework."""
+    return sum(
+        measure_files(path).byte_count
+        for path in scratch_path.rglob(
+            "CRorkHighlighterParsers.xcframework"
+        )
+        if path.is_dir()
+    )
+
+
+def selected_parser_library_bytes(binary_directory: Path) -> int:
+    """Returns the parser library size selected for the current host."""
+    library = binary_directory / "libCRorkHighlighterParsers.a"
+    return library.stat().st_size if library.is_file() else 0
 
 
 def resource_bundle_bytes(binary_directory: Path) -> int:
@@ -187,12 +221,32 @@ def swift_build_command(
     ]
 
 
-def clean_build(scratch_path: Path) -> tuple[float, Path]:
+def parser_build_environment(
+    source_parsers: bool,
+) -> dict[str, str] | None:
+    """Returns the manifest override needed for a source parser build."""
+    if source_parsers:
+        return {SOURCE_PARSER_ENVIRONMENT_VARIABLE: "1"}
+    return None
+
+
+def clean_build(
+    scratch_path: Path,
+    *,
+    source_parsers: bool,
+) -> tuple[float, Path]:
     """Resolves dependencies, cleans products, and times a release build."""
+    environment = parser_build_environment(source_parsers)
     print("Resolving probe dependencies.", file=sys.stderr)
-    run_command(swift_package_command(scratch_path, "resolve"))
+    run_command(
+        swift_package_command(scratch_path, "resolve"),
+        environment=environment,
+    )
     print("Cleaning previous probe products.", file=sys.stderr)
-    run_command(swift_package_command(scratch_path, "clean"))
+    run_command(
+        swift_package_command(scratch_path, "clean"),
+        environment=environment,
+    )
 
     print("Building the release distribution probe.", file=sys.stderr)
     start = time.perf_counter()
@@ -203,7 +257,8 @@ def clean_build(scratch_path: Path) -> tuple[float, Path]:
             "release",
             "--product",
             "DistributionProbe",
-        )
+        ),
+        environment=environment,
     )
     elapsed = time.perf_counter() - start
     binary_directory = Path(
@@ -213,15 +268,23 @@ def clean_build(scratch_path: Path) -> tuple[float, Path]:
                 "-c",
                 "release",
                 "--show-bin-path",
-            )
+            ),
+            environment=environment,
         ).stdout.strip()
     )
     return elapsed, binary_directory
 
 
-def collect_measurements(scratch_path: Path) -> DistributionMeasurements:
+def collect_measurements(
+    scratch_path: Path,
+    *,
+    source_parsers: bool = False,
+) -> DistributionMeasurements:
     """Runs the clean probe and collects source, object, and product sizes."""
-    elapsed, binary_directory = clean_build(scratch_path)
+    elapsed, binary_directory = clean_build(
+        scratch_path,
+        source_parsers=source_parsers,
+    )
     executable = binary_directory / "DistributionProbe"
     if not executable.is_file():
         raise FileNotFoundError(
@@ -249,14 +312,20 @@ def collect_measurements(scratch_path: Path) -> DistributionMeasurements:
     working_tree_dirty = bool(
         run_command(["git", "status", "--porcelain"]).stdout.strip()
     )
+    parser_delivery = (
+        "source"
+        if source_parsers or platform.system() != "Darwin"
+        else "binary"
+    )
 
     return DistributionMeasurements(
-        schema_version=1,
+        schema_version=2,
         revision=revision,
         working_tree_dirty=working_tree_dirty,
         platform=platform.system(),
         architecture=platform.machine(),
         swift_version=" ".join(swift_version.splitlines()),
+        parser_delivery=parser_delivery,
         build_seconds=round(elapsed, 3),
         parser_source_files=parser_sources.file_count,
         parser_source_bytes=parser_sources.byte_count,
@@ -264,6 +333,16 @@ def collect_measurements(scratch_path: Path) -> DistributionMeasurements:
         query_source_files=query_sources.file_count,
         query_source_bytes=query_sources.byte_count,
         parser_object_bytes=parser_object_bytes(scratch_path),
+        parser_artifact_bytes=(
+            parser_artifact_bytes(scratch_path)
+            if parser_delivery == "binary"
+            else 0
+        ),
+        selected_parser_library_bytes=(
+            selected_parser_library_bytes(binary_directory)
+            if parser_delivery == "binary"
+            else 0
+        ),
         executable_bytes=executable_size,
         resource_bundle_bytes=bundled_resources,
         linked_product_bytes=executable_size + bundled_resources,
@@ -275,13 +354,22 @@ def main() -> int:
     arguments = parse_arguments()
     scratch_path = arguments.scratch_path.resolve()
     try:
-        measurements = collect_measurements(scratch_path)
+        measurements = collect_measurements(
+            scratch_path,
+            source_parsers=arguments.source_parsers,
+        )
     except subprocess.CalledProcessError as error:
         if error.stdout:
             print(error.stdout, file=sys.stderr)
         if error.stderr:
             print(error.stderr, file=sys.stderr)
         return error.returncode
+    except subprocess.TimeoutExpired as error:
+        print(
+            f"An external command exceeded {error.timeout} seconds.",
+            file=sys.stderr,
+        )
+        return 124
     except (FileNotFoundError, RuntimeError) as error:
         print(error, file=sys.stderr)
         return 1
