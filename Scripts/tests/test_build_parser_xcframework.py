@@ -5,7 +5,7 @@ from pathlib import Path
 import plistlib
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import zipfile
 
 from Scripts import build_parser_xcframework
@@ -47,6 +47,18 @@ class ParserXCFrameworkBuilderTests(unittest.TestCase):
         self.assertEqual(
             [item.name for item in selected[0].architectures],
             ["arm64"],
+        )
+
+    def test_selects_requested_slices_in_matrix_order(self) -> None:
+        """Filters explicit slices without making output order caller-dependent."""
+        selected = build_parser_xcframework.select_slices(
+            ["visionos", "ios"],
+            False,
+        )
+
+        self.assertEqual(
+            [item.name for item in selected],
+            ["ios", "visionos"],
         )
 
     def test_rejects_unsupported_host_architecture(self) -> None:
@@ -221,6 +233,132 @@ class ParserXCFrameworkBuilderTests(unittest.TestCase):
             ["ios-arm64", "macos-x86_64"],
         )
 
+    def test_rejects_malformed_xcframework_slice_metadata(self) -> None:
+        """Rejects generated metadata that cannot be canonicalized safely."""
+        with tempfile.TemporaryDirectory() as directory:
+            xcframework = Path(directory) / "Example.xcframework"
+            xcframework.mkdir()
+            with (xcframework / "Info.plist").open("wb") as plist_file:
+                plistlib.dump(
+                    {
+                        "AvailableLibraries": [
+                            {"LibraryIdentifier": 42}
+                        ]
+                    },
+                    plist_file,
+                )
+
+            with self.assertRaisesRegex(ValueError, "malformed"):
+                build_parser_xcframework.normalize_xcframework_info_plist(
+                    xcframework
+                )
+
+    def test_validates_symbols_for_every_library_architecture(self) -> None:
+        """Checks each architecture rather than merging universal symbols."""
+        library = Path("/artifacts/libParsers.a")
+        expected = ["tree_sitter_swift", "tree_sitter_json"]
+        symbols = {
+            "arm64": set(expected),
+            "x86_64": set(expected),
+        }
+        with (
+            patch.object(
+                build_parser_xcframework,
+                "library_architectures",
+                return_value=["arm64", "x86_64"],
+            ),
+            patch.object(
+                build_parser_xcframework,
+                "exported_symbols",
+                side_effect=lambda _, architecture: symbols[architecture],
+            ) as exported_symbols,
+        ):
+            build_parser_xcframework.validate_exported_symbols(
+                [library],
+                expected,
+            )
+
+        self.assertEqual(exported_symbols.call_count, 2)
+
+    def test_reports_architecture_with_missing_parser_symbol(self) -> None:
+        """Identifies the exact architecture that has an incomplete archive."""
+        library = Path("/artifacts/libParsers.a")
+        expected = ["tree_sitter_swift", "tree_sitter_json"]
+        symbols = {
+            "arm64": set(expected),
+            "x86_64": {"tree_sitter_swift"},
+        }
+        with (
+            patch.object(
+                build_parser_xcframework,
+                "library_architectures",
+                return_value=["arm64", "x86_64"],
+            ),
+            patch.object(
+                build_parser_xcframework,
+                "exported_symbols",
+                side_effect=lambda _, architecture: symbols[architecture],
+            ),
+            self.assertRaisesRegex(
+                ValueError,
+                "x86_64 is missing tree_sitter_json",
+            ),
+        ):
+            build_parser_xcframework.validate_exported_symbols(
+                [library],
+                expected,
+            )
+
+    def test_validates_retained_license_materials(self) -> None:
+        """Accepts a complete license tree and rejects a missing retained file."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            inputs = root / "inputs"
+            licenses = inputs / "ThirdPartyLicenses"
+            licenses.mkdir(parents=True)
+            package_license = inputs / "LICENSE"
+            notices = inputs / "THIRD_PARTY_NOTICES.md"
+            grammar_license = licenses / "swift.txt"
+            package_license.write_bytes(b"package")
+            notices.write_bytes(b"notices")
+            grammar_license.write_bytes(b"grammar")
+
+            xcframework = root / "Example.xcframework"
+            retained_licenses = xcframework / licenses.name
+            retained_licenses.mkdir(parents=True)
+            (xcframework / package_license.name).write_bytes(b"package")
+            (xcframework / notices.name).write_bytes(b"notices")
+            retained_grammar_license = (
+                retained_licenses / grammar_license.name
+            )
+            retained_grammar_license.write_bytes(b"grammar")
+
+            with (
+                patch.object(
+                    build_parser_xcframework,
+                    "PACKAGE_LICENSE",
+                    package_license,
+                ),
+                patch.object(
+                    build_parser_xcframework,
+                    "THIRD_PARTY_NOTICES",
+                    notices,
+                ),
+                patch.object(
+                    build_parser_xcframework,
+                    "THIRD_PARTY_LICENSES",
+                    licenses,
+                ),
+            ):
+                build_parser_xcframework.validate_license_materials(
+                    xcframework
+                )
+                retained_grammar_license.unlink()
+                with self.assertRaises(FileNotFoundError):
+                    build_parser_xcframework.validate_license_materials(
+                        xcframework
+                    )
+
     def test_generates_smoke_program_for_every_entry_point(self) -> None:
         """Links each constructor so missing archive members cannot go unnoticed."""
         source = build_parser_xcframework.smoke_test_source(
@@ -231,12 +369,37 @@ class ParserXCFrameworkBuilderTests(unittest.TestCase):
         self.assertIn("tree_sitter_json()", source)
         self.assertIn("print(languages.count)", source)
 
+    def test_accepts_swiftpm_progress_before_smoke_program_output(self) -> None:
+        """Reads the final program line after any captured SwiftPM progress."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            xcframework = root / "Example.xcframework"
+            xcframework.mkdir()
+            result = Mock(stdout="Building for production...\n2\n")
+
+            with patch.object(
+                build_parser_xcframework,
+                "run_command",
+                return_value=result,
+            ):
+                build_parser_xcframework.run_swiftpm_smoke_test(
+                    xcframework,
+                    ["tree_sitter_swift", "tree_sitter_json"],
+                    root / "scratch",
+                )
+
     def test_loads_unique_catalog_entry_points(self) -> None:
         """Keeps binary symbol validation aligned with the generated catalog."""
+        manifest = json.loads(
+            build_parser_xcframework.LANGUAGE_PACK_MANIFEST.read_text(
+                encoding="utf-8"
+            )
+        )
+        expected_count = len(manifest["languages"])
         entry_points = build_parser_xcframework.parser_entry_points()
 
-        self.assertEqual(len(entry_points), 36)
-        self.assertEqual(len(set(entry_points)), 36)
+        self.assertEqual(len(entry_points), expected_count)
+        self.assertEqual(len(set(entry_points)), expected_count)
         self.assertIn("tree_sitter_swift", entry_points)
 
     def test_metadata_json_uses_camel_case_keys(self) -> None:

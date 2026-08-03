@@ -735,10 +735,24 @@ def validate_xcframework_structure(
     return library_paths
 
 
-def exported_symbols(library_path: Path) -> set[str]:
-    """Returns global parser-style symbols exported by one static library."""
+def library_architectures(library_path: Path) -> list[str]:
+    """Returns every architecture contained in one static library."""
+    return run_command(
+        ["xcrun", "lipo", "-archs", str(library_path)]
+    ).stdout.split()
+
+
+def exported_symbols(library_path: Path, architecture: str) -> set[str]:
+    """Returns parser symbols exported by one library architecture."""
     output = run_command(
-        ["xcrun", "nm", "-gU", str(library_path)]
+        [
+            "xcrun",
+            "nm",
+            "-gU",
+            "-arch",
+            architecture,
+            str(library_path),
+        ]
     ).stdout
     symbols: set[str] = set()
     pattern = re.compile(r"_?(tree_sitter_[A-Za-z0-9_]+)$")
@@ -756,12 +770,17 @@ def validate_exported_symbols(
     """Ensures every binary slice exports all catalog parser constructors."""
     expected = set(entry_points)
     for library_path in library_paths:
-        missing = expected - exported_symbols(library_path)
-        if missing:
-            missing_list = ", ".join(sorted(missing))
-            raise ValueError(
-                f"The library {library_path} is missing {missing_list}."
+        for architecture in library_architectures(library_path):
+            missing = expected - exported_symbols(
+                library_path,
+                architecture,
             )
+            if missing:
+                missing_list = ", ".join(sorted(missing))
+                raise ValueError(
+                    f"The library {library_path} for {architecture} is "
+                    f"missing {missing_list}."
+                )
 
 
 def validate_license_materials(xcframework_path: Path) -> None:
@@ -847,7 +866,10 @@ let package = Package(
             "ParserPackSmoke",
         ]
     )
-    if result.stdout.strip() != str(len(entry_points)):
+    output_lines = [
+        line.strip() for line in result.stdout.splitlines() if line.strip()
+    ]
+    if not output_lines or output_lines[-1] != str(len(entry_points)):
         raise ValueError("The binary parser smoke test returned an invalid count.")
 
 

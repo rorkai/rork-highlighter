@@ -30,13 +30,15 @@ jobs:
     runs-on: macos-15
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v5
+        # This commit is actions/checkout v5.1.0.
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           persist-credentials: false
       - name: Build the complete parser XCFramework
         run: make parser-xcframework
       - name: Upload the parser pack
-        uses: actions/upload-artifact@v7
+        # This commit is actions/upload-artifact v7.0.1.
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: CRorkHighlighterParsers
           if-no-files-found: error

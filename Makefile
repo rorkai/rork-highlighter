@@ -76,11 +76,10 @@ check-preview:
 	@echo "The AppKit preview build is skipped on non-macOS hosts."
 endif
 
-ifeq ($(shell uname -s),Darwin)
 check-parser-xcframework:
+ifeq ($(shell uname -s),Darwin)
 	python3 Scripts/build_parser_xcframework.py --host-only --allow-dirty --output-directory .build/parser-pack-check
 else
-check-parser-xcframework:
 	@echo "The parser XCFramework check is skipped on non-macOS hosts."
 endif
 
