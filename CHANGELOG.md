@@ -7,15 +7,24 @@ release.
 
 ### Added
 
-- Added a reproducible static parser XCFramework pipeline with complete Apple
+- Added a reproducible static parser XCFramework pipeline with primary Apple
   platform coverage, deterministic archives, SwiftPM checksums, retained
   licenses, exported-symbol validation, and a real binary-consumer smoke test.
+- Added destination builds that verify binary delivery and source fallbacks
+  across every supported Apple platform.
 
 ### Changed
 
-- Apple builds now consume the common parser pack as a precompiled static
-  XCFramework without changing the package product or Swift import. Other
-  hosts continue to compile the locked parser sources.
+- iOS, macOS, and Mac Catalyst builds now consume a 26.3 MB common parser
+  archive without changing the package product or Swift import. Its extracted
+  footprint is about 273 MiB instead of 624 MiB.
+- tvOS, watchOS, visionOS, and non-Apple builds continue to compile the locked
+  parser sources.
+
+### Fixed
+
+- Fixed the default UIKit rendering font on tvOS and watchOS by deriving its
+  size from the preferred body font.
 
 ## 0.2.1 - 2026-08-03
 

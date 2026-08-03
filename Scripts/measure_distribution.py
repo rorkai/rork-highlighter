@@ -33,6 +33,12 @@ PARSER_SOURCE_DIRECTORY = (
     REPOSITORY_ROOT / "Sources" / "CRorkHighlighterParsers" / "languages"
 )
 
+# Source builds place parser objects beneath this internal target directory.
+SOURCE_PARSER_TARGET_NAME = "CRorkHighlighterSourceParsers"
+
+# Binary builds expose this static library beside linked package products.
+BINARY_PARSER_MODULE_NAME = "CRorkHighlighterParsers"
+
 # Query resources ship beside the linked library on every supported platform.
 QUERY_SOURCE_DIRECTORY = (
     REPOSITORY_ROOT
@@ -157,7 +163,7 @@ def parser_object_bytes(scratch_path: Path) -> int:
     return sum(
         path.stat().st_size
         for path in scratch_path.rglob("*.o")
-        if "CRorkHighlighterParsers.build" in path.parts
+        if f"{SOURCE_PARSER_TARGET_NAME}.build" in path.parts
     )
 
 
@@ -166,7 +172,7 @@ def parser_artifact_bytes(scratch_path: Path) -> int:
     return sum(
         measure_files(path).byte_count
         for path in scratch_path.rglob(
-            "CRorkHighlighterParsers.xcframework"
+            f"{BINARY_PARSER_MODULE_NAME}.xcframework"
         )
         if path.is_dir()
     )
@@ -174,7 +180,7 @@ def parser_artifact_bytes(scratch_path: Path) -> int:
 
 def selected_parser_library_bytes(binary_directory: Path) -> int:
     """Returns the parser library size selected for the current host."""
-    library = binary_directory / "libCRorkHighlighterParsers.a"
+    library = binary_directory / f"lib{BINARY_PARSER_MODULE_NAME}.a"
     return library.stat().st_size if library.is_file() else 0
 
 

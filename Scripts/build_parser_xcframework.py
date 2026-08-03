@@ -34,7 +34,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
 MODULE_NAME = "CRorkHighlighterParsers"
 
 # SwiftPM describes the exact translation units selected by Package.swift.
-PARSER_TARGET_NAME = MODULE_NAME
+PARSER_TARGET_NAME = "CRorkHighlighterSourceParsers"
 
 # The manifest exposes source metadata when source parser builds are requested.
 PARSER_SOURCE_ENVIRONMENT_VARIABLE = (
@@ -139,7 +139,7 @@ def slice_metadata_payload(metadata: SliceMetadata) -> dict[str, object]:
     }
 
 
-# The matrix matches every Apple platform declared by Package.swift.
+# The complete matrix matches every Apple platform declared by Package.swift.
 PARSER_SLICES = (
     ParserSlice(
         name="macos",
@@ -231,6 +231,16 @@ PARSER_SLICES = (
             Architecture("x86_64", "x86_64-apple-xros1.0-simulator"),
         ),
     ),
+)
+
+# The published artifact serves the Apple platforms used by primary clients.
+DEFAULT_SLICE_NAMES = frozenset(
+    {
+        "macos",
+        "ios",
+        "ios-simulator",
+        "maccatalyst",
+    }
 )
 
 
@@ -331,7 +341,9 @@ def select_slices(
         return (replace(macos, architectures=matching),)
 
     if requested_names is None:
-        return PARSER_SLICES
+        return tuple(
+            item for item in PARSER_SLICES if item.name in DEFAULT_SLICE_NAMES
+        )
 
     requested = set(requested_names)
     return tuple(item for item in PARSER_SLICES if item.name in requested)
@@ -429,6 +441,8 @@ def validate_adopted_artifact_lock() -> None:
     """Ensures the adopted artifact still represents the locked parser source."""
     metadata = json.loads(PARSER_ARTIFACT_LOCK.read_text(encoding="utf-8"))
     sources = parser_sources()
+    # Query and generated catalog changes do not alter the native artifact.
+    # Adoption is therefore bound to the exact compiled C inputs.
     expected_metadata = {
         "schemaVersion": ARTIFACT_SCHEMA_VERSION,
         "moduleName": MODULE_NAME,
@@ -437,7 +451,6 @@ def validate_adopted_artifact_lock() -> None:
         "compiledSourceSHA256": source_tree_sha256(sources),
         "compiledSourceFiles": len(sources),
         "compiledSourceBytes": sum(path.stat().st_size for path in sources),
-        "languagePackLockSHA256": file_sha256(LANGUAGE_PACK_LOCK),
     }
     mismatched_keys = [
         key

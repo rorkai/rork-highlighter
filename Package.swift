@@ -8,7 +8,7 @@ import PackageDescription
 /// - Returns: A target containing the locked parser sources.
 private func makeSourceParserTarget() -> Target {
     .target(
-        name: "CRorkHighlighterParsers",
+        name: "CRorkHighlighterSourceParsers",
         path: "Sources/CRorkHighlighterParsers",
         exclude: [
             "languages/dockerfile/scanner.c",
@@ -29,28 +29,52 @@ private let buildsParsersFromSource =
     ] == "1"
 
 #if os(macOS)
-    /// Selects source parsers when requested and the Apple artifact otherwise.
-    private let parserTarget: Target =
+    /// Loads the immutable parser artifact used by primary Apple platforms.
+    private let precompiledParserTarget: Target = .binaryTarget(
+        name: "CRorkHighlighterParsers",
+        url:
+            "https://github.com/rorkai/rork-highlighter/releases/download/parser-pack-0.3.0-r1/CRorkHighlighterParsers.xcframework.zip",
+        checksum: "275891b594d9cdf10aced8a9b2db769c0f19696269980b8732957b6ff0f6495a"
+    )
+
+    /// Declares source and binary parser targets needed by Apple destinations.
+    private let parserTargets: [Target] =
         if buildsParsersFromSource {
-            makeSourceParserTarget()
+            [makeSourceParserTarget()]
         } else {
-            .binaryTarget(
-                name: "CRorkHighlighterParsers",
-                url:
-                    "https://github.com/rorkai/rork-highlighter/releases/download/parser-pack-0.3.0-r1/CRorkHighlighterParsers.xcframework.zip",
-                checksum: "275891b594d9cdf10aced8a9b2db769c0f19696269980b8732957b6ff0f6495a"
-            )
+            [makeSourceParserTarget(), precompiledParserTarget]
+        }
+
+    /// Selects precompiled parsers where the primary artifact has a slice.
+    private let parserDependencies: [Target.Dependency] =
+        if buildsParsersFromSource {
+            ["CRorkHighlighterSourceParsers"]
+        } else {
+            [
+                .target(
+                    name: "CRorkHighlighterParsers",
+                    condition: .when(platforms: [.macOS, .macCatalyst, .iOS])
+                ),
+                .target(
+                    name: "CRorkHighlighterSourceParsers",
+                    condition: .when(platforms: [.tvOS, .watchOS, .visionOS])
+                ),
+            ]
         }
 #else
-    /// Compiles the bundled parser sources on hosts without Apple binary support.
-    private let parserTarget: Target = makeSourceParserTarget()
+    /// Declares the source parser target on hosts without binary support.
+    private let parserTargets: [Target] = [makeSourceParserTarget()]
+
+    /// Compiles parsers from source on hosts without binary support.
+    private let parserDependencies: [Target.Dependency] = [
+        "CRorkHighlighterSourceParsers"
+    ]
 #endif
 
 /// Defines the public highlighting library and its package dependencies.
 private let rorkHighlighterTarget: Target = .target(
     name: "RorkHighlighter",
-    dependencies: [
-        "CRorkHighlighterParsers",
+    dependencies: parserDependencies + [
         .product(
             name: "SwiftTreeSitter",
             package: "swift-tree-sitter"
@@ -102,8 +126,7 @@ let package = Package(
             exact: "0.25.1-rork.3"
         )
     ],
-    targets: [
-        parserTarget,
+    targets: parserTargets + [
         rorkHighlighterTarget,
         rorkHighlighterTestsTarget,
     ],

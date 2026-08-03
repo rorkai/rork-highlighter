@@ -26,7 +26,8 @@ separate SwiftPM dependency for every Tree-sitter grammar.
 - Nested-language infrastructure through SwiftTreeSitterLayer.
 - A parser-neutral registry for custom and generated language packs.
 - One generated Clang target containing all common parser implementations.
-- Precompiled parser delivery for Apple builds with a source fallback elsewhere.
+- Precompiled parser delivery for primary Apple builds with source fallback
+  everywhere else.
 - Reproducible grammar updates through exact revisions and locked file hashes.
 - Apache-2.0 project code with audited third-party notices.
 
@@ -60,10 +61,10 @@ Add the library product to your target:
 )
 ```
 
-That is the complete integration. Apple builds select the precompiled parser
-pack automatically, while non-Apple hosts compile the same locked parsers from
-source. The package URL, product name, and `import RorkHighlighter` remain the
-same.
+That is the complete integration. iOS, macOS, and Mac Catalyst builds select
+the precompiled parser pack automatically. tvOS, watchOS, visionOS, and
+non-Apple builds compile the same locked parsers from source. The package URL,
+product name, and `import RorkHighlighter` remain the same.
 
 ## One-shot highlighting
 
@@ -374,8 +375,8 @@ SwiftPM binary consumer. Non-macOS hosts skip this check:
 make check-parser-xcframework
 ```
 
-From a clean macOS checkout, build the release artifact with every supported
-Apple device and Simulator slice:
+From a clean macOS checkout, build the release artifact for iOS, macOS, and Mac
+Catalyst device and Simulator destinations:
 
 ```bash
 make parser-xcframework
@@ -388,6 +389,10 @@ Published Apple builds resolve the immutable artifact recorded in
 `ParserArtifact.lock.json`. Set
 `RORK_HIGHLIGHTER_BUILD_PARSERS_FROM_SOURCE=1` when artifact tooling or a
 macOS-hosted cross-compilation needs the source target instead.
+
+The primary artifact is 26.3 MB and expands to about 273 MiB. Destinations
+outside its platform matrix use the checked-in parser sources because SwiftPM
+eagerly resolves every remote binary target declared by one package.
 
 The [benchmark guide](Benchmarks/README.md) describes the regression workloads,
 reported metrics, focused runs, cross-library comparison suite, and

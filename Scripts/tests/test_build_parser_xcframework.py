@@ -14,12 +14,24 @@ from Scripts import build_parser_xcframework
 class ParserXCFrameworkBuilderTests(unittest.TestCase):
     """Verifies slice selection, archive output, and artifact validation."""
 
-    def test_selects_complete_default_matrix(self) -> None:
-        """Includes every declared Apple platform when no filter is given."""
+    def test_selects_primary_default_matrix(self) -> None:
+        """Includes the platforms served by the published binary artifact."""
         selected = build_parser_xcframework.select_slices(None, False)
 
         self.assertEqual(
             [item.name for item in selected],
+            [
+                "macos",
+                "ios",
+                "ios-simulator",
+                "maccatalyst",
+            ],
+        )
+
+    def test_complete_matrix_covers_source_fallback_platforms(self) -> None:
+        """Keeps explicit builds available for every declared Apple platform."""
+        self.assertEqual(
+            [item.name for item in build_parser_xcframework.PARSER_SLICES],
             [
                 "macos",
                 "ios",

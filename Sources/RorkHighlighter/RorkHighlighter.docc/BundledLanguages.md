@@ -43,7 +43,8 @@ let snapshot = try highlighter.highlight(markdown, as: .markdown)
 
 ## Understand distribution
 
-Generated parser and scanner files are native code compiled into the internal
-`CRorkHighlighterParsers` target. Query files are bundled resources loaded by
-`RorkHighlighter`. Apps depend on one library product and only import
-`RorkHighlighter`.
+Generated parser and scanner files are native code supplied by a precompiled
+artifact or the internal `CRorkHighlighterSourceParsers` target. The generated
+catalog selects the module available for its destination. Query files are
+bundled resources loaded by `RorkHighlighter`. Apps depend on one library
+product and only import `RorkHighlighter`.

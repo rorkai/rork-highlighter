@@ -39,7 +39,10 @@ class DistributionMeasurementTests(unittest.TestCase):
         """Excludes object files emitted for unrelated build targets."""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            parser_build = root / "CRorkHighlighterParsers.build"
+            parser_build = (
+                root
+                / f"{measure_distribution.SOURCE_PARSER_TARGET_NAME}.build"
+            )
             parser_build.mkdir()
             (parser_build / "parser.c.o").write_bytes(b"12345")
             other_build = root / "RorkHighlighter.build"
@@ -57,7 +60,10 @@ class DistributionMeasurementTests(unittest.TestCase):
             artifact = (
                 root
                 / "artifacts"
-                / "CRorkHighlighterParsers.xcframework"
+                / (
+                    f"{measure_distribution.BINARY_PARSER_MODULE_NAME}"
+                    ".xcframework"
+                )
             )
             artifact.mkdir(parents=True)
             (artifact / "library.a").write_bytes(b"12345")
@@ -71,7 +77,10 @@ class DistributionMeasurementTests(unittest.TestCase):
         """Reports the current platform library copied beside build products."""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / "libCRorkHighlighterParsers.a").write_bytes(b"12345")
+            (
+                root
+                / f"lib{measure_distribution.BINARY_PARSER_MODULE_NAME}.a"
+            ).write_bytes(b"12345")
 
             byte_count = (
                 measure_distribution.selected_parser_library_bytes(root)

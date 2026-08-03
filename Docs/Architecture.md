@@ -38,10 +38,12 @@ document-specific switch statements.
 
 ## Generated packs
 
-`CRorkHighlighterParsers` is one internal Clang target containing every native
-parser in the common pack. Each grammar keeps its generated parser header beside
-its C sources because Tree-sitter ABI 14 and ABI 15 generated sources use
-different structure spellings. The Tree-sitter runtime supports both ABIs.
+`CRorkHighlighterSourceParsers` is one internal Clang target containing every
+native parser in the common pack. The generated catalog imports this module
+when the `CRorkHighlighterParsers` binary module is unavailable. Each grammar
+keeps its generated parser header beside its C sources because Tree-sitter ABI
+14 and ABI 15 generated sources use different structure spellings. The
+Tree-sitter runtime supports both ABIs.
 
 The public `RorkHighlighter` target contains query resources and generated Swift
 catalog wiring. SwiftPM therefore compiles C and Swift in their appropriate
@@ -78,23 +80,26 @@ precompiled Swift toolchain.
 
 `Scripts/build_parser_xcframework.py` compiles the exact C translation units
 selected by `Package.swift`. It validates `LanguagePack.lock.json`, builds
-static libraries for every supported Apple device and Simulator variant, and
-combines them into one XCFramework. The deterministic ZIP is accompanied by a
-SwiftPM checksum and a provenance manifest that records its source, toolchain,
+static libraries for iOS, macOS, and Mac Catalyst destinations, and combines
+them into one XCFramework. Explicit slice arguments remain available for
+maintainer experiments. The deterministic ZIP is accompanied by a SwiftPM
+checksum and a provenance manifest that records its source, toolchain,
 platform matrix, and size.
 
 On macOS hosts, `Package.swift` selects the immutable artifact URL and checksum
-recorded in `ParserArtifact.lock.json`. Other hosts compile the source target.
-Artifact generation and macOS-hosted cross-compilation can request the same
-source target with `RORK_HIGHLIGHTER_BUILD_PARSERS_FROM_SOURCE=1`. This switch
-does not alter the public package product or Swift import.
+recorded in `ParserArtifact.lock.json` for iOS, macOS, and Mac Catalyst.
+tvOS, watchOS, and visionOS select the source target through platform
+conditions. Other hosts also compile the source target. Artifact generation
+and macOS-hosted cross-compilation can request the same source target with
+`RORK_HIGHLIGHTER_BUILD_PARSERS_FROM_SOURCE=1`. This switch does not alter the
+public package product or Swift import.
 
-The first common pack archive is 60.2 MB. SwiftPM expands its complete
-multi-platform XCFramework to about 624 MiB so one resolved package can build
-for every supported Apple destination and architecture. SwiftPM artifact
-indexes select by build-host triple rather than app destination, so splitting
-the archive would either retain the same Apple payload or remove legitimate
-cross-compilation slices.
+The primary pack archive is 26.3 MB and expands to about 273 MiB. The complete
+Apple matrix previously required a 60.2 MB archive and about 624 MiB after
+extraction. SwiftPM eagerly resolves a remote binary target even when no
+product depends on it, so declaring separate platform artifacts in one package
+would download all of them. Source fallbacks preserve the remaining Apple
+destinations without imposing their binary slices on primary clients.
 
 The artifact retains the package license, third-party notice, and every pinned
 grammar license. A local SwiftPM smoke package imports the binary module and

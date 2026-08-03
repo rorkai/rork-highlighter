@@ -26,15 +26,45 @@ jobs:
         env:
           BENCHMARK_DISABLE_JEMALLOC: "true"
         run: make check
-      - name: Build for iOS
-        run: >-
-          xcodebuild
-          -scheme rork-highlighter
-          -destination 'generic/platform=iOS'
-          -derivedDataPath "${RUNNER_TEMP}/rork-highlighter-ios"
-          CODE_SIGNING_ALLOWED=NO
-          build
-          -quiet
+      - name: Build primary binary destinations
+        run: |
+          xcodebuild \
+            -scheme rork-highlighter \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "${RUNNER_TEMP}/rork-highlighter-apple" \
+            CODE_SIGNING_ALLOWED=NO \
+            build \
+            -quiet
+          xcodebuild \
+            -scheme rork-highlighter \
+            -destination 'platform=macOS,variant=Mac Catalyst' \
+            -derivedDataPath "${RUNNER_TEMP}/rork-highlighter-apple" \
+            CODE_SIGNING_ALLOWED=NO \
+            build \
+            -quiet
+      - name: Build source fallback destinations
+        run: |
+          xcodebuild \
+            -scheme rork-highlighter \
+            -destination 'generic/platform=tvOS' \
+            -derivedDataPath "${RUNNER_TEMP}/rork-highlighter-apple" \
+            CODE_SIGNING_ALLOWED=NO \
+            build \
+            -quiet
+          xcodebuild \
+            -scheme rork-highlighter \
+            -destination 'generic/platform=watchOS' \
+            -derivedDataPath "${RUNNER_TEMP}/rork-highlighter-apple" \
+            CODE_SIGNING_ALLOWED=NO \
+            build \
+            -quiet
+          xcodebuild \
+            -scheme rork-highlighter \
+            -destination 'generic/platform=visionOS' \
+            -derivedDataPath "${RUNNER_TEMP}/rork-highlighter-apple" \
+            CODE_SIGNING_ALLOWED=NO \
+            build \
+            -quiet
 
   linux:
     name: Linux

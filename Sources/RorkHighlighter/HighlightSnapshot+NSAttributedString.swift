@@ -24,7 +24,7 @@
         public func nsAttributedString(
             theme: HighlightTheme,
             font: UIFont = .monospacedSystemFont(
-                ofSize: UIFont.systemFontSize,
+                ofSize: UIFont.preferredFont(forTextStyle: .body).pointSize,
                 weight: .regular
             )
         ) throws(HighlightRenderingError) -> NSAttributedString {

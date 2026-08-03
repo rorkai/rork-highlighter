@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           persist-credentials: false
-      - name: Build the complete parser XCFramework
+      - name: Build the primary parser XCFramework
         run: make parser-xcframework
       - name: Upload the parser pack
         # This commit is actions/upload-artifact v7.0.1.

@@ -31,9 +31,8 @@ the initial API and correctness guarantees.
 
 ## Pack tooling
 
-- Maintain reproducible Apple XCFramework generation for the bundled parser
-  module.
+- Maintain reproducible XCFramework generation for primary Apple destinations.
 - Keep the published common parser artifact behind the existing package
-  product and import while retaining source builds on other hosts.
+  product and import while retaining source builds for other destinations.
 - Add a tool that builds a custom pack from a selected language list.
 - Publish common, domain, and all-language artifacts with measured size data.
