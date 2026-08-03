@@ -1,16 +1,16 @@
 {
-  "archiveBytes": 60188576,
+  "archiveBytes": 26328988,
   "archiveFileName": "CRorkHighlighterParsers.xcframework.zip",
-  "archiveSHA256": "275891b594d9cdf10aced8a9b2db769c0f19696269980b8732957b6ff0f6495a",
-  "archiveURL": "https://github.com/rorkai/rork-highlighter/releases/download/parser-pack-0.3.0-r1/CRorkHighlighterParsers.xcframework.zip",
+  "archiveSHA256": "36ea5a3fe62453f06d0484dd50aa4281518488a9270a8b3c36d71152e694eaeb",
+  "archiveURL": "https://github.com/rorkai/rork-highlighter/releases/download/parser-pack-0.3.0-r2/CRorkHighlighterParsers.xcframework.zip",
   "compiledSourceBytes": 214682027,
   "compiledSourceFiles": 63,
   "compiledSourceSHA256": "c4372c1fe861e6607a69ca201ebda9bd64e330f0cfe08681311a4a1b9f9c74d7",
-  "languagePackLockSHA256": "bb77a2194131325f063aa1015a24f3522732b35bc75b1fd6c085caf0ce183474",
+  "languagePackLockSHA256": "dc097d68cc8d9bac8db314770a5f3bf8a4c0c23f5200d709eed14c14ecb4a1d3",
   "moduleName": "CRorkHighlighterParsers",
-  "releaseTag": "parser-pack-0.3.0-r1",
-  "revision": "945d0a2dc5dd5ea63d5aa0ffd8557ffa4887252d",
+  "releaseTag": "parser-pack-0.3.0-r2",
+  "revision": "52aa965792c22f5c3cf1c0a8140ad1bf492dacd4",
   "schemaVersion": 1,
-  "swiftPMChecksum": "275891b594d9cdf10aced8a9b2db769c0f19696269980b8732957b6ff0f6495a",
+  "swiftPMChecksum": "36ea5a3fe62453f06d0484dd50aa4281518488a9270a8b3c36d71152e694eaeb",
   "workingTreeDirty": false
 }

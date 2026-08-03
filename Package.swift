@@ -33,8 +33,8 @@ private let buildsParsersFromSource =
     private let precompiledParserTarget: Target = .binaryTarget(
         name: "CRorkHighlighterParsers",
         url:
-            "https://github.com/rorkai/rork-highlighter/releases/download/parser-pack-0.3.0-r1/CRorkHighlighterParsers.xcframework.zip",
-        checksum: "275891b594d9cdf10aced8a9b2db769c0f19696269980b8732957b6ff0f6495a"
+            "https://github.com/rorkai/rork-highlighter/releases/download/parser-pack-0.3.0-r2/CRorkHighlighterParsers.xcframework.zip",
+        checksum: "36ea5a3fe62453f06d0484dd50aa4281518488a9270a8b3c36d71152e694eaeb"
     )
 
     /// Declares source and binary parser targets needed by Apple destinations.
