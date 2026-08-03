@@ -83,6 +83,19 @@ combines them into one XCFramework. The deterministic ZIP is accompanied by a
 SwiftPM checksum and a provenance manifest that records its source, toolchain,
 platform matrix, and size.
 
+On macOS hosts, `Package.swift` selects the immutable artifact URL and checksum
+recorded in `ParserArtifact.lock.json`. Other hosts compile the source target.
+Artifact generation and macOS-hosted cross-compilation can request the same
+source target with `RORK_HIGHLIGHTER_BUILD_PARSERS_FROM_SOURCE=1`. This switch
+does not alter the public package product or Swift import.
+
+The first common pack archive is about 60 MB. SwiftPM expands its complete
+multi-platform XCFramework to about 624 MB so one resolved package can build
+for every supported Apple destination and architecture. SwiftPM artifact
+indexes select by build-host triple rather than app destination, so splitting
+the archive would either retain the same Apple payload or remove legitimate
+cross-compilation slices.
+
 The artifact retains the package license, third-party notice, and every pinned
 grammar license. A local SwiftPM smoke package imports the binary module and
 loads all parser constructors before an artifact is accepted. Binary delivery

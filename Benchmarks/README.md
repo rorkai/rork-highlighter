@@ -62,8 +62,8 @@ and reporting constraints.
 
 ## Distribution measurements
 
-Measure a clean release build and its source, object, executable, and resource
-footprints.
+Measure a clean release build and its parser delivery, source, object,
+executable, and resource footprints.
 
 ```sh
 make measure-distribution
@@ -71,13 +71,21 @@ make measure-distribution
 
 The measurement resolves dependencies before timing and then asks SwiftPM to
 clean the probe package. Network fetches are therefore excluded from the build
-duration while every compiled product is rebuilt.
+duration while every compiled product is rebuilt. On macOS, the default run
+uses the published parser artifact. Force a source baseline with a separate
+scratch directory:
+
+```sh
+python3 Scripts/measure_distribution.py \
+    --source-parsers \
+    --scratch-path .build/distribution-source
+```
 
 The command emits sorted JSON containing the Git revision, working-tree state,
 host and toolchain, clean build duration, generated parser source size and line
-count, compiled parser object size, linked probe size, bundled query resources,
-and complete linked product size. Save a result when an external system needs
-to retain it.
+count, compiled parser object size, extracted artifact size, selected host
+library size, linked probe size, bundled query resources, and complete linked
+product size. Save a result when an external system needs to retain it.
 
 ```sh
 python3 Scripts/measure_distribution.py \

@@ -31,6 +31,11 @@ MODULE_NAME = "CRorkHighlighterParsers"
 # SwiftPM describes the exact translation units selected by Package.swift.
 PARSER_TARGET_NAME = MODULE_NAME
 
+# The manifest exposes source metadata when source parser builds are requested.
+PARSER_SOURCE_ENVIRONMENT_VARIABLE = (
+    "RORK_HIGHLIGHTER_BUILD_PARSERS_FROM_SOURCE"
+)
+
 # Generated build products stay under ignored SwiftPM output by default.
 DEFAULT_OUTPUT_DIRECTORY = REPOSITORY_ROOT / ".build" / "parser-pack"
 
@@ -48,6 +53,12 @@ LANGUAGE_PACK_MANIFEST = REPOSITORY_ROOT / "LanguagePack.json"
 
 # The lock digest identifies the exact parser and query bytes behind an artifact.
 LANGUAGE_PACK_LOCK = REPOSITORY_ROOT / "LanguagePack.lock.json"
+
+# The adopted artifact lock binds published binary bytes to the source tree.
+PARSER_ARTIFACT_LOCK = REPOSITORY_ROOT / "ParserArtifact.lock.json"
+
+# The package manifest contains the remote artifact URL and SwiftPM checksum.
+PACKAGE_MANIFEST = REPOSITORY_ROOT / "Package.swift"
 
 # Binary redistribution retains the package and upstream license material.
 PACKAGE_LICENSE = REPOSITORY_ROOT / "LICENSE"
@@ -337,7 +348,8 @@ def parser_sources() -> list[Path]:
     """Returns the exact C translation units selected by Package.swift."""
     description = json.loads(
         run_command(
-            ["swift", "package", "describe", "--type", "json"]
+            ["swift", "package", "describe", "--type", "json"],
+            environment={PARSER_SOURCE_ENVIRONMENT_VARIABLE: "1"},
         ).stdout
     )
     try:
@@ -413,6 +425,49 @@ def source_tree_sha256(sources: Sequence[Path]) -> str:
         digest.update(b"\0")
         digest.update(bytes.fromhex(file_sha256(source)))
     return digest.hexdigest()
+
+
+def validate_adopted_artifact_lock() -> None:
+    """Ensures the adopted artifact still represents the locked parser source."""
+    metadata = json.loads(PARSER_ARTIFACT_LOCK.read_text(encoding="utf-8"))
+    sources = parser_sources()
+    expected_metadata = {
+        "schemaVersion": ARTIFACT_SCHEMA_VERSION,
+        "moduleName": MODULE_NAME,
+        "workingTreeDirty": False,
+        "archiveFileName": f"{MODULE_NAME}.xcframework.zip",
+        "compiledSourceSHA256": source_tree_sha256(sources),
+        "compiledSourceFiles": len(sources),
+        "compiledSourceBytes": sum(path.stat().st_size for path in sources),
+        "languagePackLockSHA256": file_sha256(LANGUAGE_PACK_LOCK),
+    }
+    mismatched_keys = [
+        key
+        for key, expected_value in expected_metadata.items()
+        if metadata.get(key) != expected_value
+    ]
+    if mismatched_keys:
+        raise ValueError(
+            "The adopted parser artifact does not match "
+            f"{', '.join(mismatched_keys)}."
+        )
+
+    archive_url = metadata.get("archiveURL")
+    checksum = metadata.get("swiftPMChecksum")
+    if not isinstance(archive_url, str) or not isinstance(checksum, str):
+        raise ValueError(
+            "The adopted parser artifact needs a URL and SwiftPM checksum."
+        )
+    if metadata.get("archiveSHA256") != checksum:
+        raise ValueError(
+            "The adopted parser artifact has inconsistent archive checksums."
+        )
+
+    package_manifest = PACKAGE_MANIFEST.read_text(encoding="utf-8")
+    if archive_url not in package_manifest or checksum not in package_manifest:
+        raise ValueError(
+            "Package.swift does not select the locked parser artifact."
+        )
 
 
 def object_path(

@@ -33,7 +33,7 @@ the initial API and correctness guarantees.
 
 - Maintain reproducible Apple XCFramework generation for the bundled parser
   module.
-- Publish the common parser artifact behind the existing package product and
-  import.
+- Keep the published common parser artifact behind the existing package
+  product and import while retaining source builds on other hosts.
 - Add a tool that builds a custom pack from a selected language list.
 - Publish common, domain, and all-language artifacts with measured size data.
