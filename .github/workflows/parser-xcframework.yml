@@ -36,7 +36,7 @@ jobs:
       - name: Build the complete parser XCFramework
         run: make parser-xcframework
       - name: Upload the parser pack
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: CRorkHighlighterParsers
           if-no-files-found: error
