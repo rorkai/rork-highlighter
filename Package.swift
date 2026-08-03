@@ -57,7 +57,18 @@ private let buildsParsersFromSource =
                 ),
                 .target(
                     name: "CRorkHighlighterSourceParsers",
-                    condition: .when(platforms: [.tvOS, .watchOS, .visionOS])
+                    condition: .when(
+                        platforms: [
+                            .tvOS,
+                            .watchOS,
+                            .visionOS,
+                            .linux,
+                            .windows,
+                            .android,
+                            .wasi,
+                            .openbsd,
+                        ]
+                    )
                 ),
             ]
         }

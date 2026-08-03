@@ -37,6 +37,13 @@ jobs:
             -quiet
           xcodebuild \
             -scheme rork-highlighter \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "${RUNNER_TEMP}/rork-highlighter-apple" \
+            CODE_SIGNING_ALLOWED=NO \
+            build \
+            -quiet
+          xcodebuild \
+            -scheme rork-highlighter \
             -destination 'platform=macOS,variant=Mac Catalyst' \
             -derivedDataPath "${RUNNER_TEMP}/rork-highlighter-apple" \
             CODE_SIGNING_ALLOWED=NO \
