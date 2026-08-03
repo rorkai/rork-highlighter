@@ -46,6 +46,37 @@ private let buildsParsersFromSource =
     private let parserTarget: Target = makeSourceParserTarget()
 #endif
 
+/// Defines the public highlighting library and its package dependencies.
+private let rorkHighlighterTarget: Target = .target(
+    name: "RorkHighlighter",
+    dependencies: [
+        "CRorkHighlighterParsers",
+        .product(
+            name: "SwiftTreeSitter",
+            package: "swift-tree-sitter"
+        ),
+        .product(
+            name: "SwiftTreeSitterLayer",
+            package: "swift-tree-sitter"
+        ),
+    ],
+    resources: [
+        .copy("Resources/Languages")
+    ]
+)
+
+/// Defines the validation target for the public highlighting library.
+private let rorkHighlighterTestsTarget: Target = .testTarget(
+    name: "RorkHighlighterTests",
+    dependencies: [
+        "RorkHighlighter",
+        .product(
+            name: "SwiftTreeSitter",
+            package: "swift-tree-sitter"
+        ),
+    ]
+)
+
 /// Defines the Swift library, its bundled parser target, and its validation
 /// tests.
 let package = Package(
@@ -73,33 +104,8 @@ let package = Package(
     ],
     targets: [
         parserTarget,
-        .target(
-            name: "RorkHighlighter",
-            dependencies: [
-                "CRorkHighlighterParsers",
-                .product(
-                    name: "SwiftTreeSitter",
-                    package: "swift-tree-sitter"
-                ),
-                .product(
-                    name: "SwiftTreeSitterLayer",
-                    package: "swift-tree-sitter"
-                ),
-            ],
-            resources: [
-                .copy("Resources/Languages")
-            ]
-        ),
-        .testTarget(
-            name: "RorkHighlighterTests",
-            dependencies: [
-                "RorkHighlighter",
-                .product(
-                    name: "SwiftTreeSitter",
-                    package: "swift-tree-sitter"
-                ),
-            ]
-        ),
+        rorkHighlighterTarget,
+        rorkHighlighterTestsTarget,
     ],
     swiftLanguageModes: [.v6],
     cLanguageStandard: .c11
