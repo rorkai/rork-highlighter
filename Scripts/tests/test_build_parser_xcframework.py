@@ -1,0 +1,271 @@
+"""Tests deterministic helpers used by the parser XCFramework builder."""
+
+import json
+from pathlib import Path
+import plistlib
+import tempfile
+import unittest
+from unittest.mock import patch
+import zipfile
+
+from Scripts import build_parser_xcframework
+
+
+class ParserXCFrameworkBuilderTests(unittest.TestCase):
+    """Verifies slice selection, archive output, and artifact validation."""
+
+    def test_selects_complete_default_matrix(self) -> None:
+        """Includes every declared Apple platform when no filter is given."""
+        selected = build_parser_xcframework.select_slices(None, False)
+
+        self.assertEqual(
+            [item.name for item in selected],
+            [
+                "macos",
+                "ios",
+                "ios-simulator",
+                "maccatalyst",
+                "tvos",
+                "tvos-simulator",
+                "watchos",
+                "watchos-simulator",
+                "visionos",
+                "visionos-simulator",
+            ],
+        )
+
+    def test_selects_one_host_architecture(self) -> None:
+        """Restricts the fast smoke artifact to the current macOS architecture."""
+        selected = build_parser_xcframework.select_slices(
+            None,
+            True,
+            host_architecture="arm64",
+        )
+
+        self.assertEqual(len(selected), 1)
+        self.assertEqual(selected[0].name, "macos")
+        self.assertEqual(
+            [item.name for item in selected[0].architectures],
+            ["arm64"],
+        )
+
+    def test_rejects_unsupported_host_architecture(self) -> None:
+        """Fails instead of silently creating an unusable host artifact."""
+        with self.assertRaises(ValueError):
+            build_parser_xcframework.select_slices(
+                None,
+                True,
+                host_architecture="powerpc",
+            )
+
+    def test_builds_expected_compile_command(self) -> None:
+        """Pins optimization, deployment target, SDK, and deterministic output."""
+        architecture = build_parser_xcframework.Architecture(
+            "arm64",
+            "arm64-apple-ios16.0",
+        )
+        source = Path("/source/parser.c")
+        destination = Path("/objects/parser.o")
+
+        with (
+            patch.object(
+                build_parser_xcframework,
+                "xcrun_tool",
+                return_value="/toolchain/clang",
+            ),
+            patch.object(
+                build_parser_xcframework,
+                "sdk_path",
+                return_value="/SDKs/iPhoneOS.sdk",
+            ),
+        ):
+            command = build_parser_xcframework.compile_command(
+                source,
+                destination,
+                architecture,
+                "iphoneos",
+            )
+
+        self.assertEqual(command[0], "/toolchain/clang")
+        self.assertIn("arm64-apple-ios16.0", command)
+        self.assertIn("/SDKs/iPhoneOS.sdk", command)
+        self.assertIn("-O2", command)
+        self.assertEqual(command[-2:], ["-o", str(destination)])
+
+    def test_writes_reproducible_archive(self) -> None:
+        """Produces identical ZIP bytes after source modification times change."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            xcframework = root / "Example.xcframework"
+            nested = xcframework / "slice"
+            nested.mkdir(parents=True)
+            (xcframework / "Info.plist").write_bytes(b"plist")
+            (nested / "library.a").write_bytes(b"binary contents")
+            first_archive = root / "first.zip"
+            second_archive = root / "second.zip"
+
+            build_parser_xcframework.write_deterministic_zip(
+                xcframework,
+                first_archive,
+            )
+            (nested / "library.a").touch()
+            build_parser_xcframework.write_deterministic_zip(
+                xcframework,
+                second_archive,
+            )
+
+            first_digest = build_parser_xcframework.file_sha256(first_archive)
+            second_digest = build_parser_xcframework.file_sha256(second_archive)
+            with zipfile.ZipFile(first_archive) as archive:
+                names = archive.namelist()
+
+        self.assertEqual(first_digest, second_digest)
+        self.assertIn("Example.xcframework/Info.plist", names)
+        self.assertIn("Example.xcframework/slice/library.a", names)
+
+    def test_removes_only_the_selected_stale_output(self) -> None:
+        """Clears an old artifact without disturbing neighboring output."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            stale_output = root / "Example.xcframework"
+            stale_output.mkdir()
+            (stale_output / "Info.plist").write_bytes(b"old")
+            neighbor = root / "keep.txt"
+            neighbor.write_bytes(b"keep")
+
+            build_parser_xcframework.remove_existing_output(stale_output)
+
+            self.assertFalse(stale_output.exists())
+            self.assertEqual(neighbor.read_bytes(), b"keep")
+
+    def test_validates_xcframework_structure(self) -> None:
+        """Accepts a complete library, header, and module map for one slice."""
+        specification = build_parser_xcframework.ParserSlice(
+            name="macos",
+            sdk="macosx",
+            supported_platform="macos",
+            supported_variant=None,
+            architectures=(
+                build_parser_xcframework.Architecture(
+                    "arm64",
+                    "arm64-apple-macos13.0",
+                ),
+            ),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            xcframework = Path(directory) / "Example.xcframework"
+            slice_directory = xcframework / "macos-arm64"
+            headers = slice_directory / "Headers"
+            headers.mkdir(parents=True)
+            library = slice_directory / "libExample.a"
+            library.write_bytes(b"archive")
+            (
+                headers
+                / build_parser_xcframework.PUBLIC_HEADER.name
+            ).write_bytes(b"header")
+            (headers / "module.modulemap").write_bytes(b"module")
+            with (xcframework / "Info.plist").open("wb") as plist_file:
+                plistlib.dump(
+                    {
+                        "AvailableLibraries": [
+                            {
+                                "LibraryIdentifier": "macos-arm64",
+                                "LibraryPath": "libExample.a",
+                                "HeadersPath": "Headers",
+                                "SupportedArchitectures": ["arm64"],
+                                "SupportedPlatform": "macos",
+                            }
+                        ]
+                    },
+                    plist_file,
+                )
+
+            libraries = (
+                build_parser_xcframework.validate_xcframework_structure(
+                    xcframework,
+                    [specification],
+                )
+            )
+
+        self.assertEqual(libraries, [library])
+
+    def test_normalizes_generated_xcframework_slice_order(self) -> None:
+        """Sorts generated library metadata before deterministic archiving."""
+        with tempfile.TemporaryDirectory() as directory:
+            xcframework = Path(directory) / "Example.xcframework"
+            xcframework.mkdir()
+            info_path = xcframework / "Info.plist"
+            with info_path.open("wb") as plist_file:
+                plistlib.dump(
+                    {
+                        "AvailableLibraries": [
+                            {"LibraryIdentifier": "macos-x86_64"},
+                            {"LibraryIdentifier": "ios-arm64"},
+                        ]
+                    },
+                    plist_file,
+                )
+
+            build_parser_xcframework.normalize_xcframework_info_plist(
+                xcframework
+            )
+
+            with info_path.open("rb") as plist_file:
+                normalized = plistlib.load(plist_file)
+
+        self.assertEqual(
+            [
+                item["LibraryIdentifier"]
+                for item in normalized["AvailableLibraries"]
+            ],
+            ["ios-arm64", "macos-x86_64"],
+        )
+
+    def test_generates_smoke_program_for_every_entry_point(self) -> None:
+        """Links each constructor so missing archive members cannot go unnoticed."""
+        source = build_parser_xcframework.smoke_test_source(
+            ["tree_sitter_swift", "tree_sitter_json"]
+        )
+
+        self.assertIn("tree_sitter_swift()", source)
+        self.assertIn("tree_sitter_json()", source)
+        self.assertIn("print(languages.count)", source)
+
+    def test_loads_unique_catalog_entry_points(self) -> None:
+        """Keeps binary symbol validation aligned with the generated catalog."""
+        entry_points = build_parser_xcframework.parser_entry_points()
+
+        self.assertEqual(len(entry_points), 36)
+        self.assertEqual(len(set(entry_points)), 36)
+        self.assertIn("tree_sitter_swift", entry_points)
+
+    def test_metadata_json_uses_camel_case_keys(self) -> None:
+        """Keeps generated sidecar naming consistent with repository manifests."""
+        slice_payload = build_parser_xcframework.slice_metadata_payload(
+            build_parser_xcframework.SliceMetadata(
+                name="macos",
+                sdk="macosx",
+                platform="macos",
+                variant=None,
+                architectures=["arm64"],
+                library_bytes=42,
+            )
+        )
+        payload = {
+            "schemaVersion": 1,
+            "workingTreeDirty": False,
+            "swiftPMChecksum": "abc",
+            "slices": [slice_payload],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "artifact.json"
+            build_parser_xcframework.write_artifact_metadata(payload, output)
+            decoded = json.loads(output.read_text(encoding="utf-8"))
+
+        self.assertEqual(decoded, payload)
+        self.assertEqual(decoded["slices"][0]["libraryBytes"], 42)
+        self.assertNotIn("library_bytes", decoded["slices"][0])
+
+
+if __name__ == "__main__":
+    unittest.main()

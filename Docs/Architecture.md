@@ -68,6 +68,28 @@ Downloaded native grammar libraries are not part of the iOS distribution
 model. Queries, themes, and other non-executable metadata can have a separate
 update policy when compatibility is validated.
 
+## Binary parser artifacts
+
+The Apple binary boundary contains only `CRorkHighlighterParsers`. The stable C
+module exposes process-lifetime parser constructors, while the public Swift
+API, query resources, themes, and documentation remain source-based. This
+avoids rebuilding generated parser tables without coupling clients to a
+precompiled Swift toolchain.
+
+`Scripts/build_parser_xcframework.py` compiles the exact C translation units
+selected by `Package.swift`. It validates `LanguagePack.lock.json`, builds
+static libraries for every supported Apple device and Simulator variant, and
+combines them into one XCFramework. The deterministic ZIP is accompanied by a
+SwiftPM checksum and a provenance manifest that records its source, toolchain,
+platform matrix, and size.
+
+The artifact retains the package license, third-party notice, and every pinned
+grammar license. A local SwiftPM smoke package imports the binary module and
+loads all parser constructors before an artifact is accepted. Binary delivery
+is a build-time optimization. It does not permit executable parser downloads
+after an Apple application has been signed, and non-Apple platforms continue
+to require source parsers.
+
 ## Licensing
 
 Rork-maintained Swift code uses Apache-2.0. Tree-sitter, SwiftTreeSitter, parser

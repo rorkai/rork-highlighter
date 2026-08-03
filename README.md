@@ -350,6 +350,26 @@ Measure a clean release build and its parser, executable, and resource sizes:
 make measure-distribution
 ```
 
+Build a host-only parser XCFramework and verify it through a local SwiftPM
+binary consumer:
+
+```bash
+make check-parser-xcframework
+```
+
+Build the release artifact with every supported Apple device and Simulator
+slice:
+
+```bash
+make parser-xcframework
+```
+
+The generated XCFramework, deterministic ZIP, SwiftPM checksum, and provenance
+manifest stay under `.build/parser-pack`. The archive retains every parser
+license and notice. This tooling establishes the binary artifact boundary while
+the published package continues to use source parsers until the precompiled
+artifact is adopted by a release.
+
 The [benchmark guide](Benchmarks/README.md) describes the regression workloads,
 reported metrics, focused runs, cross-library comparison suite, and
 machine-comparison constraints.

@@ -11,8 +11,10 @@ COMPARISON_BENCHMARK_ARGUMENTS ?=
 JAVASCRIPT_BENCHMARK_ARGUMENTS ?=
 DISTRIBUTION_PROBE_PACKAGE := Tools/DistributionProbe
 DISTRIBUTION_PROBE_SCRATCH := .build/distribution-probe
+PARSER_PACK_OUTPUT ?= .build/parser-pack
+PARSER_PACK_ARGUMENTS ?=
 
-.PHONY: build test format lint preview benchmark comparison-fixtures comparison-javascript-dependencies benchmark-comparison benchmark-comparison-swift benchmark-comparison-javascript check-comparison measure-distribution vendor-languages check-languages check-documentation check-preview check-benchmarks check
+.PHONY: build test format lint preview benchmark comparison-fixtures comparison-javascript-dependencies benchmark-comparison benchmark-comparison-swift benchmark-comparison-javascript check-comparison measure-distribution parser-xcframework vendor-languages check-languages check-documentation check-preview check-parser-xcframework check-benchmarks check
 
 build:
 	swift build -Xswiftc -warnings-as-errors
@@ -53,6 +55,9 @@ check-comparison: comparison-fixtures comparison-javascript-dependencies
 measure-distribution:
 	python3 Scripts/measure_distribution.py
 
+parser-xcframework:
+	python3 Scripts/build_parser_xcframework.py --output-directory "$(PARSER_PACK_OUTPUT)" $(PARSER_PACK_ARGUMENTS)
+
 vendor-languages:
 	python3 Scripts/vendor_languages.py --update
 
@@ -71,8 +76,16 @@ check-preview:
 	@echo "The AppKit preview build is skipped on non-macOS hosts."
 endif
 
+ifeq ($(shell uname -s),Darwin)
+check-parser-xcframework:
+	python3 Scripts/build_parser_xcframework.py --host-only --allow-dirty --output-directory .build/parser-pack-check
+else
+check-parser-xcframework:
+	@echo "The parser XCFramework check is skipped on non-macOS hosts."
+endif
+
 check-benchmarks:
 	swift build --package-path $(BENCHMARK_PACKAGE) --scratch-path $(BENCHMARK_SCRATCH) --target RorkHighlighterBenchmarks -Xswiftc -warnings-as-errors
 	swift build --package-path $(DISTRIBUTION_PROBE_PACKAGE) --scratch-path $(DISTRIBUTION_PROBE_SCRATCH) --target DistributionProbe -Xswiftc -warnings-as-errors
 
-check: lint check-languages build test check-documentation check-preview check-benchmarks
+check: lint check-languages build test check-documentation check-preview check-parser-xcframework check-benchmarks
