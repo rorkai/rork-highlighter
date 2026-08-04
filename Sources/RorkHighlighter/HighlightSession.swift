@@ -252,7 +252,8 @@ public actor HighlightSession {
             in: NSRange(
                 location: refreshRange.location,
                 length: refreshRange.length
-            )
+            ),
+            documentLength: textUTF16Length
         )
         let refreshedRanges = Set(refreshed.map(\.range))
         let offsetDelta = replacementRange.length - replacedRange.length

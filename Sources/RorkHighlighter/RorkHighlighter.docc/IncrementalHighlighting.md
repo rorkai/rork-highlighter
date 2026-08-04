@@ -45,12 +45,19 @@ to existing attributed storage:
 
 ```swift
 let renderer = TextKitHighlightRenderer(theme: .rorkDark)
+#if canImport(AppKit)
+guard let textStorage = textView.textStorage else {
+    return
+}
+#else
+let textStorage = textView.textStorage
+#endif
 let snapshot = try await session.snapshot()
-try renderer.render(snapshot, in: textView.textStorage)
+try renderer.render(snapshot, in: textStorage)
 
 let range = UTF16Range(location: 10, length: 1)
 let replacement = "updated"
-textView.textStorage.replaceCharacters(
+textStorage.replaceCharacters(
     in: NSRange(location: range.location, length: range.length),
     with: replacement
 )
@@ -58,7 +65,7 @@ let update = try await session.replaceCharacters(
     in: range,
     with: replacement
 )
-try renderer.render(update, in: textView.textStorage)
+try renderer.render(update, in: textStorage)
 ```
 
 ``TextKitHighlightRenderer`` retains native style and font caches across

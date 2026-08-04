@@ -131,16 +131,37 @@
                 textStorage.apply(baseAttributes, to: nativeRange)
             }
 
-            var firstCandidateRangeIndex = ranges.startIndex
-            var previousHighlightLocation: Int?
-            for highlight in snapshot.highlights {
-                if let previousHighlightLocation,
-                    highlight.range.location < previousHighlightLocation
-                {
-                    firstCandidateRangeIndex = ranges.startIndex
-                }
-                previousHighlightLocation = highlight.range.location
+            if snapshot.hasParserProducedHighlightRanges {
+                applyMonotonicHighlights(
+                    snapshot.highlights,
+                    to: textStorage,
+                    in: ranges
+                )
+            } else {
+                applyStoredHighlights(
+                    snapshot.highlights,
+                    to: textStorage,
+                    in: ranges
+                )
+            }
+        }
 
+        /// Applies parser-produced highlights with one forward range cursor.
+        ///
+        /// Parser snapshots contain captures sorted by source location. The
+        /// cursor therefore never needs to revisit an earlier rendering range.
+        ///
+        /// - Parameters:
+        ///   - highlights: The parser-produced highlights to apply.
+        ///   - textStorage: The mutable attributed string receiving attributes.
+        ///   - ranges: The sorted source ranges requiring new attributes.
+        private mutating func applyMonotonicHighlights(
+            _ highlights: [HighlightSpan],
+            to textStorage: NSMutableAttributedString,
+            in ranges: [UTF16Range]
+        ) {
+            var firstCandidateRangeIndex = ranges.startIndex
+            for highlight in highlights {
                 while firstCandidateRangeIndex < ranges.endIndex,
                     ranges[firstCandidateRangeIndex].upperBound
                         <= highlight.range.location
@@ -151,42 +172,97 @@
                     break
                 }
 
-                var attributes: NativeHighlightAttributes?
-                var rangeIndex = firstCandidateRangeIndex
-                while rangeIndex < ranges.endIndex,
-                    ranges[rangeIndex].location < highlight.range.upperBound
-                {
-                    let range = ranges[rangeIndex]
-                    let lowerBound = max(
-                        range.location,
-                        highlight.range.location
-                    )
-                    let upperBound = min(
-                        range.upperBound,
-                        highlight.range.upperBound
-                    )
-                    if lowerBound < upperBound {
-                        let resolvedAttributes: NativeHighlightAttributes
-                        if let attributes {
-                            resolvedAttributes = attributes
-                        } else {
-                            let newAttributes = attributeCache.attributes(
-                                for: styleCache.style(for: highlight),
-                                includingBaseFont: false
-                            )
-                            attributes = newAttributes
-                            resolvedAttributes = newAttributes
-                        }
-                        textStorage.apply(
-                            resolvedAttributes,
-                            to: NSRange(
-                                location: lowerBound,
-                                length: upperBound - lowerBound
-                            )
-                        )
-                    }
-                    rangeIndex += 1
+                apply(
+                    highlight,
+                    to: textStorage,
+                    in: ranges,
+                    startingAt: firstCandidateRangeIndex
+                )
+            }
+        }
+
+        /// Applies public highlights in their caller-supplied order.
+        ///
+        /// Public snapshots may move backward between source locations, so
+        /// each highlight independently finds its first candidate range.
+        ///
+        /// - Parameters:
+        ///   - highlights: The caller-supplied highlights to apply.
+        ///   - textStorage: The mutable attributed string receiving attributes.
+        ///   - ranges: The sorted source ranges requiring new attributes.
+        private mutating func applyStoredHighlights(
+            _ highlights: [HighlightSpan],
+            to textStorage: NSMutableAttributedString,
+            in ranges: [UTF16Range]
+        ) {
+            for highlight in highlights {
+                guard
+                    let firstCandidateRangeIndex = ranges.firstIndex(where: {
+                        $0.upperBound > highlight.range.location
+                    })
+                else {
+                    continue
                 }
+
+                apply(
+                    highlight,
+                    to: textStorage,
+                    in: ranges,
+                    startingAt: firstCandidateRangeIndex
+                )
+            }
+        }
+
+        /// Applies one highlight where it intersects requested ranges.
+        ///
+        /// - Parameters:
+        ///   - highlight: The highlight retaining its stored precedence.
+        ///   - textStorage: The mutable attributed string receiving attributes.
+        ///   - ranges: The sorted source ranges requiring new attributes.
+        ///   - firstCandidateRangeIndex: The first range ending after the
+        ///     highlight begins.
+        @inline(__always)
+        private mutating func apply(
+            _ highlight: HighlightSpan,
+            to textStorage: NSMutableAttributedString,
+            in ranges: [UTF16Range],
+            startingAt firstCandidateRangeIndex: [UTF16Range].Index
+        ) {
+            var attributes: NativeHighlightAttributes?
+            var rangeIndex = firstCandidateRangeIndex
+            while rangeIndex < ranges.endIndex,
+                ranges[rangeIndex].location < highlight.range.upperBound
+            {
+                let range = ranges[rangeIndex]
+                let lowerBound = max(
+                    range.location,
+                    highlight.range.location
+                )
+                let upperBound = min(
+                    range.upperBound,
+                    highlight.range.upperBound
+                )
+                if lowerBound < upperBound {
+                    let resolvedAttributes: NativeHighlightAttributes
+                    if let attributes {
+                        resolvedAttributes = attributes
+                    } else {
+                        let newAttributes = attributeCache.attributes(
+                            for: styleCache.style(for: highlight),
+                            includingBaseFont: false
+                        )
+                        attributes = newAttributes
+                        resolvedAttributes = newAttributes
+                    }
+                    textStorage.apply(
+                        resolvedAttributes,
+                        to: NSRange(
+                            location: lowerBound,
+                            length: upperBound - lowerBound
+                        )
+                    )
+                }
+                rangeIndex += 1
             }
         }
     }

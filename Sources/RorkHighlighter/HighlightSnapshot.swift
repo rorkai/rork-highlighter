@@ -19,7 +19,8 @@ public struct HighlightSnapshot: Hashable, Sendable {
     ///
     /// Publicly constructed snapshots remain untrusted because their captures
     /// can contain arbitrary offsets. Parser-produced snapshots use this marker
-    /// to avoid repeating a complete Unicode boundary scan while rendering.
+    /// to avoid repeating a complete Unicode boundary scan and retain the
+    /// collector's source ordering while rendering.
     let hasParserProducedHighlightRanges: Bool
 
     /// Creates an immutable highlighting snapshot.

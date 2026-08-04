@@ -93,8 +93,15 @@ let renderer = TextKitHighlightRenderer(
     theme: .rorkDark,
     font: .monospacedSystemFont(ofSize: 15, weight: .regular)
 )
+#if canImport(AppKit)
+guard let textStorage = textView.textStorage else {
+    return
+}
+#else
+let textStorage = textView.textStorage
+#endif
 let snapshot = try await session.snapshot()
-try renderer.render(snapshot, in: textView.textStorage)
+try renderer.render(snapshot, in: textStorage)
 ```
 
 Apply each character edit to TextKit and the highlighting session before
@@ -104,7 +111,7 @@ rendering the returned update:
 let editRange = UTF16Range(location: 24, length: 4)
 let replacement = "2000"
 
-textView.textStorage.replaceCharacters(
+textStorage.replaceCharacters(
     in: NSRange(location: editRange.location, length: editRange.length),
     with: replacement
 )
@@ -112,7 +119,7 @@ let update = try await session.replaceCharacters(
     in: editRange,
     with: replacement
 )
-try renderer.render(update, in: textView.textStorage)
+try renderer.render(update, in: textStorage)
 ```
 
 The renderer resets and reapplies only syntax-owned font, foreground,

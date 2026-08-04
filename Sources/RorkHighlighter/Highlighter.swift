@@ -258,7 +258,8 @@ public struct Highlighter: Sendable {
                 text: text,
                 language: language,
                 layer: layer,
-                in: fullRange
+                in: fullRange,
+                documentLength: documentLength
             ),
             utf16Length: documentLength
         )
@@ -276,13 +277,15 @@ public struct Highlighter: Sendable {
     ///   - language: The canonical root language identifier.
     ///   - layer: The parsed root language layer.
     ///   - range: The UTF-16 region whose intersecting captures are requested.
+    ///   - documentLength: The validated UTF-16 source length.
     /// - Returns: Highlight spans in deterministic application order.
     /// - Throws: ``HighlighterError`` when the tree or query is unavailable.
     func makeHighlights(
         text: String,
         language: LanguageID,
         layer: LanguageLayer,
-        in range: NSRange
+        in range: NSRange,
+        documentLength: Int
     ) throws(HighlighterError) -> [HighlightSpan] {
         guard range.length > 0 else {
             return []
@@ -298,7 +301,7 @@ public struct Highlighter: Sendable {
 
             if snapshot.sublayerSnapshots.isEmpty,
                 range.location == 0,
-                range.length == text.utf16.count
+                range.length == documentLength
             {
                 return try makeRootHighlights(
                     from: snapshot.rootSnapshot,

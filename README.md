@@ -260,12 +260,19 @@ Keep one session and TextKit renderer for each open document:
 ```swift
 let session = try highlighter.makeSession(source, as: .swift)
 let renderer = TextKitHighlightRenderer(theme: .rorkDark)
+#if canImport(AppKit)
+guard let textStorage = textView.textStorage else {
+    return
+}
+#else
+let textStorage = textView.textStorage
+#endif
 let snapshot = try await session.snapshot()
-try renderer.render(snapshot, in: textView.textStorage)
+try renderer.render(snapshot, in: textStorage)
 
 let editRange = UTF16Range(location: 10, length: 1)
 let replacement = "updated"
-textView.textStorage.replaceCharacters(
+textStorage.replaceCharacters(
     in: NSRange(location: editRange.location, length: editRange.length),
     with: replacement
 )
@@ -273,13 +280,15 @@ let update = try await session.replaceCharacters(
     in: editRange,
     with: replacement
 )
-try renderer.render(update, in: textView.textStorage)
+try renderer.render(update, in: textStorage)
 ```
 
 Apply the same character edit to TextKit before rendering its matching update.
 The renderer restyles only the replacement and invalidated syntax ranges. It
-falls back to a verified complete render when a revision is skipped or its
-storage, theme, or font changes.
+does not compare the complete source after every update. A skipped revision, a
+different storage instance, an incompatible source length, or an appearance
+change triggers a verified complete render. Reject same-length out-of-order
+edits through the document revision before passing them to the renderer.
 
 ## Registering a language
 

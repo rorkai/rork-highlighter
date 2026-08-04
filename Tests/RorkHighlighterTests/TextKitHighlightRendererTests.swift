@@ -281,11 +281,15 @@
         @Test
         func rendersOutOfOrderSpansAcrossDisjointRanges() throws {
             let source = "abcdefghij"
+            let leadingRange = UTF16Range(location: 0, length: 2)
+            let trailingRange = UTF16Range(location: 8, length: 2)
             let initialSnapshot = HighlightSnapshot(
                 text: source,
                 language: .swift,
                 revision: 0,
-                highlights: []
+                highlights: [
+                    HighlightSpan(scope: "string", range: trailingRange)
+                ]
             )
             let storage = NSTextStorage(string: source)
             let font = TestTextKitFont.monospacedSystemFont(
@@ -298,8 +302,6 @@
             )
             try renderer.render(initialSnapshot, in: storage)
 
-            let leadingRange = UTF16Range(location: 0, length: 2)
-            let trailingRange = UTF16Range(location: 8, length: 2)
             let latestSnapshot = HighlightSnapshot(
                 text: source,
                 language: .swift,
@@ -313,7 +315,7 @@
             let update = HighlightUpdate(
                 replacedRange: unchangedRange,
                 replacementRange: unchangedRange,
-                invalidatedRanges: [leadingRange, trailingRange],
+                invalidatedRanges: [leadingRange],
                 snapshot: latestSnapshot
             )
 
@@ -627,7 +629,7 @@
             )
             let character = nativeText.substring(with: characterRange)
             return character.unicodeScalars.contains {
-                $0.properties.isEmoji
+                $0.properties.isEmojiPresentation
             }
         }
 
