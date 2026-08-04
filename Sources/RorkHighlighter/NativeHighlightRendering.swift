@@ -132,7 +132,15 @@
             }
 
             var firstCandidateRangeIndex = ranges.startIndex
+            var previousHighlightLocation: Int?
             for highlight in snapshot.highlights {
+                if let previousHighlightLocation,
+                    highlight.range.location < previousHighlightLocation
+                {
+                    firstCandidateRangeIndex = ranges.startIndex
+                }
+                previousHighlightLocation = highlight.range.location
+
                 while firstCandidateRangeIndex < ranges.endIndex,
                     ranges[firstCandidateRangeIndex].upperBound
                         <= highlight.range.location
