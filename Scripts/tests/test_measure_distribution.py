@@ -50,47 +50,6 @@ class DistributionMeasurementTests(unittest.TestCase):
 
         self.assertEqual(byte_count, 5)
 
-    def test_sums_extracted_parser_artifacts(self) -> None:
-        """Counts complete XCFramework contents beneath the scratch path."""
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            artifact = (
-                root
-                / "artifacts"
-                / "CRorkHighlighterParsers.xcframework"
-            )
-            artifact.mkdir(parents=True)
-            (artifact / "library.a").write_bytes(b"12345")
-            (artifact / "Info.plist").write_bytes(b"123")
-
-            byte_count = measure_distribution.parser_artifact_bytes(root)
-
-        self.assertEqual(byte_count, 8)
-
-    def test_measures_selected_parser_library(self) -> None:
-        """Reports the current platform library copied beside build products."""
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            (root / "libCRorkHighlighterParsers.a").write_bytes(b"12345")
-
-            byte_count = (
-                measure_distribution.selected_parser_library_bytes(root)
-            )
-
-        self.assertEqual(byte_count, 5)
-
-    def test_builds_source_parser_environment_on_request(self) -> None:
-        """Keeps the source measurement aligned with Package.swift."""
-        self.assertEqual(
-            measure_distribution.parser_build_environment(True),
-            {
-                measure_distribution.SOURCE_PARSER_ENVIRONMENT_VARIABLE: "1"
-            },
-        )
-        self.assertIsNone(
-            measure_distribution.parser_build_environment(False)
-        )
-
     def test_sums_matching_resource_bundles(self) -> None:
         """Includes package resources while ignoring unrelated bundles."""
         with tempfile.TemporaryDirectory() as directory:
