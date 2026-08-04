@@ -9,6 +9,86 @@ import RorkHighlighter
     import SwiftUI
 #endif
 
+#if canImport(AppKit)
+    /// Owns the TextKit state used by one serial incremental benchmark.
+    private actor TextKitIncrementalBenchmark {
+        /// Holds the incremental parser state for the benchmark document.
+        private let session: HighlightSession
+
+        /// Applies update ranges while retaining native style caches.
+        private let renderer: TextKitHighlightRenderer
+
+        /// Holds the attributed document updated during every iteration.
+        private let textStorage: NSTextStorage
+
+        /// Identifies the fixed-width revision marker edited each time.
+        private let markerRange: UTF16Range
+
+        /// Creates synchronized parser and TextKit state for one fixture.
+        ///
+        /// - Parameters:
+        ///   - fixture: The source document used by every iteration.
+        ///   - highlighter: The highlighter used for initial and incremental work.
+        /// - Throws: Highlighting or rendering failures during setup.
+        init(
+            fixture: BenchmarkSource,
+            highlighter: Highlighter
+        ) throws {
+            let snapshot = try highlighter.highlight(
+                fixture.text,
+                as: .swift
+            )
+            let renderer = TextKitHighlightRenderer(theme: .rorkDark)
+            let textStorage = NSTextStorage(string: fixture.text)
+            try renderer.render(snapshot, in: textStorage)
+
+            self.session = try highlighter.makeSession(
+                fixture.text,
+                as: .swift
+            )
+            self.renderer = renderer
+            self.textStorage = textStorage
+            self.markerRange = BenchmarkFixtures.revisionMarkerRange(
+                in: fixture.text
+            )
+        }
+
+        /// Applies one fixed-width edit through the parser and TextKit renderer.
+        ///
+        /// - Parameter iteration: The benchmark iteration selecting the marker.
+        /// - Returns: The unchanged document length consumed by `blackHole`.
+        /// - Throws: Highlighting or rendering failures during the edit.
+        func renderEdit(iteration: Int) async throws -> Int {
+            let replacement =
+                iteration.isMultiple(of: 2)
+                ? "2000"
+                : BenchmarkFixtures.revisionMarker
+            textStorage.replaceCharacters(
+                in: NSRange(
+                    location: markerRange.location,
+                    length: markerRange.length
+                ),
+                with: replacement
+            )
+
+            #if compiler(>=6.1)
+                let update = try await session.replaceCharacters(
+                    in: markerRange,
+                    with: replacement
+                )
+            #else
+                // Swift 6.0 imports this cross-package actor call as synchronous.
+                let update = try session.replaceCharacters(
+                    in: markerRange,
+                    with: replacement
+                )
+            #endif
+            try renderer.render(update, in: textStorage)
+            return textStorage.length
+        }
+    }
+#endif
+
 /// Creates benchmark state before any measured iteration begins.
 private enum BenchmarkSetup {
     /// Creates the standard highlighter or stops on an invalid bundled pack.
@@ -61,6 +141,30 @@ private enum BenchmarkSetup {
             )
         }
     }
+
+    #if canImport(AppKit)
+        /// Creates synchronized state for incremental TextKit measurements.
+        ///
+        /// - Parameters:
+        ///   - fixture: The source document edited by the benchmark.
+        ///   - highlighter: The highlighter shared by benchmark setup.
+        /// - Returns: Actor-isolated parser and TextKit state.
+        static func textKitIncrementalBenchmark(
+            for fixture: BenchmarkSource,
+            using highlighter: Highlighter
+        ) -> TextKitIncrementalBenchmark {
+            do {
+                return try TextKitIncrementalBenchmark(
+                    fixture: fixture,
+                    highlighter: highlighter
+                )
+            } catch {
+                preconditionFailure(
+                    "Could not initialize incremental TextKit rendering: \(error)"
+                )
+            }
+        }
+    #endif
 }
 
 /// Registers benchmarks for the public highlighting and rendering workflows.
@@ -255,5 +359,22 @@ let benchmarks: @Sendable () -> Void = {
                 )
             }
         }
+
+        let textKitIncrementalBenchmark =
+            BenchmarkSetup.textKitIncrementalBenchmark(
+                for: largeFixture,
+                using: highlighter
+            )
+        let incrementalTextKitRender: @Sendable (Benchmark) async throws -> Void = { benchmark in
+            blackHole(
+                try await textKitIncrementalBenchmark.renderEdit(
+                    iteration: benchmark.currentIteration
+                )
+            )
+        }
+        Benchmark(
+            "Render/TextKitIncrementalEdit/Large",
+            closure: incrementalTextKitRender
+        )
     #endif
 }

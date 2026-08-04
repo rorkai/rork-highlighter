@@ -21,7 +21,8 @@ separate SwiftPM dependency for every Tree-sitter grammar.
 - Incremental parsing inside one actor per document.
 - Explicit UTF-16 ranges that match Foundation text systems.
 - Renderer-neutral light and dark themes with hierarchical scope matching.
-- Native SwiftUI `AttributedString` and TextKit `NSAttributedString` output.
+- Native SwiftUI `AttributedString`, TextKit `NSAttributedString`, and
+  incremental `NSTextStorage` rendering.
 - Deterministic aliases, filenames, and file-extension discovery.
 - Nested-language infrastructure through SwiftTreeSitterLayer.
 - A parser-neutral registry for custom and generated language packs.
@@ -195,6 +196,10 @@ let rendered = try snapshot.nsAttributedString(
 Assign the result directly to APIs such as `UILabel.attributedText` or
 `NSTextStorage.setAttributedString(_:)`.
 
+Use `TextKitHighlightRenderer` when a text view already owns its attributed
+storage. It preserves paragraph styles, links, attachments, and custom
+attributes while updating syntax-owned attributes in place.
+
 Rendering preserves the snapshot's UTF-16 ranges and overlap order. Invalid
 ranges throw `HighlightRenderingError` instead of being rounded or trapping.
 The native APIs are available when SwiftUI, UIKit, or AppKit is present.
@@ -250,24 +255,31 @@ Markdown, JavaScript, TypeScript, TSX, and Swift.
 
 ## Incremental highlighting
 
-Keep one session for each open document:
+Keep one session and TextKit renderer for each open document:
 
 ```swift
-let session = try highlighter.makeSession(source, as: .json)
+let session = try highlighter.makeSession(source, as: .swift)
+let renderer = TextKitHighlightRenderer(theme: .rorkDark)
+let snapshot = try await session.snapshot()
+try renderer.render(snapshot, in: textView.textStorage)
 
-let update = try await session.replaceCharacters(
-    in: UTF16Range(location: 10, length: 1),
-    with: #""new value""#
+let editRange = UTF16Range(location: 10, length: 1)
+let replacement = "updated"
+textView.textStorage.replaceCharacters(
+    in: NSRange(location: editRange.location, length: editRange.length),
+    with: replacement
 )
-
-render(update.snapshot.highlights)
-invalidate(update.invalidatedRanges)
+let update = try await session.replaceCharacters(
+    in: editRange,
+    with: replacement
+)
+try renderer.render(update, in: textView.textStorage)
 ```
 
-The session applies a Tree-sitter edit to the previous syntax tree and reparses
-incrementally. It currently returns a complete highlight snapshot together with
-the invalidated ranges. A later renderer layer can consume token deltas without
-changing the edit API.
+Apply the same character edit to TextKit before rendering its matching update.
+The renderer restyles only the replacement and invalidated syntax ranges. It
+falls back to a verified complete render when a revision is skipped or its
+storage, theme, or font changes.
 
 ## Registering a language
 

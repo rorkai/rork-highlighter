@@ -20,10 +20,10 @@ serializes edits and keeps mutable Tree-sitter state from crossing concurrency
 boundaries.
 
 An incremental edit updates the existing syntax tree before reparsing. The
-first implementation queries a complete snapshot after each edit and also
-returns Tree-sitter invalidation ranges. A future renderer can replace the
-complete query with visible-range and token-delta processing without changing
-edit semantics.
+session retains captures outside the invalidated syntax region and queries only
+the changed portion before assembling a complete snapshot. `HighlightUpdate`
+also carries the invalidated ranges so `TextKitHighlightRenderer` can restyle
+existing attributed storage without rebuilding the complete document.
 
 ## Language definitions
 

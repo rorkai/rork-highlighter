@@ -3,6 +3,13 @@
 This document records the user-visible changes in each Rork Highlighter
 release.
 
+## Unreleased
+
+### Added
+
+- Added reusable TextKit rendering that applies incremental invalidation ranges
+  to existing `NSTextStorage` while preserving paragraph and custom attributes.
+
 ## 0.2.1 - 2026-08-03
 
 ### Added

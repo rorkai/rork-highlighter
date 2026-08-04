@@ -23,6 +23,9 @@ public actor HighlightSession {
     /// Holds the source text represented by `layer`.
     private var text: String
 
+    /// Caches the source length used by Tree-sitter and TextKit ranges.
+    private var textUTF16Length: Int
+
     /// Holds the monotonically increasing document revision.
     private var revision: UInt64
 
@@ -46,7 +49,7 @@ public actor HighlightSession {
         text: String,
         language: LanguageID
     ) throws(HighlighterError) {
-        _ = try highlighter.validateDocumentLength(text)
+        let textUTF16Length = try highlighter.validateDocumentLength(text)
         let languageDefinition = try highlighter.languageDefinition(
             for: language
         )
@@ -58,7 +61,8 @@ public actor HighlightSession {
             text: text,
             language: languageDefinition.id,
             revision: 0,
-            layer: layer
+            layer: layer,
+            documentLength: textUTF16Length
         )
 
         self.highlighter = highlighter
@@ -66,6 +70,7 @@ public actor HighlightSession {
         self.language = languageDefinition.id
         self.layer = layer
         self.text = text
+        self.textUTF16Length = textUTF16Length
         self.revision = 0
         self.cachedHighlights = snapshot.highlights
     }
@@ -90,7 +95,8 @@ public actor HighlightSession {
                 parserProducedText: text,
                 language: languageDefinition.id,
                 revision: revision,
-                highlights: cachedHighlights
+                highlights: cachedHighlights,
+                utf16Length: textUTF16Length
             )
         }
 
@@ -98,7 +104,8 @@ public actor HighlightSession {
             text: text,
             language: languageDefinition.id,
             revision: revision,
-            layer: layer
+            layer: layer,
+            documentLength: textUTF16Length
         )
         cachedHighlights = snapshot.highlights
         return snapshot
@@ -121,7 +128,7 @@ public actor HighlightSession {
         in range: UTF16Range,
         with replacement: String
     ) throws(HighlighterError) -> HighlightUpdate {
-        let oldLength = text.utf16.count
+        let oldLength = textUTF16Length
         guard range.upperBound <= oldLength else {
             throw HighlighterError.rangeOutOfBounds(
                 range: range,
@@ -138,13 +145,24 @@ public actor HighlightSession {
             in: text
         )
 
+        let replacementLength = replacement.utf16.count
+        let retainedLength = oldLength - range.length
+        let (newLength, lengthOverflowed) = retainedLength.addingReportingOverflow(
+            replacementLength
+        )
+        guard !lengthOverflowed else {
+            throw HighlighterError.documentTooLarge
+        }
+        let updatedTextUTF16Length = try highlighter.validateDocumentLength(
+            newLength
+        )
+
         var updatedText = text
         updatedText.replaceSubrange(stringRange, with: replacement)
-        _ = try highlighter.validateDocumentLength(updatedText)
 
         let replacementRange = UTF16Range(
             location: range.location,
-            length: replacement.utf16.count
+            length: replacementLength
         )
         let newEndPoint = Self.endPoint(
             of: replacement,
@@ -165,11 +183,12 @@ public actor HighlightSession {
         )
 
         text = updatedText
+        textUTF16Length = updatedTextUTF16Length
         revision += 1
 
         let invalidatedRanges = Self.ranges(
             from: invalidated,
-            documentLength: updatedText.utf16.count
+            documentLength: updatedTextUTF16Length
         )
 
         do {
@@ -220,7 +239,7 @@ public actor HighlightSession {
             let refreshRange = Self.refreshRange(
                 invalidatedRanges: invalidatedRanges,
                 replacementRange: replacementRange,
-                documentLength: text.utf16.count
+                documentLength: textUTF16Length
             )
         else {
             return []

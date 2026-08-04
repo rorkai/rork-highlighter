@@ -12,6 +12,9 @@ public struct HighlightSnapshot: Hashable, Sendable {
     /// Holds every highlight span in deterministic application order.
     public let highlights: [HighlightSpan]
 
+    /// Caches the Foundation-native length used by incremental renderers.
+    let utf16Length: Int
+
     /// Records whether every range came from the producing parser.
     ///
     /// Publicly constructed snapshots remain untrusted because their captures
@@ -37,6 +40,7 @@ public struct HighlightSnapshot: Hashable, Sendable {
             language: language,
             revision: revision,
             highlights: highlights,
+            utf16Length: text.utf16.count,
             hasParserProducedHighlightRanges: false
         )
     }
@@ -52,17 +56,20 @@ public struct HighlightSnapshot: Hashable, Sendable {
     ///   - language: The root language used to parse the text.
     ///   - revision: The document revision represented by the snapshot.
     ///   - highlights: The ordered captures produced by Tree-sitter.
+    ///   - utf16Length: The validated UTF-16 length of the parsed source.
     init(
         parserProducedText text: String,
         language: LanguageID,
         revision: UInt64,
-        highlights: [HighlightSpan]
+        highlights: [HighlightSpan],
+        utf16Length: Int
     ) {
         self.init(
             text: text,
             language: language,
             revision: revision,
             highlights: highlights,
+            utf16Length: utf16Length,
             hasParserProducedHighlightRanges: true
         )
     }
@@ -74,6 +81,7 @@ public struct HighlightSnapshot: Hashable, Sendable {
     ///   - language: The root language used to parse the text.
     ///   - revision: The document revision represented by the snapshot.
     ///   - highlights: The ordered captures applied during rendering.
+    ///   - utf16Length: The UTF-16 length of the source text.
     ///   - hasParserProducedHighlightRanges: Whether parsing produced the
     ///     capture ranges.
     private init(
@@ -81,12 +89,14 @@ public struct HighlightSnapshot: Hashable, Sendable {
         language: LanguageID,
         revision: UInt64,
         highlights: [HighlightSpan],
+        utf16Length: Int,
         hasParserProducedHighlightRanges: Bool
     ) {
         self.text = text
         self.language = language
         self.revision = revision
         self.highlights = highlights
+        self.utf16Length = utf16Length
         self.hasParserProducedHighlightRanges =
             hasParserProducedHighlightRanges
     }

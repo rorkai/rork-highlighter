@@ -82,6 +82,54 @@ uses the standard `.font`, `.underlineStyle`, and `.strikethroughStyle` keys, so
 the result can be assigned directly to `UILabel`, `UITextView`, `NSTextView`,
 and `NSTextStorage` APIs.
 
+## Update TextKit storage incrementally
+
+Create one ``TextKitHighlightRenderer`` beside each changing storage instance.
+The storage must contain the source represented by the first snapshot:
+
+```swift
+let session = try highlighter.makeSession(source, as: .swift)
+let renderer = TextKitHighlightRenderer(
+    theme: .rorkDark,
+    font: .monospacedSystemFont(ofSize: 15, weight: .regular)
+)
+let snapshot = try await session.snapshot()
+try renderer.render(snapshot, in: textView.textStorage)
+```
+
+Apply each character edit to TextKit and the highlighting session before
+rendering the returned update:
+
+```swift
+let editRange = UTF16Range(location: 24, length: 4)
+let replacement = "2000"
+
+textView.textStorage.replaceCharacters(
+    in: NSRange(location: editRange.location, length: editRange.length),
+    with: replacement
+)
+let update = try await session.replaceCharacters(
+    in: editRange,
+    with: replacement
+)
+try renderer.render(update, in: textView.textStorage)
+```
+
+The renderer resets and reapplies only syntax-owned font, foreground,
+background, underline, and strikethrough values inside the replacement and
+invalidated ranges. Paragraph styles, links, attachments, and custom attributes
+remain untouched.
+
+Apply updates in document revision order. The incremental path deliberately
+does not compare the complete source string after each edit. A skipped revision,
+another storage instance, or an incompatible length triggers a verified complete
+render. A same-length out-of-order edit remains the caller's responsibility to
+reject through its document revision.
+
+Changing ``TextKitHighlightRenderer/theme`` or its platform font clears cached
+document state. Render the current complete snapshot after changing appearance,
+or pass the next update when the storage already contains that snapshot source.
+
 ## Preserve capture precedence
 
 The renderer applies ``HighlightSnapshot/highlights`` in their stored order.

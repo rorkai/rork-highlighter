@@ -17,8 +17,8 @@ the initial API and correctness guarantees.
 - Keep hierarchical theme resolution independent of any rendering framework.
 - Provide native `AttributedString` and `NSAttributedString` output on Apple
   platforms.
-- Add TextKit adapters that can apply invalidated ranges without rebuilding an
-  entire document.
+- Keep incremental TextKit rendering aligned with session invalidation ranges
+  without rebuilding an entire attributed document.
 - Keep raw highlight spans available for custom editors and servers.
 
 ## Common languages

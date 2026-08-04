@@ -33,7 +33,8 @@ The suite generates its inputs before measurement begins. Swift fixtures cover
 roughly 4 KiB, 128 KiB, and 1 MiB documents. The workloads include standard
 catalog initialization, one-shot Swift highlighting, HTML with JavaScript and
 CSS injections, a fixed-width incremental edit, hierarchical theme resolution,
-and native attributed rendering where those frameworks are available.
+native attributed rendering, and incremental TextKit storage rendering where
+those frameworks are available.
 
 Incremental coverage includes fixed-width replacements near both ends of the
 document and edits that alternate between shorter and longer text. The

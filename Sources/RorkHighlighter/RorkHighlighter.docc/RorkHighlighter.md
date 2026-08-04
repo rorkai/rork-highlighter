@@ -37,6 +37,7 @@ to custom editors, terminal clients, and servers that need complete control.
 - <doc:IncrementalHighlighting>
 - ``HighlightSession``
 - ``HighlightUpdate``
+- ``TextKitHighlightRenderer``
 - ``UTF16Range``
 
 ### Languages
