@@ -78,7 +78,7 @@ Highlight an immutable source string:
 import RorkHighlighter
 
 let highlighter = try Highlighter()
-let source = #"let greeting = "Hello, Rork!""#
+let source = #"let greeting = "Hello, code!""#
 let snapshot = try highlighter.highlight(
     source,
     as: .swift
@@ -94,8 +94,10 @@ extension:
 
 ```swift
 import Foundation
+import RorkHighlighter
 
-let snapshot = try highlighter.highlight(
+let source = #"let greeting = "Hello, code!""#
+let snapshot = try Highlighter().highlight(
     source,
     for: URL(fileURLWithPath: "/tmp/WelcomeView.swift")
 )
@@ -127,10 +129,14 @@ broader styles. `HighlightColor`, `HighlightStyle`, `HighlightTheme`, and
 Create one actor-isolated session for each changing document:
 
 ```swift
+import RorkHighlighter
+
+let source = #"let greeting = "Hello, code!""#
+let highlighter = try Highlighter()
 let session = try highlighter.makeSession(source, as: .swift)
 
 let update = try await session.replaceCharacters(
-    in: UTF16Range(location: 24, length: 4),
+    in: UTF16Range(location: 23, length: 4),
     with: "Rork"
 )
 
@@ -197,6 +203,8 @@ Create a complete `NSAttributedString` when the destination does not need
 incremental editing:
 
 ```swift
+let source = #"let greeting = "Hello, Rork!""#
+let snapshot = try Highlighter().highlight(source, as: .swift)
 let rendered = try snapshot.nsAttributedString(
     theme: .rorkDark,
     font: .monospacedSystemFont(ofSize: 15, weight: .regular)
@@ -230,6 +238,7 @@ attributes remain under application control.
 import RorkHighlighter
 import UIKit
 
+let source = #"let greeting = "Hello, Rork!""#
 let snapshot = try Highlighter().highlight(source, as: .swift)
 textView.text = snapshot.text
 
@@ -243,6 +252,7 @@ try renderer.render(snapshot, in: textView.textStorage)
 import AppKit
 import RorkHighlighter
 
+let source = #"let greeting = "Hello, Rork!""#
 let snapshot = try Highlighter().highlight(source, as: .swift)
 textView.string = snapshot.text
 

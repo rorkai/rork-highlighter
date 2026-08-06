@@ -21,18 +21,18 @@ YAML.
 Select a language explicitly when its identity is already known:
 
 ```swift
-let snapshot = try highlighter.highlight(
-    #"let greeting = "Hello""#,
-    as: .swift
-)
+let source = #"let greeting = "Hello""#
+let snapshot = try highlighter.highlight(source, as: .swift)
 ```
 
 Use a file URL when its filename or extension should choose the language:
 
 ```swift
 import Foundation
+import RorkHighlighter
 
-let snapshot = try highlighter.highlight(
+let source = #"{"name":"Rork"}"#
+let snapshot = try Highlighter().highlight(
     source,
     for: URL(fileURLWithPath: "/tmp/settings.json")
 )

@@ -7,6 +7,10 @@ Preserve Tree-sitter state across document edits.
 Create one session for each changing document:
 
 ```swift
+import RorkHighlighter
+
+let highlighter = try Highlighter()
+let source = #"{"name":"Rork"}"#
 let session = try highlighter.makeSession(source, as: .json)
 ```
 
@@ -19,8 +23,8 @@ Editor ranges use UTF-16 offsets:
 
 ```swift
 let update = try await session.replaceCharacters(
-    in: UTF16Range(location: 10, length: 1),
-    with: #""updated""#
+    in: UTF16Range(location: 9, length: 4),
+    with: "Codex"
 )
 ```
 

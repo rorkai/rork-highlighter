@@ -7,9 +7,21 @@ Use common Tree-sitter grammars without adding parser packages to an app.
 Every bundled language has a typed ``LanguageID`` value:
 
 ```swift
-let swift = try highlighter.highlight(source, as: .swift)
-let typescript = try highlighter.highlight(source, as: .typescript)
-let shell = try highlighter.highlight(source, as: .bash)
+import RorkHighlighter
+
+let highlighter = try Highlighter()
+let swift = try highlighter.highlight(
+    "let enabled = true",
+    as: .swift
+)
+let typescript = try highlighter.highlight(
+    "const enabled: boolean = true",
+    as: .typescript
+)
+let shell = try highlighter.highlight(
+    "enabled=true",
+    as: .bash
+)
 ```
 
 ``LanguageCatalog/standard()`` also resolves aliases such as `js`, `sh`, `md`,

@@ -70,6 +70,8 @@ Request an `NSAttributedString` with a `UIFont`:
 import RorkHighlighter
 import UIKit
 
+let source = #"let greeting = "Hello, Rork!""#
+let snapshot = try Highlighter().highlight(source, as: .swift)
 let rendered = try snapshot.nsAttributedString(
     theme: .rorkDark,
     font: .monospacedSystemFont(ofSize: 15, weight: .regular)
@@ -89,6 +91,8 @@ The same API accepts an `NSFont` on AppKit:
 import AppKit
 import RorkHighlighter
 
+let source = #"let greeting = "Hello, Rork!""#
+let snapshot = try Highlighter().highlight(source, as: .swift)
 let rendered = try snapshot.nsAttributedString(
     theme: .rorkDark,
     font: .monospacedSystemFont(ofSize: 15, weight: .regular)

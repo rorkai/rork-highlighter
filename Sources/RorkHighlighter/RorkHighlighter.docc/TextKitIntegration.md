@@ -26,6 +26,7 @@ Place the snapshot source into the text view before rendering:
 import RorkHighlighter
 import UIKit
 
+let source = #"let greeting = "Hello, Rork!""#
 let snapshot = try Highlighter().highlight(source, as: .swift)
 textView.text = snapshot.text
 
@@ -52,6 +53,7 @@ rendering:
 import AppKit
 import RorkHighlighter
 
+let source = #"let greeting = "Hello, Rork!""#
 let snapshot = try Highlighter().highlight(source, as: .swift)
 textView.string = snapshot.text
 
@@ -73,9 +75,15 @@ The initial complete render establishes the storage identity, source length,
 language, and revision used by the incremental path:
 
 ```swift
+import Foundation
+import RorkHighlighter
+
+let source = #"let greeting = "Hello, code!""#
+let highlighter = try Highlighter()
 let session = try highlighter.makeSession(source, as: .swift)
 let renderer = TextKitHighlightRenderer(theme: .rorkDark)
 
+textStorage.setAttributedString(NSAttributedString(string: source))
 let snapshot = try await session.snapshot()
 try renderer.render(snapshot, in: textStorage)
 ```
@@ -85,7 +93,7 @@ unchanged when the session rejects a range. Apply the same replacement to
 TextKit after the session succeeds, then render the matching update:
 
 ```swift
-let range = UTF16Range(location: 24, length: 4)
+let range = UTF16Range(location: 23, length: 4)
 let replacement = "Rork"
 
 let update = try await session.replaceCharacters(
