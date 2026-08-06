@@ -22,8 +22,19 @@ boundaries.
 An incremental edit updates the existing syntax tree before reparsing. The
 session retains captures outside the invalidated syntax region and queries only
 the changed portion before assembling a complete snapshot. `HighlightUpdate`
-also carries the invalidated ranges so `TextKitHighlightRenderer` can restyle
-existing attributed storage without rebuilding the complete document.
+also exposes merged rendering ranges so any incremental backend can refresh
+only the affected portion of its destination.
+
+## Rendering boundaries
+
+The parser and theme layers do not depend on a presentation framework.
+`HighlightRenderer` lets a backend select its own target and typed failure
+without prescribing storage, layout, drawing, or font objects.
+
+Native attributed-value functions form a separate Apple convenience layer.
+`TextKitHighlightRenderer` is one optimized backend for existing UIKit and
+AppKit storage. It does not define the general rendering model and does not own
+an editor.
 
 ## Language definitions
 

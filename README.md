@@ -1,36 +1,41 @@
 # Rork Highlighter
 
-Rork Highlighter is a SwiftPM-first syntax-highlighting library built on
-Tree-sitter. It provides a small Swift API for immutable source strings and an
-actor-isolated session API for documents that change over time.
+Rork Highlighter is a fast, Swift-native syntax-highlighting library powered
+by Tree-sitter. It parses source code into immutable semantic spans, preserves
+syntax state while a document changes, and lets each application choose how
+those results are rendered.
 
 ![Rork Highlighter rendering Swift with native attributed output.](Sources/RorkHighlighter/RorkHighlighter.docc/Resources/swift-attributed-output.png)
 
-The preview uses the bundled Swift parser and `.rorkDark` theme. The editor
-chrome is illustrative.
+The preview uses the bundled Swift parser and the Rork Dark theme.
 
-The package currently bundles a common pack with 36 language definitions. Apps
-resolve one Swift package and import one public module instead of managing a
-separate SwiftPM dependency for every Tree-sitter grammar.
+## What it is designed for
 
-## Highlights
+Rork Highlighter works well anywhere Swift code needs accurate highlighting:
 
-- Tree-sitter parsing and query-based highlighting.
-- Native Swift 6 concurrency and `Sendable` value types.
-- Typed `HighlighterError` contracts for highlighting operations.
-- Incremental parsing inside one actor per document.
-- Explicit UTF-16 ranges that match Foundation text systems.
-- Renderer-neutral light and dark themes with hierarchical scope matching.
-- A typed renderer contract for native, graphics, terminal, and custom
-  backends.
-- Native SwiftUI `AttributedString`, TextKit `NSAttributedString`, and an
-  optimized incremental TextKit backend.
-- Deterministic aliases, filenames, and file-extension discovery.
-- Nested-language infrastructure through SwiftTreeSitterLayer.
-- A parser-neutral registry for custom and generated language packs.
-- One generated Clang target containing all common parser implementations.
-- Reproducible grammar updates through exact revisions and locked file hashes.
-- Apache-2.0 project code with audited third-party notices.
+- Code blocks, previews, diffs, and documentation.
+- UIKit and AppKit text views.
+- Full editors that need incremental updates while typing.
+- SwiftUI views using native `AttributedString`.
+- Custom Core Text, Metal, terminal, HTML, and server-side renderers.
+- Mobile and web projects that mix languages through Tree-sitter injections.
+
+The library does not ship a text view or take over layout, selection, scrolling,
+or editing. It supplies highlighting state and optional rendering helpers, so
+an application can use as much or as little of the package as it needs.
+
+## Choose your integration level
+
+| Level | Use it when | Main API |
+| --- | --- | --- |
+| Framework-agnostic core | You own rendering or need semantic syntax data | `Highlighter`, `HighlightSession`, `HighlightSnapshot` |
+| Native attributed output | You need a complete SwiftUI, UIKit, or AppKit value | `attributedString(theme:font:)`, `nsAttributedString(theme:font:)` |
+| Incremental TextKit integration | An editable UIKit or AppKit text view owns its storage | `TextKitHighlightRenderer` |
+| Custom rendering backend | You want reusable rendering for Metal, Core Text, a terminal, or another target | `HighlightRenderer` |
+
+The framework-agnostic core has no UIKit, AppKit, SwiftUI, or TextKit
+dependency. The Apple rendering APIs are conveniences built on top of the same
+snapshots, updates, themes, and UTF-16 ranges.
 
 ## Requirements
 
@@ -44,7 +49,7 @@ platforms.
 
 ## Installation
 
-Add the package dependency:
+Add Rork Highlighter to your package:
 
 ```swift
 .package(
@@ -62,70 +67,258 @@ Add the library product to your target:
 )
 ```
 
-## One-shot highlighting
+Your application imports one module. The standard catalog and its 36 native
+Tree-sitter parsers are managed by the package.
 
-Create a highlighter with the bundled catalog and request a snapshot:
+## Quick start
+
+Highlight an immutable source string:
 
 ```swift
 import RorkHighlighter
 
 let highlighter = try Highlighter()
 let snapshot = try highlighter.highlight(
-    #"{"name":"Rork","enabled":true}"#,
-    as: .json
+    #"let greeting = "Hello, Rork!""#,
+    as: .swift
 )
-
-for highlight in snapshot.highlights {
-    print(highlight.scope, highlight.range)
-}
 ```
 
-The spans preserve Tree-sitter capture names such as
-`string.special.key`, `string`, and `constant.builtin`. Spans may overlap.
-Apply broader spans first and more specific spans afterward.
+`snapshot.text` contains the original source. `snapshot.highlights` contains
+ordered `HighlightSpan` values with Tree-sitter capture scopes and
+Foundation-compatible UTF-16 ranges.
 
-## Rendering backends
-
-`HighlightRenderer` defines the common contract for rendering complete
-snapshots and incremental updates into a backend target. Renderers choose their
-own target, configuration, caching, and typed failure. A backend only needs to
-implement complete snapshot rendering because the protocol falls back to the
-latest complete snapshot when it receives an update.
-
-Optimized incremental backends can also implement update rendering and use
-`HighlightUpdate.rangesRequiringRendering` to refresh the merged replacement
-and Tree-sitter invalidation ranges. Raw ordered spans and renderer-neutral
-theme styles remain available for Metal, CoreText, terminal, HTML, and other
-custom pipelines. See
-[Building Rendering Backends](Sources/RorkHighlighter/RorkHighlighter.docc/RenderingBackends.md)
-for a complete implementation outline.
-
-Filename and file-extension discovery are also available:
+Use a file URL when the language should be discovered from its filename or
+extension:
 
 ```swift
 import Foundation
 
 let snapshot = try highlighter.highlight(
     source,
-    for: URL(fileURLWithPath: "/tmp/settings.json")
+    for: URL(fileURLWithPath: "/tmp/WelcomeView.swift")
 )
 ```
 
-## Themes
+## Framework-agnostic core
 
-Resolve highlight spans through a bundled light or dark theme:
+The core API returns data rather than drawing into a particular framework.
+Resolve each span through a theme and pass the result into any rendering
+pipeline:
 
 ```swift
 let theme = HighlightTheme.rorkDark
 
-for span in snapshot.highlights {
-    let style = theme.style(for: span)
-    print(span.range, style)
+let styledRanges = snapshot.highlights.map { span in
+    (
+        range: span.range,
+        style: theme.style(for: span)
+    )
 }
 ```
 
-Themes are immutable, `Sendable`, and `Codable`. A custom theme supplies a base
-style and scope-specific refinements:
+Spans remain in capture order because later overlapping captures can refine
+broader styles. `HighlightColor`, `HighlightStyle`, `HighlightTheme`, and
+`HighlightTextTrait` are immutable, renderer-neutral values.
+
+### Incremental documents
+
+Create one actor-isolated session for each changing document:
+
+```swift
+let session = try highlighter.makeSession(source, as: .swift)
+
+let update = try await session.replaceCharacters(
+    in: UTF16Range(location: 24, length: 4),
+    with: "Rork"
+)
+
+let rangesToRefresh = update.rangesRequiringRendering
+```
+
+The session edits the existing Tree-sitter syntax tree, retains unaffected
+captures, and queries only the invalidated syntax. `update.snapshot` still
+contains the complete latest state when a backend prefers simple full
+rendering.
+
+Apply the same edit to your own text model before rendering the matching update.
+Keep revisions in order when coordinating edits from another versioned buffer.
+
+### Custom rendering backends
+
+`HighlightRenderer` defines a small typed contract for complete snapshots and
+incremental updates. A backend chooses its own target, error type, configuration,
+and caches. Implementing complete rendering is enough to begin because the
+default update path renders the latest complete snapshot.
+
+An optimized backend can implement update rendering and use
+`rangesRequiringRendering` to touch only affected regions. The protocol does
+not prescribe layout, drawing, font objects, or storage ownership.
+
+See [Building Rendering Backends](Sources/RorkHighlighter/RorkHighlighter.docc/RenderingBackends.md)
+for a complete implementation.
+
+## Native attributed output
+
+Native output is optional. It converts a complete snapshot into a value that
+SwiftUI, UIKit, or AppKit already understands.
+
+### SwiftUI
+
+```swift
+import RorkHighlighter
+import SwiftUI
+
+let source = #"""
+import SwiftUI
+
+struct WelcomeView: View {
+    var body: some View {
+        Text("Hello, Rork!")
+    }
+}
+"""#
+
+let snapshot = try Highlighter().highlight(source, as: .swift)
+let rendered = try snapshot.attributedString(
+    theme: .rorkDark,
+    font: .system(size: 15, design: .monospaced)
+)
+
+let code = Text(rendered)
+    .textSelection(.enabled)
+    .padding()
+```
+
+### UIKit and AppKit
+
+Create a complete `NSAttributedString` when the destination does not need
+incremental editing:
+
+```swift
+let rendered = try snapshot.nsAttributedString(
+    theme: .rorkDark,
+    font: .monospacedSystemFont(ofSize: 15, weight: .regular)
+)
+```
+
+Assign it to `UILabel.attributedText`, `UITextView.attributedText`,
+`NSTextStorage.setAttributedString(_:)`, or any API that accepts native
+attributed text.
+
+Bundled themes leave text backgrounds unset. The surrounding view or editor
+owns its canvas color, so highlighted runs do not paint separate background
+strips.
+
+See [Rendering Attributed Code](Sources/RorkHighlighter/RorkHighlighter.docc/RenderingAttributedCode.md)
+for native color, font, trait, and range behavior.
+
+## TextKit integration
+
+`TextKitHighlightRenderer` is an optional built-in backend for editable UIKit
+and AppKit text views. It works with the `NSTextStorage` exposed by TextKit 1
+and TextKit 2 without depending on a layout manager or owning the text view.
+
+It changes only syntax-owned font, foreground, background, underline, and
+strikethrough attributes. Paragraph styles, links, attachments, and custom
+attributes remain under application control.
+
+### UIKit
+
+```swift
+import RorkHighlighter
+import UIKit
+
+let snapshot = try Highlighter().highlight(source, as: .swift)
+textView.text = snapshot.text
+
+let renderer = TextKitHighlightRenderer(theme: .rorkDark)
+try renderer.render(snapshot, in: textView.textStorage)
+```
+
+### AppKit
+
+```swift
+import AppKit
+import RorkHighlighter
+
+let snapshot = try Highlighter().highlight(source, as: .swift)
+textView.string = snapshot.text
+
+guard let textStorage = textView.textStorage else {
+    return
+}
+
+let renderer = TextKitHighlightRenderer(theme: .rorkDark)
+try renderer.render(snapshot, in: textStorage)
+```
+
+Keep one renderer beside each editable storage so its native style and font
+caches survive between edits. Apply a character edit to TextKit and the
+`HighlightSession`, then render the returned `HighlightUpdate`. Only the
+replacement and invalidated syntax ranges are restyled.
+
+See [Integrating with TextKit](Sources/RorkHighlighter/RorkHighlighter.docc/TextKitIntegration.md)
+for the complete editing sequence and synchronization contract.
+
+## Performance
+
+Rork Highlighter uses native Tree-sitter parsers and preserves syntax trees
+between edits. The common one-shot path streams lightweight predicate-aware
+captures, while incremental sessions retain unaffected spans. Themes, native
+colors, font faces, and TextKit attributes are cached where reuse matters.
+
+These release-mode medians provide a reference from the same Apple M5 Max
+development machine:
+
+| Workload | Source | Median |
+| --- | ---: | ---: |
+| One-shot semantic highlighting | 256 KiB Swift | 34.7 ms |
+| Incremental parse | 1 MiB Swift | 10.478 ms |
+| Incremental parse and TextKit restyling | 1 MiB Swift | 10.715 ms |
+
+On the shared 256 KiB fixture, Rork Highlighter and highlight.js 11.11.1 both
+measured about 34.7 ms. Rork returned 63,146 semantic UTF-16 spans, while
+highlight.js returned escaped HTML, so the comparison describes practical
+throughput rather than identical output. The editing benchmark is where
+retained Tree-sitter state matters because a change does not trigger another
+full-document pass.
+
+Performance results vary with hardware, operating system, Swift toolchain, and
+source structure. The repository includes public-workflow regression
+benchmarks and an opt-in same-corpus comparison with HighlightKit,
+swift-highlight, and highlight.js. The
+[benchmark guide](Benchmarks/README.md) documents workloads, commands, pins,
+and reporting constraints.
+
+## Languages
+
+The standard catalog bundles 36 definitions selected for mobile and modern web
+development:
+
+- Apple, Android, and systems code includes Swift, Objective-C, Kotlin, Java,
+  Groovy, C, C++, Go, Rust, and Ruby.
+- Web application code includes JavaScript, TypeScript, TSX, HTML, CSS, SCSS,
+  Vue, Svelte, Astro, GraphQL, and SQL.
+- Content and configuration include JSON, JSON5, YAML, TOML, XML, Markdown,
+  MDX, Dockerfile, dotenv, Java Properties, Bash, and Python.
+- Supporting injection definitions include JSDoc, regular expressions, and
+  Markdown Inline.
+
+Nested-language queries resolve through the same catalog. This covers examples
+such as JavaScript inside HTML, TypeScript inside Vue, GraphQL tagged templates,
+Swift regular-expression literals, and fenced code inside Markdown.
+
+The [bundled language guide](Sources/RorkHighlighter/RorkHighlighter.docc/BundledLanguages.md)
+lists discovery behavior and explains parser distribution.
+
+## Themes
+
+Rork Light and Rork Dark use hierarchical Tree-sitter capture scopes. A
+`string.special.key` span inherits broader `string` and `string.special`
+rules before its exact rule is applied.
+
+Create a custom renderer-neutral theme with a base style and scope refinements:
 
 ```swift
 let theme = HighlightTheme(
@@ -146,214 +339,33 @@ let theme = HighlightTheme(
 )
 ```
 
-Scope matching proceeds from broad captures to specific captures. A
-`string.special.key` span inherits `string` and `string.special` refinements
-before its exact rule is applied.
+See [Theming](Sources/RorkHighlighter/RorkHighlighter.docc/Theming.md) for
+inheritance and native typography behavior.
 
-## Native attributed output
+## Custom languages
 
-Highlight Swift source and render the snapshot directly in SwiftUI:
+The bundled catalog needs no application-side parser registration.
+`HighlightLanguage` remains available for a private grammar or a language
+outside the common pack. A definition combines one generated Tree-sitter
+parser with compatible highlight, injection, and locals queries.
 
-```swift
-import RorkHighlighter
-import SwiftUI
+See [Registering Languages](Sources/RorkHighlighter/RorkHighlighter.docc/RegisteringLanguages.md)
+for the complete setup.
 
-let source = #"""
-import SwiftUI
+## Documentation
 
-struct WelcomeView: View {
-    let name: String
-
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "sparkles")
-            Text("Hello, \(name)!")
-                .font(.title.bold())
-        }
-    }
-}
-"""#
-
-let highlighter = try Highlighter()
-let snapshot = try highlighter.highlight(source, as: .swift)
-let rendered = try snapshot.attributedString(
-    theme: .rorkDark,
-    font: .system(size: 15, design: .monospaced)
-)
-
-let code = Text(rendered)
-    .textSelection(.enabled)
-    .padding()
-    .background(Color.black)
-```
-
-The bundled themes leave `HighlightStyle.backgroundColor` unset. Set the canvas
-on the containing view or editor so attributed text does not paint background
-strips behind individual text runs.
-
-The renderer uses a monospaced system font by default. Supply any SwiftUI font
-when the surrounding interface owns typography:
-
-```swift
-let rendered = try snapshot.attributedString(
-    theme: .rorkLight,
-    font: .system(size: 14, design: .monospaced)
-)
-```
-
-UIKit and AppKit clients can request an `NSAttributedString` with native
-platform colors, fonts, and TextKit keys:
-
-```swift
-let rendered = try snapshot.nsAttributedString(
-    theme: .rorkDark,
-    font: .monospacedSystemFont(ofSize: 14, weight: .regular)
-)
-```
-
-Assign the result directly to APIs such as `UILabel.attributedText` or
-`NSTextStorage.setAttributedString(_:)`.
-
-Use `TextKitHighlightRenderer`, the built-in `HighlightRenderer` backend, when
-a text view already owns its attributed storage. It supports the
-`NSTextStorage` exposed by TextKit 1 and TextKit 2 while preserving paragraph
-styles, links, attachments, and custom attributes.
-
-Rendering preserves the snapshot's UTF-16 ranges and overlap order. Invalid
-ranges throw `HighlightRenderingError` instead of being rounded or trapping.
-The native APIs are available when SwiftUI, UIKit, or AppKit is present.
-Renderer-neutral themes and raw spans remain available on Linux and other
-Swift platforms.
-
-## Bundled languages
-
-The standard catalog includes the following definitions:
-
-| Language | Swift identifier | Common aliases | File extensions | Exact filenames |
-| --- | --- | --- | --- | --- |
-| Astro | `.astro` | | `astro` | |
-| Bash | `.bash` | `sh`, `shell` | `bash`, `bats`, `sh`, `zsh` | `.bash_profile`, `.bashrc`, `.profile`, `.zprofile`, `.zshrc` |
-| C | `.c` | | `c`, `h` | |
-| C++ | `.cpp` | `c++`, `cplusplus`, `cxx` | `cc`, `cpp`, `cxx`, `hh`, `hpp`, `hxx`, `ipp`, `tpp` | |
-| CSS | `.css` | | `css` | |
-| Dockerfile | `.dockerfile` | `docker` | | `Containerfile`, `Dockerfile` |
-| dotenv | `.dotenv` | `env` | `env` | `.env`, `.env.development`, `.env.example`, `.env.local`, `.env.production`, `.env.test` |
-| Go | `.go` | `golang` | `go` | |
-| GraphQL | `.graphql` | `gql` | `gql`, `graphql`, `graphqls` | |
-| Groovy | `.groovy` | | `gradle`, `groovy`, `gsh`, `gvy`, `gy` | |
-| HTML | `.html` | `htm` | `htm`, `html`, `xhtml` | |
-| Java | `.java` | | `java` | |
-| JavaScript | `.javascript` | `js`, `jsx`, `node` | `cjs`, `js`, `jsx`, `mjs` | |
-| JSDoc | `.jsdoc` | `js-doc` | | |
-| JSON | `.json` | | `geojson`, `json` | `Package.resolved` |
-| JSON5 | `.json5` | `jsonc` | `json5`, `jsonc` | `jsconfig.json`, `tsconfig.json` |
-| Kotlin | `.kotlin` | `kt`, `kts` | `kt`, `kts` | |
-| Markdown | `.markdown` | `md` | `markdown`, `md`, `mdown`, `mkd`, `mkdn` | |
-| Markdown Inline | `.markdownInline` | `markdown_inline` | | |
-| MDX | `.mdx` | | `mdx` | |
-| Objective-C | `.objectiveC` | `obj-c`, `objc` | `m`, `mm` | |
-| Java Properties | `.properties` | `java-properties` | `properties` | |
-| Python | `.python` | `py` | `py`, `pyi`, `pyw` | |
-| Regular Expression | `.regex` | `regexp` | | |
-| Ruby | `.ruby` | `rb` | `gemspec`, `podspec`, `rake`, `rb` | `Brewfile`, `Fastfile`, `Gemfile`, `Podfile`, `Rakefile` |
-| Rust | `.rust` | `rs` | `rs` | |
-| SCSS | `.scss` | | `scss` | |
-| SQL | `.sql` | | `sql` | |
-| Svelte | `.svelte` | | `svelte` | |
-| Swift | `.swift` | `swiftlang` | `swift` | |
-| TOML | `.toml` | | `toml` | |
-| TSX | `.tsx` | `react-typescript` | `tsx` | |
-| TypeScript | `.typescript` | `ts` | `cts`, `mts`, `ts` | |
-| Vue | `.vue` | | `vue` | |
-| XML | `.xml` | | `plist`, `storyboard`, `svg`, `xib`, `xml` | |
-| YAML | `.yaml` | `yml` | `yaml`, `yml` | `Podfile.lock` |
-
-Markdown Inline, JSDoc, and Regular Expression are public because they are real
-Tree-sitter definitions. Their primary role is parsing content injected by
-Markdown, JavaScript, TypeScript, TSX, and Swift.
-
-## Incremental highlighting
-
-Keep one session and TextKit renderer for each open document:
-
-```swift
-let session = try highlighter.makeSession(source, as: .swift)
-let renderer = TextKitHighlightRenderer(theme: .rorkDark)
-#if canImport(AppKit)
-guard let textStorage = textView.textStorage else {
-    return
-}
-#else
-let textStorage = textView.textStorage
-#endif
-let snapshot = try await session.snapshot()
-try renderer.render(snapshot, in: textStorage)
-
-let editRange = UTF16Range(location: 10, length: 1)
-let replacement = "updated"
-textStorage.replaceCharacters(
-    in: NSRange(location: editRange.location, length: editRange.length),
-    with: replacement
-)
-let update = try await session.replaceCharacters(
-    in: editRange,
-    with: replacement
-)
-try renderer.render(update, in: textStorage)
-```
-
-Apply the same character edit to TextKit before rendering its matching update.
-The renderer restyles only the replacement and invalidated syntax ranges. It
-does not compare the complete source after every update. A skipped revision, a
-different storage instance, an incompatible source length, or an appearance
-change triggers a verified complete render. Reject same-length out-of-order
-edits through the document revision before passing them to the renderer.
-
-Other rendering backends receive the same `HighlightUpdate`. Use
-`rangesRequiringRendering` when the destination can update only affected
-regions, or rely on the protocol's complete-snapshot fallback.
-
-## Registering a language
-
-`HighlightLanguage` accepts any compatible generated Tree-sitter parser and its
-matching query sources:
-
-```swift
-import RorkHighlighter
-import TreeSitterSwift
-
-let swift = try HighlightLanguage(
-    id: "swift",
-    displayName: "Swift",
-    aliases: ["swiftlang"],
-    fileExtensions: ["swift"],
-    filenames: [],
-    treeSitterLanguage: tree_sitter_swift(),
-    highlightsQuery: swiftHighlightsQuery,
-    injectionsQuery: swiftInjectionsQuery
-)
-
-let catalog = try LanguageCatalog(languages: [swift])
-let highlighter = Highlighter(catalog: catalog)
-```
-
-Applications do not need to register bundled languages this way. Direct
-registration remains available for private grammars and languages outside the
-common pack.
-
-## Language distribution
-
-Official language packs follow three rules:
-
-1. Parser code and query files come from the same pinned upstream revision.
-2. Every distributed grammar has an audited permissive license.
-3. Apple application builds bundle parser code at build time instead of
-   downloading executable parsers.
-
-`CRorkHighlighterParsers` is an internal Clang target. Generated `parser.c` and
-`scanner.c` files are compiled native code under that target. Matching
-`highlights.scm`, `injections.scm`, and `locals.scm` files are resources in the
-public Swift target. Consumers only import `RorkHighlighter`.
+- [Getting Started](Sources/RorkHighlighter/RorkHighlighter.docc/GettingStarted.md)
+  introduces immutable highlighting.
+- [Incremental Highlighting](Sources/RorkHighlighter/RorkHighlighter.docc/IncrementalHighlighting.md)
+  explains document sessions without assuming a rendering framework.
+- [Building Rendering Backends](Sources/RorkHighlighter/RorkHighlighter.docc/RenderingBackends.md)
+  covers the low-level renderer contract.
+- [Rendering Attributed Code](Sources/RorkHighlighter/RorkHighlighter.docc/RenderingAttributedCode.md)
+  covers complete SwiftUI, UIKit, and AppKit output.
+- [Integrating with TextKit](Sources/RorkHighlighter/RorkHighlighter.docc/TextKitIntegration.md)
+  covers editable UIKit and AppKit storage.
+- [Architecture](Docs/Architecture.md) explains parser ownership and
+  distribution.
 
 ## Development
 
@@ -363,59 +375,25 @@ Run the complete validation:
 make check
 ```
 
-Format maintained Swift sources:
-
-```bash
-make format
-```
-
-`make check` builds with warnings treated as errors, runs the tests, lints
-Swift formatting, verifies the language pack lock, and checks documentation for
-Swift and authored C declarations. It also compiles the private benchmark and
-distribution-measurement tools.
-
 Run the public-workflow performance suite:
 
 ```bash
 make benchmark
 ```
 
-Run the opt-in same-corpus comparison with HighlightKit, swift-highlight, and
-highlight.js:
+Run the opt-in same-corpus comparison:
 
 ```bash
 make benchmark-comparison \
   COMPARISON_BENCHMARK_ARGUMENTS="--metric wallClock --time-units microseconds --no-progress"
 ```
 
-Measure a clean release build and its parser, executable, and resource sizes:
-
-```bash
-make measure-distribution
-```
-
-The [benchmark guide](Benchmarks/README.md) describes the regression workloads,
-reported metrics, focused runs, cross-library comparison suite, and
-machine-comparison constraints.
-
-Update every bundled parser from its pinned revision:
-
-```bash
-make vendor-languages
-```
-
-The update command reads `LanguagePack.json`, regenerates the C interface and
-Swift catalog, copies exact upstream files, and refreshes
-`LanguagePack.lock.json`.
-
-See the package's DocC catalog for API guidance, the
-[architecture](Docs/Architecture.md) for the distribution design, the
-[roadmap](Docs/Roadmap.md) for planned work, and the
-[contribution guide](CONTRIBUTING.md) for maintenance rules. The
-[changelog](CHANGELOG.md) records each published release.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for maintenance workflows and
+[CHANGELOG.md](CHANGELOG.md) for published releases.
 
 ## License
 
 Rork Highlighter is licensed under Apache-2.0. Tree-sitter,
 SwiftTreeSitter, and bundled grammars retain their original permissive
-licenses. See `THIRD_PARTY_NOTICES.md` for exact attribution.
+licenses. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for exact
+attribution.

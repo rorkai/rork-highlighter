@@ -9,10 +9,13 @@ Open ``HighlightSession`` when an editor needs to preserve its syntax tree
 across text edits.
 
 The library exposes capture scopes and UTF-16 ranges together with
-renderer-neutral themes. ``HighlightRenderer`` defines an extensible contract
-for applying complete snapshots and incremental updates to any backend. Apple
-clients also receive native attributed output and an optimized TextKit
-implementation.
+renderer-neutral themes. These values form the framework-agnostic core.
+``HighlightRenderer`` adds an extensible contract for applying complete
+snapshots and incremental updates to any backend.
+
+Apple integrations remain separate conveniences. Complete snapshots can become
+native attributed values, while ``TextKitHighlightRenderer`` can update
+existing UIKit or AppKit storage incrementally.
 
 ## Topics
 
@@ -23,28 +26,29 @@ implementation.
 - ``HighlightSnapshot``
 - ``HighlightSpan``
 
-### Themes
+### Framework-agnostic styling and rendering
 
 - <doc:Theming>
+- <doc:RenderingBackends>
 - ``HighlightTheme``
 - ``HighlightStyle``
 - ``HighlightColor``
 - ``HighlightTextTrait``
-
-### Rendering
-
-- <doc:RenderingBackends>
-- <doc:RenderingAttributedCode>
 - ``HighlightRenderer``
-- ``HighlightRenderingError``
 
 ### Incremental documents
 
 - <doc:IncrementalHighlighting>
 - ``HighlightSession``
 - ``HighlightUpdate``
-- ``TextKitHighlightRenderer``
 - ``UTF16Range``
+
+### Apple rendering
+
+- <doc:RenderingAttributedCode>
+- <doc:TextKitIntegration>
+- ``TextKitHighlightRenderer``
+- ``HighlightRenderingError``
 
 ### Languages
 

@@ -7,8 +7,12 @@ release.
 
 ### Added
 
+- Added a framework-agnostic renderer contract for complete snapshots and
+  incremental updates with typed backend targets and failures.
 - Added reusable TextKit rendering that applies incremental invalidation ranges
   to existing `NSTextStorage` while preserving paragraph and custom attributes.
+- Added separate guides for low-level rendering, native attributed output, and
+  editable TextKit integration.
 
 ## 0.2.1 - 2026-08-03
 

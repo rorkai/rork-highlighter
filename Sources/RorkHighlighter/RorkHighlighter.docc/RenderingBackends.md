@@ -1,7 +1,10 @@
 # Building Rendering Backends
 
-Render highlighted source through TextKit, graphics APIs, terminals, or custom
-display systems.
+Connect renderer-neutral highlighting state to graphics APIs, terminals, or
+custom display systems.
+
+This article covers the low-level, framework-agnostic rendering contract. It
+does not require SwiftUI, UIKit, AppKit, or TextKit.
 
 ## Understand the contract
 
@@ -98,10 +101,8 @@ inside the rendering ranges and reapplies intersecting spans in their stored
 order. The backend remains responsible for applying the same character edit to
 its text model before rendering the matching update.
 
-## Use the TextKit implementation
+## Choose an Apple integration
 
-``TextKitHighlightRenderer`` supplies this optimized update path for UIKit and
-AppKit. It converts theme values into native colors and fonts, caches repeated
-styles, and preserves attributes that syntax highlighting does not own. The
-backend accepts the `NSTextStorage` exposed by both TextKit 1 and TextKit 2 text
-views without owning their layout or editing behavior.
+Read <doc:RenderingAttributedCode> when a complete native attributed value is
+enough. Read <doc:TextKitIntegration> when an editable UIKit or AppKit view
+owns the destination storage.

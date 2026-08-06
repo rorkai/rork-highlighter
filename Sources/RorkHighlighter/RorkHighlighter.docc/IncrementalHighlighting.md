@@ -43,38 +43,13 @@ The session rejects ranges outside the current revision and ranges that split a
 Unicode scalar. Read ``HighlightSession/currentRevision`` when coordinating
 edits from a versioned text buffer.
 
-## Render TextKit updates
+## Choose a rendering path
 
-``TextKitHighlightRenderer`` is the built-in backend for UIKit and AppKit. It
-applies the session's rendering ranges directly to existing attributed storage:
+Incremental highlighting does not depend on a presentation framework. A custom
+pipeline can consume ``HighlightUpdate/snapshot`` and refresh
+``HighlightUpdate/rangesRequiringRendering`` directly. Implement
+``HighlightRenderer`` when that behavior should become a reusable backend.
 
-```swift
-let renderer = TextKitHighlightRenderer(theme: .rorkDark)
-#if canImport(AppKit)
-guard let textStorage = textView.textStorage else {
-    return
-}
-#else
-let textStorage = textView.textStorage
-#endif
-let snapshot = try await session.snapshot()
-try renderer.render(snapshot, in: textStorage)
-
-let range = UTF16Range(location: 10, length: 1)
-let replacement = "updated"
-textStorage.replaceCharacters(
-    in: NSRange(location: range.location, length: range.length),
-    with: replacement
-)
-let update = try await session.replaceCharacters(
-    in: range,
-    with: replacement
-)
-try renderer.render(update, in: textStorage)
-```
-
-``TextKitHighlightRenderer`` retains native style and font caches across
-updates. It preserves non-syntax attributes and restyles only the replacement
-and ``HighlightUpdate/invalidatedRanges``. Apply each matching TextKit edit and
-session update in revision order so the renderer can remain on its incremental
-path.
+Read <doc:RenderingBackends> for the low-level renderer contract. Read
+<doc:TextKitIntegration> when an editable UIKit or AppKit view owns the
+destination storage.

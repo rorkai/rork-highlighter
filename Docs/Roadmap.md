@@ -15,10 +15,12 @@ the initial API and correctness guarantees.
 ## Rendering
 
 - Keep hierarchical theme resolution independent of any rendering framework.
+- Keep the generic renderer contract independent of storage, layout, and
+  drawing technology.
 - Provide native `AttributedString` and `NSAttributedString` output on Apple
-  platforms.
+  platforms as optional conveniences.
 - Keep incremental TextKit rendering aligned with session invalidation ranges
-  without rebuilding an entire attributed document.
+  as one concrete backend without rebuilding an entire attributed document.
 - Keep raw highlight spans available for custom editors and servers.
 
 ## Common languages

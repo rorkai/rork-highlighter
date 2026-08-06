@@ -42,3 +42,14 @@ Each ``HighlightSpan`` contains a Tree-sitter capture scope and a
 ``UTF16Range``. Spans can overlap because a specific capture may refine a
 broader one. Apply spans in their returned order when resolving theme
 precedence.
+
+## Choose the next layer
+
+The snapshot and theme APIs are framework agnostic. Read <doc:Theming> to
+resolve capture scopes yourself or <doc:RenderingBackends> to build a reusable
+renderer.
+
+Read <doc:RenderingAttributedCode> for complete SwiftUI, UIKit, or AppKit
+output. Read <doc:IncrementalHighlighting> when a document changes over time,
+and use <doc:TextKitIntegration> only when an editable Apple text view owns the
+destination storage.
