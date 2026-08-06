@@ -112,7 +112,8 @@ struct BundledLanguageTests {
             text: fixture.source,
             language: fixture.language,
             revision: 0,
-            layer: layer
+            layer: layer,
+            documentLength: fixture.source.utf16.count
         )
 
         #expect(optimized == layered)

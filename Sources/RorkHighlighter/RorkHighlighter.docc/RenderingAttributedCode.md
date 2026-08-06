@@ -1,10 +1,23 @@
-# Rendering Attributed Code
+# Rendering Native Attributed Output
 
-Create native attributed output for SwiftUI, UIKit, and AppKit.
+Create complete attributed values for SwiftUI, UIKit, and AppKit.
 
-## Render a snapshot
+## Understand native output
 
-Highlight source text, select a theme, and render the immutable snapshot:
+Native attributed output is a convenience built on the framework-agnostic
+snapshot and theme APIs. It is useful for code blocks, previews, labels, static
+text views, and any destination that does not need an incremental rendering
+backend.
+
+This API returns a new `AttributedString` or `NSAttributedString`. It does
+not own a view or mutate an existing editor. See <doc:TextKitIntegration> when
+an editable UIKit or AppKit view already owns its text storage. See
+<doc:RenderingBackends> for a non-Apple or custom rendering target.
+
+## Render in SwiftUI
+
+Highlight the source, render its complete snapshot, and pass the native value
+to `Text`:
 
 ```swift
 import RorkHighlighter
@@ -17,11 +30,7 @@ struct WelcomeView: View {
     let name: String
 
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "sparkles")
-            Text("Hello, \(name)!")
-                .font(.title.bold())
-        }
+        Text("Hello, \(name)!")
     }
 }
 """#
@@ -36,76 +45,95 @@ let rendered = try snapshot.attributedString(
 let code = Text(rendered)
     .textSelection(.enabled)
     .padding()
-    .background(Color.black)
 ```
 
-The syntax colors below come directly from `.rorkDark`. The surrounding editor
-chrome is illustrative.
+The syntax colors below come directly from `.rorkDark`. The surrounding
+editor chrome is illustrative.
 
 ![Swift source highlighted with the Rork Dark theme.](swift-attributed-output.png)
 
-The bundled themes leave ``HighlightStyle/backgroundColor`` unset. Set the
-canvas on the containing view or editor so attributed text does not paint
-background strips behind individual text runs.
-
-The default font is the monospaced system body font. Pass a font when an editor
-or design system owns the typography:
+The default font is the monospaced system body font. Pass another SwiftUI font
+when the surrounding interface owns typography:
 
 ```swift
 let rendered = try snapshot.attributedString(
     theme: .rorkLight,
-    font: .system(size: 15, design: .monospaced)
+    font: .system(size: 14, design: .monospaced)
 )
 ```
 
-Bold and italic traits derive from the supplied font. Underline and
-strikethrough traits become native `AttributedString` line styles. Existing
-traits in the caller-provided font remain part of the rendering baseline.
+## Render for UIKit
 
-## Render with TextKit
-
-UIKit and AppKit clients can request an `NSAttributedString`:
+Request an `NSAttributedString` with a `UIFont`:
 
 ```swift
+import RorkHighlighter
+import UIKit
+
+let source = #"let greeting = "Hello, Rork!""#
+let snapshot = try Highlighter().highlight(source, as: .swift)
 let rendered = try snapshot.nsAttributedString(
     theme: .rorkDark,
     font: .monospacedSystemFont(ofSize: 15, weight: .regular)
 )
+
+label.attributedText = rendered
 ```
 
-The font parameter is a `UIFont` on UIKit platforms and an `NSFont` on AppKit.
-The renderer uses the platform's monospaced system font when the parameter is
-omitted.
+The result also works with `UITextView.attributedText` and other UIKit APIs
+that accept attributed strings.
 
-Colors become `UIColor` or `NSColor` values in the sRGB color space. Typography
-uses the standard `.font`, `.underlineStyle`, and `.strikethroughStyle` keys, so
-the result can be assigned directly to `UILabel`, `UITextView`, `NSTextView`,
-and `NSTextStorage` APIs.
+## Render for AppKit
+
+The same API accepts an `NSFont` on AppKit:
+
+```swift
+import AppKit
+import RorkHighlighter
+
+let source = #"let greeting = "Hello, Rork!""#
+let snapshot = try Highlighter().highlight(source, as: .swift)
+let rendered = try snapshot.nsAttributedString(
+    theme: .rorkDark,
+    font: .monospacedSystemFont(ofSize: 15, weight: .regular)
+)
+
+textView.textStorage?.setAttributedString(rendered)
+```
+
+Use <doc:TextKitIntegration> instead when the view is editable and should
+retain parser and renderer state between changes.
+
+## Control the canvas
+
+The bundled themes leave ``HighlightStyle/backgroundColor`` unset. Set the
+canvas on the containing SwiftUI view, `UIView`, or `NSView` so attributed
+runs do not paint separate background strips.
+
+Colors become native sRGB values. Bold and italic traits derive from the
+caller-provided base font. Underline and strikethrough traits use the standard
+native attributed-string keys.
 
 ## Preserve capture precedence
 
-The renderer applies ``HighlightSnapshot/highlights`` in their stored order.
-Later captures can refine colors or replace typography applied by an earlier
+Native rendering applies ``HighlightSnapshot/highlights`` in stored order.
+Later captures can refine colors or replace typography from an earlier
 overlapping capture. An explicitly empty ``HighlightStyle/textTraits`` set
-removes traits inherited from broader theme rules while preserving the
-caller-provided base font.
-
-The renderer resolves shared UTF-16 boundaries during one forward traversal of
-the source. It does not rescan the complete document for each capture. Styles,
-native colors, and derived font faces are reused when capture scopes repeat.
+removes traits inherited from broader theme rules while preserving the base
+font supplied by the caller.
 
 ## Handle invalid ranges
 
 Rendering throws ``HighlightRenderingError`` when a manually constructed
 snapshot contains an out-of-bounds range or a boundary inside a Swift
-character. Ranges are never rounded because rounding could color source text
-outside the Tree-sitter capture.
+character. Ranges are never rounded because rounding could color source outside
+the Tree-sitter capture.
 
 Snapshots produced by ``Highlighter`` and ``HighlightSession`` carry
-Tree-sitter range provenance. The TextKit renderer recognizes that provenance
-and avoids repeating the Unicode boundary validation pass.
+validated Tree-sitter range provenance, so native rendering can avoid repeating
+the Unicode boundary validation pass.
 
-The Swift value renderer is available when SwiftUI is present. The TextKit
-renderer is available when UIKit or AppKit is present. The raw
-``HighlightSnapshot`` and renderer-neutral theme APIs remain available on
-other platforms.
+SwiftUI attributed output is available when SwiftUI is present. Native
+`NSAttributedString` output is available when UIKit or AppKit is present. Raw
+``HighlightSnapshot`` values and renderer-neutral themes remain available
+on other platforms.

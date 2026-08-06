@@ -73,7 +73,8 @@ public struct Highlighter: Sendable {
             text: text,
             language: definition.id,
             revision: 0,
-            layer: layer
+            layer: layer,
+            documentLength: documentLength
         )
     }
 
@@ -219,10 +220,11 @@ public struct Highlighter: Sendable {
             )
         )
         return HighlightSnapshot(
-            text: text,
+            parserProducedText: text,
             language: language,
             revision: 0,
-            highlights: highlights
+            highlights: highlights,
+            utf16Length: documentLength
         )
     }
 
@@ -233,17 +235,19 @@ public struct Highlighter: Sendable {
     ///   - language: The canonical root language identifier.
     ///   - revision: The document revision represented by the layer.
     ///   - layer: The parsed root language layer.
+    ///   - documentLength: The validated UTF-16 source length.
     /// - Returns: A complete immutable highlighting snapshot.
     /// - Throws: ``HighlighterError`` when the tree or query is unavailable.
     func makeSnapshot(
         text: String,
         language: LanguageID,
         revision: UInt64,
-        layer: LanguageLayer
+        layer: LanguageLayer,
+        documentLength: Int
     ) throws(HighlighterError) -> HighlightSnapshot {
         let fullRange = NSRange(
             location: 0,
-            length: text.utf16.count
+            length: documentLength
         )
 
         return HighlightSnapshot(
@@ -254,8 +258,10 @@ public struct Highlighter: Sendable {
                 text: text,
                 language: language,
                 layer: layer,
-                in: fullRange
-            )
+                in: fullRange,
+                documentLength: documentLength
+            ),
+            utf16Length: documentLength
         )
     }
 
@@ -271,13 +277,15 @@ public struct Highlighter: Sendable {
     ///   - language: The canonical root language identifier.
     ///   - layer: The parsed root language layer.
     ///   - range: The UTF-16 region whose intersecting captures are requested.
+    ///   - documentLength: The validated UTF-16 source length.
     /// - Returns: Highlight spans in deterministic application order.
     /// - Throws: ``HighlighterError`` when the tree or query is unavailable.
     func makeHighlights(
         text: String,
         language: LanguageID,
         layer: LanguageLayer,
-        in range: NSRange
+        in range: NSRange,
+        documentLength: Int
     ) throws(HighlighterError) -> [HighlightSpan] {
         guard range.length > 0 else {
             return []
@@ -293,7 +301,7 @@ public struct Highlighter: Sendable {
 
             if snapshot.sublayerSnapshots.isEmpty,
                 range.location == 0,
-                range.length == text.utf16.count
+                range.length == documentLength
             {
                 return try makeRootHighlights(
                     from: snapshot.rootSnapshot,
@@ -428,6 +436,18 @@ public struct Highlighter: Sendable {
         _ text: String
     ) throws(HighlighterError) -> Int {
         let documentLength = text.utf16.count
+        return try validateDocumentLength(documentLength)
+    }
+
+    /// Ensures a known UTF-16 length fits the width used by Tree-sitter.
+    ///
+    /// - Parameter documentLength: The nonnegative UTF-16 document length.
+    /// - Returns: The validated document length in UTF-16 code units.
+    /// - Throws: ``HighlighterError/documentTooLarge`` when encoded offsets
+    ///   would overflow.
+    func validateDocumentLength(
+        _ documentLength: Int
+    ) throws(HighlighterError) -> Int {
         guard documentLength <= Self.maximumUTF16Length else {
             throw HighlighterError.documentTooLarge
         }

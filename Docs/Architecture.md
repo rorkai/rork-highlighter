@@ -8,8 +8,10 @@ public API remains stable as the bundled catalog and its tooling grow.
 `LanguageID` and `LanguageCatalog` resolve canonical identifiers, aliases,
 filenames, and file extensions without exposing mutable parser state.
 
-`HighlightSnapshot`, `HighlightSpan`, and `UTF16Range` are immutable `Sendable`
-values. Highlight ranges use UTF-16 because Foundation text systems and the
+`HighlightSnapshot`, `HighlightSpan`, `StyledHighlight`, and `UTF16Range` are
+immutable `Sendable` values. A snapshot can resolve its spans through a theme
+into ordered styled highlights without selecting a rendering framework.
+Highlight ranges use UTF-16 because Foundation text systems and the
 SwiftTreeSitter convenience API share that coordinate space.
 
 ## Parser ownership
@@ -20,10 +22,21 @@ serializes edits and keeps mutable Tree-sitter state from crossing concurrency
 boundaries.
 
 An incremental edit updates the existing syntax tree before reparsing. The
-first implementation queries a complete snapshot after each edit and also
-returns Tree-sitter invalidation ranges. A future renderer can replace the
-complete query with visible-range and token-delta processing without changing
-edit semantics.
+session retains captures outside the invalidated syntax region and queries only
+the changed portion before assembling a complete snapshot. `HighlightUpdate`
+also exposes merged rendering ranges so any incremental backend can refresh
+only the affected portion of its destination.
+
+## Rendering boundaries
+
+The parser and theme layers do not depend on a presentation framework.
+`HighlightRenderer` lets a backend select its own target and typed failure
+without prescribing storage, layout, drawing, or font objects.
+
+Native attributed-value functions form a separate Apple convenience layer.
+`TextKitHighlightRenderer` is one optimized backend for existing UIKit and
+AppKit storage. It does not define the general rendering model and does not own
+an editor.
 
 ## Language definitions
 

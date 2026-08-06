@@ -92,7 +92,7 @@ extension HighlightSnapshot {
     private func highlightBoundaryOffsets()
         throws(HighlightRenderingError) -> [Int]
     {
-        let textLength = text.utf16.count
+        let textLength = utf16Length
         var offsets: Set<Int> = []
         offsets.reserveCapacity(highlights.count)
 

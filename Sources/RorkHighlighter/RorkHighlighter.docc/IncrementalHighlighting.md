@@ -7,6 +7,10 @@ Preserve Tree-sitter state across document edits.
 Create one session for each changing document:
 
 ```swift
+import RorkHighlighter
+
+let highlighter = try Highlighter()
+let source = #"{"name":"Rork"}"#
 let session = try highlighter.makeSession(source, as: .json)
 ```
 
@@ -19,14 +23,19 @@ Editor ranges use UTF-16 offsets:
 
 ```swift
 let update = try await session.replaceCharacters(
-    in: UTF16Range(location: 10, length: 1),
-    with: #""updated""#
+    in: UTF16Range(location: 9, length: 4),
+    with: "Codex"
 )
 ```
 
 ``HighlightUpdate/snapshot`` contains the complete new state.
 ``HighlightUpdate/invalidatedRanges`` identifies regions whose syntax or
 highlighting may have changed.
+
+``HighlightUpdate/renderingRanges`` combines the replacement with those
+invalidation ranges and returns sorted, merged regions in the new document.
+Incremental ``HighlightRenderer`` implementations can use that value without
+reproducing Tree-sitter-specific range handling.
 
 The session retains captures outside Tree-sitter's invalidated region. It
 rebases captures after the edit and queries only the changed syntax before
@@ -37,3 +46,14 @@ edit.
 The session rejects ranges outside the current revision and ranges that split a
 Unicode scalar. Read ``HighlightSession/currentRevision`` when coordinating
 edits from a versioned text buffer.
+
+## Choose a rendering path
+
+Incremental highlighting does not depend on a presentation framework. A custom
+pipeline can consume ``HighlightUpdate/snapshot`` and refresh
+``HighlightUpdate/renderingRanges`` directly. Implement ``HighlightRenderer``
+when that behavior should become a reusable backend.
+
+Read <doc:RenderingBackends> for the low-level renderer contract. Read
+<doc:TextKitIntegration> when an editable UIKit or AppKit view owns the
+destination storage.
