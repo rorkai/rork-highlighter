@@ -122,7 +122,7 @@ struct HighlightRendererTests {
 
     /// Confirms renderer ranges include replacements and parser invalidations.
     @Test
-    func mergesRangesRequiringRendering() {
+    func mergesRenderingRanges() {
         let snapshot = HighlightSnapshot(
             text: "01234567890123456789",
             language: .swift,
@@ -142,7 +142,7 @@ struct HighlightRendererTests {
         )
 
         #expect(
-            update.rangesRequiringRendering == [
+            update.renderingRanges == [
                 UTF16Range(location: 4, length: 5),
                 UTF16Range(location: 12, length: 3),
             ]
@@ -166,7 +166,7 @@ struct HighlightRendererTests {
             snapshot: snapshot
         )
 
-        #expect(update.rangesRequiringRendering.isEmpty)
+        #expect(update.renderingRanges.isEmpty)
     }
 
     /// Creates a minimal update for generic backend dispatch tests.

@@ -113,9 +113,8 @@ try renderer.render(update, in: textStorage)
 ```
 
 The renderer clears and reapplies syntax-owned attributes only inside
-``HighlightUpdate/rangesRequiringRendering``. That value combines the
-replacement with Tree-sitter invalidation ranges and merges adjacent or
-overlapping regions.
+``HighlightUpdate/renderingRanges``. That value combines the replacement with
+Tree-sitter invalidation ranges and merges adjacent or overlapping regions.
 
 ## Keep storage and session synchronized
 

@@ -27,9 +27,9 @@ public protocol HighlightRenderer<Target, Failure> {
 
     /// Renders an incremental highlighting update into a target.
     ///
-    /// Implementations can use ``HighlightUpdate/rangesRequiringRendering``
-    /// to limit work to the affected regions. Renderers without an incremental
-    /// path receive a default implementation that renders the complete latest
+    /// Implementations can use ``HighlightUpdate/renderingRanges`` to limit
+    /// work to the affected regions. Renderers without an incremental path
+    /// receive a default implementation that renders the complete latest
     /// snapshot.
     ///
     /// - Parameters:

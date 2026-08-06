@@ -90,9 +90,9 @@ above or flatten them into its own nonoverlapping representation.
 ## Add incremental rendering
 
 Implement the update overload when the target can replace styling in only part
-of a document. ``HighlightUpdate/rangesRequiringRendering`` combines the
-replacement range with Tree-sitter's invalidation ranges, removes empty ranges,
-and merges adjacent or overlapping regions.
+of a document. ``HighlightUpdate/renderingRanges`` combines the replacement
+range with Tree-sitter's invalidation ranges, removes empty ranges, and merges
+adjacent or overlapping regions.
 
 The latest complete spans remain available through
 ``HighlightUpdate/snapshot``. An incremental backend clears its owned styling

@@ -267,7 +267,7 @@
                 return nil
             }
 
-            return update.rangesRequiringRendering
+            return update.renderingRanges
         }
 
         /// Rebuilds style caches and forgets the rendered document revision.

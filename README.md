@@ -134,7 +134,7 @@ let update = try await session.replaceCharacters(
     with: "Rork"
 )
 
-let rangesToRefresh = update.rangesRequiringRendering
+let renderingRanges = update.renderingRanges
 ```
 
 The session edits the existing Tree-sitter syntax tree, retains unaffected
@@ -152,9 +152,9 @@ incremental updates. A backend chooses its own target, error type, configuration
 and caches. Implementing complete rendering is enough to begin because the
 default update path renders the latest complete snapshot.
 
-An optimized backend can implement update rendering and use
-`rangesRequiringRendering` to touch only affected regions. The protocol does
-not prescribe layout, drawing, font objects, or storage ownership.
+An optimized backend can implement update rendering and use `renderingRanges`
+to touch only affected regions. The protocol does not prescribe layout,
+drawing, font objects, or storage ownership.
 
 See [Building Rendering Backends](Sources/RorkHighlighter/RorkHighlighter.docc/RenderingBackends.md)
 for a complete implementation.

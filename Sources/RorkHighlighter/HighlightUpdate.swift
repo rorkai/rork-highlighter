@@ -12,12 +12,12 @@ public struct HighlightUpdate: Hashable, Sendable {
     /// Holds the complete highlighting state after the edit.
     public let snapshot: HighlightSnapshot
 
-    /// Returns the new-document ranges that a renderer needs to refresh.
+    /// Returns the new-document ranges for incremental rendering.
     ///
     /// The result combines the replacement with Tree-sitter's invalidation
     /// ranges. Overlapping and adjacent ranges are merged, empty ranges are
     /// omitted, and the remaining ranges are sorted by location.
-    public var rangesRequiringRendering: [UTF16Range] {
+    public var renderingRanges: [UTF16Range] {
         Self.mergedRenderingRanges(
             invalidatedRanges + [replacementRange]
         )

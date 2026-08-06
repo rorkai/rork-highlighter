@@ -32,10 +32,10 @@ let update = try await session.replaceCharacters(
 ``HighlightUpdate/invalidatedRanges`` identifies regions whose syntax or
 highlighting may have changed.
 
-``HighlightUpdate/rangesRequiringRendering`` combines the replacement with
-those invalidation ranges and returns sorted, merged regions in the new
-document. Incremental ``HighlightRenderer`` implementations can use that value
-without reproducing Tree-sitter-specific range handling.
+``HighlightUpdate/renderingRanges`` combines the replacement with those
+invalidation ranges and returns sorted, merged regions in the new document.
+Incremental ``HighlightRenderer`` implementations can use that value without
+reproducing Tree-sitter-specific range handling.
 
 The session retains captures outside Tree-sitter's invalidated region. It
 rebases captures after the edit and queries only the changed syntax before
@@ -51,8 +51,8 @@ edits from a versioned text buffer.
 
 Incremental highlighting does not depend on a presentation framework. A custom
 pipeline can consume ``HighlightUpdate/snapshot`` and refresh
-``HighlightUpdate/rangesRequiringRendering`` directly. Implement
-``HighlightRenderer`` when that behavior should become a reusable backend.
+``HighlightUpdate/renderingRanges`` directly. Implement ``HighlightRenderer``
+when that behavior should become a reusable backend.
 
 Read <doc:RenderingBackends> for the low-level renderer contract. Read
 <doc:TextKitIntegration> when an editable UIKit or AppKit view owns the
