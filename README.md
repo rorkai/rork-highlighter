@@ -405,7 +405,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for maintenance workflows and
 
 ## License
 
-Rork Highlighter is licensed under Apache-2.0. Tree-sitter,
-SwiftTreeSitter, and bundled grammars retain their original permissive
-licenses. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for exact
-attribution.
+See the [Apache-2.0 license](LICENSE) and
+[third-party notices](THIRD_PARTY_NOTICES.md).
