@@ -28,6 +28,11 @@ let update = try await session.replaceCharacters(
 ``HighlightUpdate/invalidatedRanges`` identifies regions whose syntax or
 highlighting may have changed.
 
+``HighlightUpdate/rangesRequiringRendering`` combines the replacement with
+those invalidation ranges and returns sorted, merged regions in the new
+document. Incremental ``HighlightRenderer`` implementations can use that value
+without reproducing Tree-sitter-specific range handling.
+
 The session retains captures outside Tree-sitter's invalidated region. It
 rebases captures after the edit and queries only the changed syntax before
 assembling the complete snapshot. Consumers therefore keep the simple complete
@@ -40,8 +45,8 @@ edits from a versioned text buffer.
 
 ## Render TextKit updates
 
-UIKit and AppKit clients can apply the session's invalidation ranges directly
-to existing attributed storage:
+``TextKitHighlightRenderer`` is the built-in backend for UIKit and AppKit. It
+applies the session's rendering ranges directly to existing attributed storage:
 
 ```swift
 let renderer = TextKitHighlightRenderer(theme: .rorkDark)

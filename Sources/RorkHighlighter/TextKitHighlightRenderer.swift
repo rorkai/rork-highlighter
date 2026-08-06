@@ -71,6 +71,10 @@
 #if canImport(UIKit) || canImport(AppKit)
     /// Applies complete snapshots and incremental updates to TextKit storage.
     ///
+    /// This built-in ``HighlightRenderer`` backend works with the
+    /// `NSTextStorage` exposed by both TextKit 1 and TextKit 2 text views. It
+    /// does not depend on either layout manager.
+    ///
     /// The renderer retains resolved theme styles and native font faces across
     /// edits. It changes only font, foreground, background, underline, and
     /// strikethrough attributes, so paragraph styles and custom attributes stay
@@ -79,7 +83,13 @@
     /// Instances contain mutable caches and do not conform to `Sendable`. Use a
     /// renderer on the same isolation domain that owns its `NSTextStorage`, and
     /// keep one renderer with each storage instance.
-    public final class TextKitHighlightRenderer {
+    public final class TextKitHighlightRenderer: HighlightRenderer {
+        /// Uses mutable TextKit storage as the rendering destination.
+        public typealias Target = NSTextStorage
+
+        /// Reports failures through the shared native rendering error.
+        public typealias Failure = HighlightRenderingError
+
         /// Holds the theme used to resolve capture scopes.
         ///
         /// Assigning another theme clears the cached document state. Render a
@@ -257,40 +267,7 @@
                 return nil
             }
 
-            return Self.mergedRenderingRanges(
-                update.invalidatedRanges + [update.replacementRange]
-            )
-        }
-
-        /// Merges overlapping and adjacent nonempty rendering ranges.
-        ///
-        /// - Parameter ranges: The bounded new-document ranges to merge.
-        /// - Returns: Sorted disjoint ranges suitable for one TextKit edit.
-        private static func mergedRenderingRanges(
-            _ ranges: [UTF16Range]
-        ) -> [UTF16Range] {
-            let sortedRanges = ranges.filter { $0.length > 0 }.sorted()
-            guard var currentRange = sortedRanges.first else {
-                return []
-            }
-
-            var result: [UTF16Range] = []
-            result.reserveCapacity(sortedRanges.count)
-            for range in sortedRanges.dropFirst() {
-                if range.location <= currentRange.upperBound {
-                    currentRange = UTF16Range(
-                        location: currentRange.location,
-                        length:
-                            max(currentRange.upperBound, range.upperBound)
-                            - currentRange.location
-                    )
-                } else {
-                    result.append(currentRange)
-                    currentRange = range
-                }
-            }
-            result.append(currentRange)
-            return result
+            return update.rangesRequiringRendering
         }
 
         /// Rebuilds style caches and forgets the rendered document revision.

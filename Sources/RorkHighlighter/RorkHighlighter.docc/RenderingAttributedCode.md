@@ -84,8 +84,10 @@ and `NSTextStorage` APIs.
 
 ## Update TextKit storage incrementally
 
-Create one ``TextKitHighlightRenderer`` beside each changing storage instance.
-The storage must contain the source represented by the first snapshot:
+``TextKitHighlightRenderer`` is the built-in ``HighlightRenderer`` backend for
+the `NSTextStorage` shared by TextKit 1 and TextKit 2. Create one renderer
+beside each changing storage instance. The storage must contain the source
+represented by the first snapshot:
 
 ```swift
 let session = try highlighter.makeSession(source, as: .swift)

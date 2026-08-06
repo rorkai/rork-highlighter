@@ -21,8 +21,10 @@ separate SwiftPM dependency for every Tree-sitter grammar.
 - Incremental parsing inside one actor per document.
 - Explicit UTF-16 ranges that match Foundation text systems.
 - Renderer-neutral light and dark themes with hierarchical scope matching.
-- Native SwiftUI `AttributedString`, TextKit `NSAttributedString`, and
-  incremental `NSTextStorage` rendering.
+- A typed renderer contract for native, graphics, terminal, and custom
+  backends.
+- Native SwiftUI `AttributedString`, TextKit `NSAttributedString`, and an
+  optimized incremental TextKit backend.
 - Deterministic aliases, filenames, and file-extension discovery.
 - Nested-language infrastructure through SwiftTreeSitterLayer.
 - A parser-neutral registry for custom and generated language packs.
@@ -81,6 +83,22 @@ for highlight in snapshot.highlights {
 The spans preserve Tree-sitter capture names such as
 `string.special.key`, `string`, and `constant.builtin`. Spans may overlap.
 Apply broader spans first and more specific spans afterward.
+
+## Rendering backends
+
+`HighlightRenderer` defines the common contract for rendering complete
+snapshots and incremental updates into a backend target. Renderers choose their
+own target, configuration, caching, and typed failure. A backend only needs to
+implement complete snapshot rendering because the protocol falls back to the
+latest complete snapshot when it receives an update.
+
+Optimized incremental backends can also implement update rendering and use
+`HighlightUpdate.rangesRequiringRendering` to refresh the merged replacement
+and Tree-sitter invalidation ranges. Raw ordered spans and renderer-neutral
+theme styles remain available for Metal, CoreText, terminal, HTML, and other
+custom pipelines. See
+[Building Rendering Backends](Sources/RorkHighlighter/RorkHighlighter.docc/RenderingBackends.md)
+for a complete implementation outline.
 
 Filename and file-extension discovery are also available:
 
@@ -196,9 +214,10 @@ let rendered = try snapshot.nsAttributedString(
 Assign the result directly to APIs such as `UILabel.attributedText` or
 `NSTextStorage.setAttributedString(_:)`.
 
-Use `TextKitHighlightRenderer` when a text view already owns its attributed
-storage. It preserves paragraph styles, links, attachments, and custom
-attributes while updating syntax-owned attributes in place.
+Use `TextKitHighlightRenderer`, the built-in `HighlightRenderer` backend, when
+a text view already owns its attributed storage. It supports the
+`NSTextStorage` exposed by TextKit 1 and TextKit 2 while preserving paragraph
+styles, links, attachments, and custom attributes.
 
 Rendering preserves the snapshot's UTF-16 ranges and overlap order. Invalid
 ranges throw `HighlightRenderingError` instead of being rounded or trapping.
@@ -289,6 +308,10 @@ does not compare the complete source after every update. A skipped revision, a
 different storage instance, an incompatible source length, or an appearance
 change triggers a verified complete render. Reject same-length out-of-order
 edits through the document revision before passing them to the renderer.
+
+Other rendering backends receive the same `HighlightUpdate`. Use
+`rangesRequiringRendering` when the destination can update only affected
+regions, or rely on the protocol's complete-snapshot fallback.
 
 ## Registering a language
 
