@@ -32,6 +32,7 @@ existing UIKit or AppKit storage incrementally.
 - <doc:RenderingBackends>
 - ``HighlightTheme``
 - ``HighlightStyle``
+- ``StyledHighlight``
 - ``HighlightColor``
 - ``HighlightTextTrait``
 - ``HighlightRenderer``

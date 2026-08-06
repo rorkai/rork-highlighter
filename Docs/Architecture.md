@@ -8,8 +8,10 @@ public API remains stable as the bundled catalog and its tooling grow.
 `LanguageID` and `LanguageCatalog` resolve canonical identifiers, aliases,
 filenames, and file extensions without exposing mutable parser state.
 
-`HighlightSnapshot`, `HighlightSpan`, and `UTF16Range` are immutable `Sendable`
-values. Highlight ranges use UTF-16 because Foundation text systems and the
+`HighlightSnapshot`, `HighlightSpan`, `StyledHighlight`, and `UTF16Range` are
+immutable `Sendable` values. A snapshot can resolve its spans through a theme
+into ordered styled highlights without selecting a rendering framework.
+Highlight ranges use UTF-16 because Foundation text systems and the
 SwiftTreeSitter convenience API share that coordinate space.
 
 ## Parser ownership

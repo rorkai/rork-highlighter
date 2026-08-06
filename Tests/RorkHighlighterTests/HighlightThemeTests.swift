@@ -98,6 +98,49 @@ struct HighlightThemeTests {
         )
     }
 
+    /// Confirms snapshot-level theme resolution preserves capture order and
+    /// semantic spans.
+    @Test
+    func createsOrderedStyledHighlights() {
+        let broadSpan = HighlightSpan(
+            scope: "string",
+            range: UTF16Range(location: 0, length: 6)
+        )
+        let specificSpan = HighlightSpan(
+            scope: "string.special",
+            range: UTF16Range(location: 1, length: 4)
+        )
+        let snapshot = HighlightSnapshot(
+            text: #""Rork""#,
+            language: .swift,
+            revision: 3,
+            highlights: [broadSpan, specificSpan]
+        )
+        let specificStyle = HighlightStyle(
+            foregroundColor: HighlightColor(rgb: 0xAB_CD_EF)
+        )
+        let theme = HighlightTheme(
+            name: "Styled highlights",
+            styles: ["string.special": specificStyle]
+        )
+
+        let highlights = snapshot.styledHighlights(using: theme)
+
+        #expect(
+            highlights == [
+                StyledHighlight(
+                    span: broadSpan,
+                    style: theme.baseStyle
+                ),
+                StyledHighlight(
+                    span: specificSpan,
+                    style: specificStyle
+                ),
+            ]
+        )
+        #expect(highlights.map(\.range) == [broadSpan.range, specificSpan.range])
+    }
+
     /// Confirms a bundled theme resolves scopes emitted by a real parser.
     @Test
     func stylesHighlightedJSONScopes() throws(HighlighterError) {

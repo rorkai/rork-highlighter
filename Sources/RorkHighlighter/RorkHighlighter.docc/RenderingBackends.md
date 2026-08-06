@@ -17,6 +17,7 @@ highlighter supplies the same renderer-neutral values:
 - ``HighlightUpdate`` contains the latest complete snapshot and the ranges
   affected by an edit.
 - ``HighlightTheme`` resolves each capture span into a platform-neutral style.
+- ``StyledHighlight`` pairs each semantic capture with its resolved style.
 
 The protocol does not prescribe drawing commands, layout, font objects, or
 storage ownership. A Metal backend can encode GPU data, a terminal backend can
@@ -36,8 +37,8 @@ final class CodeSurface {
     /// Holds the source currently represented by the surface.
     var text: String
 
-    /// Holds ordered styles resolved for the current source.
-    var styles: [(range: UTF16Range, style: HighlightStyle)] = []
+    /// Holds the ordered styled highlights for the current source.
+    var highlights: [StyledHighlight] = []
 
     /// Creates a surface for source that has not been styled yet.
     ///
@@ -77,9 +78,7 @@ struct CodeSurfaceRenderer: HighlightRenderer {
         guard target.text == snapshot.text else {
             throw .sourceMismatch
         }
-        target.styles = snapshot.highlights.map { span in
-            (span.range, theme.style(for: span))
-        }
+        target.highlights = snapshot.styledHighlights(using: theme)
     }
 }
 ```

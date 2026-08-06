@@ -9,6 +9,8 @@ release.
 
 - Added a framework-agnostic renderer contract for complete snapshots and
   incremental updates with typed backend targets and failures.
+- Added named `StyledHighlight` values and snapshot-level theme resolution for
+  custom rendering backends.
 - Added reusable TextKit rendering that applies incremental invalidation ranges
   to existing `NSTextStorage` while preserving paragraph and custom attributes.
 - Added separate guides for low-level rendering, native attributed output, and

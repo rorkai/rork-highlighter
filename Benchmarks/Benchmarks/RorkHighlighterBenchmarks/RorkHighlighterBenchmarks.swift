@@ -311,9 +311,7 @@ let benchmarks: @Sendable () -> Void = {
         preconditionFailure("The Swift benchmark snapshots are empty.")
     }
     Benchmark("Theme/Resolve/Large") { _ in
-        for highlight in largeSnapshot.highlights {
-            blackHole(HighlightTheme.rorkDark.style(for: highlight))
-        }
+        blackHole(largeSnapshot.styledHighlights(using: .rorkDark))
     }
 
     #if canImport(SwiftUI)

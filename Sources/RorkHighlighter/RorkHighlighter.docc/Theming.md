@@ -13,18 +13,18 @@ let snapshot = try highlighter.highlight(
     #"let greeting = "Hello""#,
     as: .swift
 )
-let theme = HighlightTheme.rorkDark
+let styledHighlights = snapshot.styledHighlights(using: .rorkDark)
 
-for span in snapshot.highlights {
-    let style = theme.style(for: span)
-    print(span.scope, style)
+for highlight in styledHighlights {
+    print(highlight.span.scope, highlight.style)
 }
 ```
 
-The base style supplies defaults for rendered text. The bundled themes leave
-their text background unset so the surrounding editor or view controls its
-canvas. Each highlighted span receives the base style followed by every
-matching scope refinement.
+``HighlightSnapshot/styledHighlights(using:)`` returns named
+``StyledHighlight`` values in capture order. The base style supplies defaults
+for rendered text. The bundled themes leave their text background unset so the
+surrounding editor or view controls its canvas. Each highlighted span receives
+the base style followed by every matching scope refinement.
 
 ## Define a custom theme
 

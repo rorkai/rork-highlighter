@@ -106,23 +106,17 @@ let snapshot = try Highlighter().highlight(
 ## Framework-agnostic core
 
 The core API returns data rather than drawing into a particular framework.
-Resolve each span through a theme and pass the result into any rendering
-pipeline:
+Resolve the snapshot through a theme and pass its typed values into any
+rendering pipeline:
 
 ```swift
-let theme = HighlightTheme.rorkDark
-
-let styledRanges = snapshot.highlights.map { span in
-    (
-        range: span.range,
-        style: theme.style(for: span)
-    )
-}
+let styledHighlights = snapshot.styledHighlights(using: .rorkDark)
 ```
 
-Spans remain in capture order because later overlapping captures can refine
-broader styles. `HighlightColor`, `HighlightStyle`, `HighlightTheme`, and
-`HighlightTextTrait` are immutable, renderer-neutral values.
+Each `StyledHighlight` retains its semantic `span`, exposes its UTF-16 `range`,
+and carries its resolved `style`. Values remain in capture order because later
+overlapping captures can refine broader styles. Every styling value is
+immutable, `Sendable`, and renderer neutral.
 
 ### Incremental documents
 
