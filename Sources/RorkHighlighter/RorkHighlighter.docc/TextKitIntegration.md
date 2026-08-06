@@ -80,20 +80,21 @@ let snapshot = try await session.snapshot()
 try renderer.render(snapshot, in: textStorage)
 ```
 
-Apply each character edit to TextKit and the session before rendering the
-matching update:
+Ask the session to validate and apply each edit first. This keeps TextKit
+unchanged when the session rejects a range. Apply the same replacement to
+TextKit after the session succeeds, then render the matching update:
 
 ```swift
 let range = UTF16Range(location: 24, length: 4)
 let replacement = "Rork"
 
-textStorage.replaceCharacters(
-    in: NSRange(location: range.location, length: range.length),
+let update = try await session.replaceCharacters(
+    in: range,
     with: replacement
 )
 
-let update = try await session.replaceCharacters(
-    in: range,
+textStorage.replaceCharacters(
+    in: NSRange(location: range.location, length: range.length),
     with: replacement
 )
 

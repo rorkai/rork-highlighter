@@ -78,8 +78,9 @@ Highlight an immutable source string:
 import RorkHighlighter
 
 let highlighter = try Highlighter()
+let source = #"let greeting = "Hello, Rork!""#
 let snapshot = try highlighter.highlight(
-    #"let greeting = "Hello, Rork!""#,
+    source,
     as: .swift
 )
 ```
@@ -254,9 +255,10 @@ try renderer.render(snapshot, in: textStorage)
 ```
 
 Keep one renderer beside each editable storage so its native style and font
-caches survive between edits. Apply a character edit to TextKit and the
-`HighlightSession`, then render the returned `HighlightUpdate`. Only the
-replacement and invalidated syntax ranges are restyled.
+caches survive between edits. Ask `HighlightSession` to validate and apply an
+edit first. Apply the same replacement to TextKit after that succeeds, then
+render the returned `HighlightUpdate`. Only the replacement and invalidated
+syntax ranges are restyled.
 
 See [Integrating with TextKit](Sources/RorkHighlighter/RorkHighlighter.docc/TextKitIntegration.md)
 for the complete editing sequence and synchronization contract.
