@@ -54,7 +54,7 @@ Add Rork Highlighter to your package:
 ```swift
 .package(
     url: "https://github.com/rorkai/rork-highlighter.git",
-    .upToNextMinor(from: "0.2.1")
+    .upToNextMinor(from: "0.3.0")
 )
 ```
 
@@ -274,21 +274,21 @@ between edits. The common one-shot path streams lightweight predicate-aware
 captures, while incremental sessions retain unaffected spans. Themes, native
 colors, font faces, and TextKit attributes are cached where reuse matters.
 
-These release-mode medians provide a reference from the same Apple M5 Max
-development machine:
+These release-mode median ranges come from two campaigns on the same Apple M5
+Max development machine:
 
-| Workload | Source | Median |
+| Workload | Source | Median range |
 | --- | ---: | ---: |
-| One-shot semantic highlighting | 256 KiB Swift | 34.7 ms |
-| Incremental parse | 1 MiB Swift | 10.478 ms |
-| Incremental parse and TextKit restyling | 1 MiB Swift | 10.715 ms |
+| One-shot semantic highlighting | 256 KiB Swift | 35.7 to 36.2 ms |
+| Incremental parse | 1 MiB Swift | 11.1 to 11.4 ms |
+| Incremental parse and TextKit restyling | 1 MiB Swift | 11.7 to 11.9 ms |
 
-On the shared 256 KiB fixture, Rork Highlighter and highlight.js 11.11.1 both
-measured about 34.7 ms. Rork returned 63,146 semantic UTF-16 spans, while
-highlight.js returned escaped HTML, so the comparison describes practical
-throughput rather than identical output. The editing benchmark is where
-retained Tree-sitter state matters because a change does not trigger another
-full-document pass.
+On the shared 256 KiB fixture, Rork Highlighter measured 35.7 to 36.2 ms and
+highlight.js 11.11.1 on Node 24.4.0 measured 36.5 to 42.6 ms. Rork returned
+63,146 semantic UTF-16 spans, while highlight.js returned escaped HTML, so the
+comparison describes practical throughput rather than identical output. The
+editing benchmark is where retained Tree-sitter state matters because a change
+does not trigger another full-document pass.
 
 Performance results vary with hardware, operating system, Swift toolchain, and
 source structure. The repository includes public-workflow regression

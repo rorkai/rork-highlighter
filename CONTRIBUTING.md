@@ -57,3 +57,21 @@ make format
 
 Generated parser tables are reviewed through their pinned upstream revision and
 generation metadata. Do not hand-edit them.
+
+## Release preparation
+
+Compare the public API with the previous release before preparing a new minor
+or patch version:
+
+```bash
+swift package diagnose-api-breaking-changes <previous-tag> \
+  --products RorkHighlighter
+```
+
+Resolve every reported break or choose a major release before continuing.
+Promote the completed changelog entry and update the public package version,
+SwiftPM installation example, and DocC archive metadata together.
+
+Run `make check` and the release benchmarks after those edits. Once the release
+PR merges, tag its merge commit and publish the GitHub release from the matching
+changelog entry.

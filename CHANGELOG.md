@@ -3,7 +3,7 @@
 This document records the user-visible changes in each Rork Highlighter
 release.
 
-## Unreleased
+## 0.3.0 - 2026-08-07
 
 ### Added
 
@@ -13,6 +13,8 @@ release.
   custom rendering backends.
 - Added reusable TextKit rendering that applies incremental invalidation ranges
   to existing `NSTextStorage` while preserving paragraph and custom attributes.
+- Added a typed `TextKitRenderingError` contract for invalid snapshots and
+  mismatched storage.
 - Added separate guides for low-level rendering, native attributed output, and
   editable TextKit integration.
 
