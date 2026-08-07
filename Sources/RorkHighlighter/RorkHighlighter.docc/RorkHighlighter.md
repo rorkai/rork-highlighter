@@ -49,6 +49,7 @@ existing UIKit or AppKit storage incrementally.
 - <doc:RenderingAttributedCode>
 - <doc:TextKitIntegration>
 - ``TextKitHighlightRenderer``
+- ``TextKitRenderingError``
 - ``HighlightRenderingError``
 
 ### Languages

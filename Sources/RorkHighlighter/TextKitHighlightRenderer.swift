@@ -1,4 +1,4 @@
-#if canImport(UIKit)
+#if canImport(UIKit) && !os(watchOS)
     import UIKit
 
     /// Supplies UIKit configuration for incremental TextKit rendering.
@@ -68,7 +68,7 @@
     }
 #endif
 
-#if canImport(UIKit) || canImport(AppKit)
+#if (canImport(UIKit) && !os(watchOS)) || canImport(AppKit)
     /// Applies complete snapshots and incremental updates to TextKit storage.
     ///
     /// This built-in ``HighlightRenderer`` backend works with the
@@ -87,8 +87,8 @@
         /// Uses mutable TextKit storage as the rendering destination.
         public typealias Target = NSTextStorage
 
-        /// Reports failures through the shared native rendering error.
-        public typealias Failure = HighlightRenderingError
+        /// Reports snapshot and storage failures through a TextKit error.
+        public typealias Failure = TextKitRenderingError
 
         /// Holds the theme used to resolve capture scopes.
         ///
@@ -142,15 +142,15 @@
         /// - Parameters:
         ///   - snapshot: The complete highlighting state to render.
         ///   - textStorage: The TextKit storage containing `snapshot.text`.
-        /// - Throws: ``HighlightRenderingError`` when a range is invalid or the
-        ///   storage does not contain the snapshot source.
+        /// - Throws: ``TextKitRenderingError`` when the snapshot is invalid or
+        ///   the storage does not contain its source.
         public func render(
             _ snapshot: HighlightSnapshot,
             in textStorage: NSTextStorage
-        ) throws(HighlightRenderingError) {
-            try snapshot.validateHighlightRanges()
+        ) throws(TextKitRenderingError) {
+            try Self.validateHighlightRanges(in: snapshot)
             guard textStorage.string == snapshot.text else {
-                throw HighlightRenderingError.textStorageMismatch(
+                throw TextKitRenderingError.textStorageMismatch(
                     snapshotRevision: snapshot.revision,
                     expectedLength: snapshot.utf16Length,
                     actualLength: textStorage.length
@@ -190,13 +190,13 @@
         /// - Parameters:
         ///   - update: The highlighting update matching the applied text edit.
         ///   - textStorage: The storage containing `update.snapshot.text`.
-        /// - Throws: ``HighlightRenderingError`` when a range is invalid or a
-        ///   required complete render finds different source text.
+        /// - Throws: ``TextKitRenderingError`` when the snapshot is invalid or
+        ///   a required complete render finds different source text.
         public func render(
             _ update: HighlightUpdate,
             in textStorage: NSTextStorage
-        ) throws(HighlightRenderingError) {
-            try update.snapshot.validateHighlightRanges()
+        ) throws(TextKitRenderingError) {
+            try Self.validateHighlightRanges(in: update.snapshot)
             guard
                 let renderingRanges = incrementalRenderingRanges(
                     for: update,
@@ -218,6 +218,21 @@
                 snapshot: update.snapshot
             )
             renderedTextStorage = textStorage
+        }
+
+        /// Validates snapshot ranges while preserving their original error.
+        ///
+        /// - Parameter snapshot: The snapshot whose ranges will be rendered.
+        /// - Throws: ``TextKitRenderingError/invalidSnapshot(_:)`` when the
+        ///   snapshot contains an invalid range.
+        private static func validateHighlightRanges(
+            in snapshot: HighlightSnapshot
+        ) throws(TextKitRenderingError) {
+            do {
+                try snapshot.validateHighlightRanges()
+            } catch {
+                throw TextKitRenderingError.invalidSnapshot(error)
+            }
         }
 
         /// Returns merged new-document ranges for a compatible update.

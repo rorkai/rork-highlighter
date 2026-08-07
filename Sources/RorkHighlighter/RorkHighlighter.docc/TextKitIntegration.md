@@ -9,6 +9,9 @@ storage.
 the `NSTextStorage` exposed by TextKit 1 and TextKit 2, but it does not own a
 text view, layout manager, selection, scrolling, or editing behavior.
 
+The backend is unavailable on watchOS because that platform does not expose
+`NSTextStorage`.
+
 Use this integration when an editable UIKit or AppKit view already owns its
 attributed storage. Use <doc:RenderingAttributedCode> when a complete
 `AttributedString` or `NSAttributedString` is enough. Use
@@ -125,7 +128,7 @@ comparing the complete source after every keystroke.
 A skipped revision, another storage instance, or incompatible edit metadata
 causes a verified complete render. That fallback succeeds when the storage
 already contains ``HighlightUpdate/snapshot`` text. It throws
-``HighlightRenderingError/textStorageMismatch(snapshotRevision:expectedLength:actualLength:)``
+``TextKitRenderingError/textStorageMismatch(snapshotRevision:expectedLength:actualLength:)``
 when the source differs.
 
 Reject same-length out-of-order edits in the document model before sending them
@@ -154,7 +157,7 @@ resynchronize through its verified fallback.
 
 ## Handle range failures
 
-The renderer throws ``HighlightRenderingError`` for storage mismatches,
-out-of-bounds spans, and UTF-16 ranges that split a Swift character. It never
-rounds invalid ranges because doing so could style text outside the original
-Tree-sitter capture.
+The renderer throws ``TextKitRenderingError`` for storage mismatches and wraps
+invalid snapshot ranges in ``TextKitRenderingError/invalidSnapshot(_:)``. It
+never rounds invalid ranges because doing so could style text outside the
+original Tree-sitter capture.

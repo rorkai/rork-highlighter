@@ -1,4 +1,4 @@
-#if canImport(UIKit)
+#if canImport(UIKit) && !os(watchOS)
     import Testing
     import UIKit
 
@@ -24,7 +24,7 @@
     private typealias TestTextStorageEditActions = NSTextStorageEditActions
 #endif
 
-#if canImport(UIKit) || canImport(AppKit)
+#if (canImport(UIKit) && !os(watchOS)) || canImport(AppKit)
     @testable import RorkHighlighter
 
     /// Verifies complete and incremental rendering into TextKit storage.
@@ -468,7 +468,7 @@
 
             #expect(
                 throws:
-                    HighlightRenderingError.textStorageMismatch(
+                    TextKitRenderingError.textStorageMismatch(
                         snapshotRevision: 7,
                         expectedLength: snapshot.text.utf16.count,
                         actualLength: storage.length
@@ -493,9 +493,44 @@
             )
         }
 
+        /// Confirms invalid snapshot ranges retain their structured failure.
+        @Test
+        func rejectsInvalidSnapshotRanges() {
+            let source = "let value = 1"
+            let invalidRange = UTF16Range(
+                location: source.utf16.count,
+                length: 1
+            )
+            let snapshot = HighlightSnapshot(
+                text: source,
+                language: .swift,
+                revision: 3,
+                highlights: [
+                    HighlightSpan(
+                        scope: "number",
+                        range: invalidRange
+                    )
+                ]
+            )
+            let storage = NSTextStorage(string: source)
+            let renderer = TextKitHighlightRenderer(theme: .rorkDark)
+
+            #expect(
+                throws:
+                    TextKitRenderingError.invalidSnapshot(
+                        .rangeOutOfBounds(
+                            range: invalidRange,
+                            textLength: source.utf16.count
+                        )
+                    )
+            ) {
+                try renderer.render(snapshot, in: storage)
+            }
+        }
+
         /// Confirms both public methods expose rendering-domain failures only.
         @Test
-        func exposesTypedRenderingContracts() throws(HighlightRenderingError) {
+        func exposesTypedRenderingContracts() throws(TextKitRenderingError) {
             let snapshot = HighlightSnapshot(
                 text: "let value = 1",
                 language: .swift,
@@ -508,12 +543,12 @@
                 (
                     HighlightSnapshot,
                     NSTextStorage
-                ) throws(HighlightRenderingError) -> Void = renderer.render(_:in:)
+                ) throws(TextKitRenderingError) -> Void = renderer.render(_:in:)
             let renderUpdate:
                 (
                     HighlightUpdate,
                     NSTextStorage
-                ) throws(HighlightRenderingError) -> Void = renderer.render(_:in:)
+                ) throws(TextKitRenderingError) -> Void = renderer.render(_:in:)
 
             try renderSnapshot(snapshot, storage)
             _ = renderUpdate
