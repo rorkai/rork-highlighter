@@ -84,7 +84,7 @@ TextKit after the session succeeds, then render the matching update:
 ```swift
 import Foundation
 import RorkHighlighter
-#if canImport(UIKit)
+#if canImport(UIKit) && !os(watchOS)
 import UIKit
 #elseif canImport(AppKit)
 import AppKit
