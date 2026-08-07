@@ -7,13 +7,6 @@ public enum HighlightRenderingError: Error, Equatable, Sendable {
 
     /// A highlight range does not align with Swift character boundaries.
     case invalidUTF16Boundary(UTF16Range)
-
-    /// TextKit storage does not contain the snapshot source being rendered.
-    case textStorageMismatch(
-        snapshotRevision: UInt64,
-        expectedLength: Int,
-        actualLength: Int
-    )
 }
 
 /// Supplies readable descriptions while preserving structured rendering
@@ -26,13 +19,6 @@ extension HighlightRenderingError: LocalizedError {
             "The UTF-16 range \(range) exceeds the snapshot length of \(textLength)."
         case .invalidUTF16Boundary(let range):
             "The UTF-16 range \(range) does not align with Swift character boundaries."
-        case .textStorageMismatch(
-            let snapshotRevision,
-            let expectedLength,
-            let actualLength
-        ):
-            "Text storage does not contain snapshot revision \(snapshotRevision). "
-                + "The snapshot has \(expectedLength) UTF-16 code units and the storage has \(actualLength)."
         }
     }
 }
