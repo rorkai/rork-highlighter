@@ -38,5 +38,8 @@ the initial API and correctness guarantees.
   its download footprint and release complexity.
 - Keep the common pack's measured consumer footprint visible in public
   documentation.
-- Revisit selectable packs only when measured size or demonstrated consumer
-  demand justifies the additional package and maintenance complexity.
+- Revisit selectable packs only when measured consumer footprint or
+  demonstrated consumer demand justifies the additional package and maintenance
+  complexity. Use the release archive and consumer download and installation
+  measurement conditions recorded in the
+  [benchmark guide](../Benchmarks/README.md#ios-application-footprint).

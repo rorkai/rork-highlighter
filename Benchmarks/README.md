@@ -92,9 +92,12 @@ machine-qualified baseline is being reviewed.
 
 Rork Highlighter 0.3.0 was measured on an Apple M5 Max with Xcode 26.6 and
 Swift 6.3.3. The comparison used two otherwise identical UIKit application
-targets with an iOS 16 minimum deployment target. Both were generic arm64
-Release archives with dead-code stripping. The highlighter target constructed
-the standard catalog, highlighted Swift, and produced native attributed output.
+targets with an iOS 16 minimum deployment target. `Baseline` was the control
+target, and its only relevant configuration difference was the absence of a
+Rork Highlighter dependency. `Highlighter` constructed the standard catalog,
+highlighted Swift, and produced native attributed output. Both targets were
+generic arm64 Release archives with dead-code stripping. The table reports the
+increase from `Baseline` to `Highlighter`.
 
 | Measured increase | Size |
 | --- | ---: |

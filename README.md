@@ -320,10 +320,11 @@ lists discovery behavior and explains parser distribution.
 
 ### Application footprint
 
-The complete 0.3.0 catalog added 39.4 MiB to a stripped, ad hoc-signed arm64
-iOS application in a controlled Release comparison. Generated parser tables
-account for almost all of this increase. Bundled query resources contribute
-only about 83 KiB.
+The complete 0.3.0 catalog increased the complete ad hoc-signed arm64 iOS
+application bundle by 39.4 MiB in a controlled Release comparison. The stripped
+application executable accounted for 39.22 MiB of that increase. Generated
+parser tables account for almost all of the growth. Bundled query resources
+contribute only about 83 KiB.
 
 The locally compressed application delta was 3.82 MiB, but this is not an App
 Store download estimate. Apple applies app thinning, DRM, and recompression
