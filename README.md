@@ -318,6 +318,18 @@ Swift regular-expression literals, and fenced code inside Markdown.
 The [bundled language guide](Sources/RorkHighlighter/RorkHighlighter.docc/BundledLanguages.md)
 lists discovery behavior and explains parser distribution.
 
+### Application footprint
+
+The complete 0.3.0 catalog added 39.4 MiB to a stripped, ad hoc-signed arm64
+iOS application in a controlled Release comparison. Generated parser tables
+account for almost all of this increase. Bundled query resources contribute
+only about 83 KiB.
+
+The locally compressed application delta was 3.82 MiB, but this is not an App
+Store download estimate. Apple applies app thinning, DRM, and recompression
+before distribution. The [benchmark guide](Benchmarks/README.md#ios-application-footprint)
+records the measurement setup and its limitations.
+
 ## Themes
 
 Rork Light and Rork Dark use hierarchical Tree-sitter capture scopes. A
