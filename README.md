@@ -299,24 +299,29 @@ and reporting constraints.
 
 ## Languages
 
-The standard catalog bundles 36 definitions selected for mobile and modern web
-development:
-
-- Apple, Android, and systems code includes Swift, Objective-C, Kotlin, Java,
-  Groovy, C, C++, Go, Rust, and Ruby.
-- Web application code includes JavaScript, TypeScript, TSX, HTML, CSS, SCSS,
-  Vue, Svelte, Astro, GraphQL, and SQL.
-- Content and configuration include JSON, JSON5, YAML, TOML, XML, Markdown,
-  MDX, Dockerfile, dotenv, Java Properties, Bash, and Python.
-- Supporting injection definitions include JSDoc, regular expressions, and
-  Markdown Inline.
+The standard catalog bundles 36 definitions for Swift, React Native and Expo,
+Android, and modern web projects. It includes primary languages and the
+supporting parsers needed for nested code.
 
 Nested-language queries resolve through the same catalog. This covers examples
 such as JavaScript inside HTML, TypeScript inside Vue, GraphQL tagged templates,
 Swift regular-expression literals, and fenced code inside Markdown.
 
 The [bundled language guide](Sources/RorkHighlighter/RorkHighlighter.docc/BundledLanguages.md)
-lists discovery behavior and explains parser distribution.
+lists every language, typed identifier, alias, and file mapping.
+
+### Application footprint
+
+The complete 0.3.0 catalog increased the complete ad hoc-signed arm64 iOS
+application bundle by 39.4 MiB in a controlled Release comparison. The stripped
+application executable accounted for 39.22 MiB of that increase. Generated
+parser tables account for almost all of the growth. Bundled query resources
+contribute only about 83 KiB.
+
+The locally compressed application delta was 3.82 MiB, but this is not an App
+Store download estimate. Apple applies app thinning, DRM, and recompression
+before distribution. The [benchmark guide](Benchmarks/README.md#ios-application-footprint)
+records the measurement setup and its limitations.
 
 ## Themes
 
@@ -330,16 +335,16 @@ Create a custom renderer-neutral theme with a base style and scope refinements:
 let theme = HighlightTheme(
     name: "Brand",
     baseStyle: HighlightStyle(
-        foregroundColor: HighlightColor(rgb: 0xE6_E6_E6),
+        foregroundColor: HighlightColor(rgb: 0xE6E6E6),
         textTraits: []
     ),
     styles: [
         "comment": HighlightStyle(
-            foregroundColor: HighlightColor(rgb: 0x7A_8A_99),
+            foregroundColor: HighlightColor(rgb: 0x7A8A99),
             textTraits: [.italic]
         ),
         "keyword": HighlightStyle(
-            foregroundColor: HighlightColor(rgb: 0xD9_9B_FF)
+            foregroundColor: HighlightColor(rgb: 0xD99BFF)
         ),
     ]
 )

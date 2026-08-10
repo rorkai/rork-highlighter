@@ -87,3 +87,34 @@ python3 Scripts/measure_distribution.py \
 
 The output path belongs under ignored build output unless a deliberate,
 machine-qualified baseline is being reviewed.
+
+### iOS application footprint
+
+Rork Highlighter 0.3.0 was measured on an Apple M5 Max with Xcode 26.6 and
+Swift 6.3.3. The comparison used two otherwise identical UIKit application
+targets with an iOS 16 minimum deployment target. `Baseline` was the control
+target, and its only relevant configuration difference was the absence of a
+Rork Highlighter dependency. `Highlighter` constructed the standard catalog,
+highlighted Swift, and produced native attributed output. Both targets were
+generic arm64 Release archives with dead-code stripping. The table reports the
+increase from `Baseline` to `Highlighter`.
+
+| Measured increase | Size |
+| --- | ---: |
+| Stripped application executable | 39.22 MiB |
+| Complete ad hoc-signed application bundle | 39.40 MiB |
+| Bundled query resources included in the application | 83.4 KiB |
+| Locally compressed ad hoc-signed application | 3.82 MiB |
+
+The linked debug symbols contained all 36 root parser entry points, so the
+result represents the complete common pack rather than only the Swift parser.
+Generated parser data accounted for most of the installed growth. The
+executable's `__const` section grew by approximately 36.3 MiB.
+
+Apple documents that local application bundles, archives, and upload IPAs do
+not provide accurate App Store download and installation sizes. A signed App
+Thinning Size Report provides a close development estimate, while App Store
+Connect reports the final per-device variants after processing. The locally
+compressed result above describes compressibility rather than a promised
+download size. See [Reducing your app's size](https://developer.apple.com/documentation/xcode/reducing-your-app-s-size)
+for Apple's measurement guidance.

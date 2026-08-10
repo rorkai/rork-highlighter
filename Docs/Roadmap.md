@@ -36,5 +36,10 @@ the initial API and correctness guarantees.
 - Keep the common parser pack source-based and track its consumer build cost.
 - Revisit precompiled delivery only when repeatable consumer benchmarks justify
   its download footprint and release complexity.
-- Add a tool that builds a custom pack from a selected language list.
-- Publish common, domain, and all-language packs with measured size data.
+- Keep the common pack's measured consumer footprint visible in public
+  documentation.
+- Revisit selectable packs only when measured consumer footprint or
+  demonstrated consumer demand justifies the additional package and maintenance
+  complexity. Use the release archive and consumer download and installation
+  measurement conditions recorded in the
+  [benchmark guide](../Benchmarks/README.md#ios-application-footprint).
