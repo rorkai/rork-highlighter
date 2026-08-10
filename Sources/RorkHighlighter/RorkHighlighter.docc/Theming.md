@@ -35,16 +35,16 @@ dotted capture scopes:
 let theme = HighlightTheme(
     name: "Brand",
     baseStyle: HighlightStyle(
-        foregroundColor: HighlightColor(rgb: 0xE6_E6_E6),
+        foregroundColor: HighlightColor(rgb: 0xE6E6E6),
         textTraits: []
     ),
     styles: [
         "comment": HighlightStyle(
-            foregroundColor: HighlightColor(rgb: 0x7A_8A_99),
+            foregroundColor: HighlightColor(rgb: 0x7A8A99),
             textTraits: [.italic]
         ),
         "keyword": HighlightStyle(
-            foregroundColor: HighlightColor(rgb: 0xD9_9B_FF)
+            foregroundColor: HighlightColor(rgb: 0xD99BFF)
         ),
     ]
 )

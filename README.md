@@ -299,24 +299,16 @@ and reporting constraints.
 
 ## Languages
 
-The standard catalog bundles 36 definitions selected for mobile and modern web
-development:
-
-- Apple, Android, and systems code includes Swift, Objective-C, Kotlin, Java,
-  Groovy, C, C++, Go, Rust, and Ruby.
-- Web application code includes JavaScript, TypeScript, TSX, HTML, CSS, SCSS,
-  Vue, Svelte, Astro, GraphQL, and SQL.
-- Content and configuration include JSON, JSON5, YAML, TOML, XML, Markdown,
-  MDX, Dockerfile, dotenv, Java Properties, Bash, and Python.
-- Supporting injection definitions include JSDoc, regular expressions, and
-  Markdown Inline.
+The standard catalog bundles 36 definitions for Swift, React Native and Expo,
+Android, and modern web projects. It includes primary languages and the
+supporting parsers needed for nested code.
 
 Nested-language queries resolve through the same catalog. This covers examples
 such as JavaScript inside HTML, TypeScript inside Vue, GraphQL tagged templates,
 Swift regular-expression literals, and fenced code inside Markdown.
 
 The [bundled language guide](Sources/RorkHighlighter/RorkHighlighter.docc/BundledLanguages.md)
-lists discovery behavior and explains parser distribution.
+lists every language, typed identifier, alias, and file mapping.
 
 ### Application footprint
 
@@ -343,16 +335,16 @@ Create a custom renderer-neutral theme with a base style and scope refinements:
 let theme = HighlightTheme(
     name: "Brand",
     baseStyle: HighlightStyle(
-        foregroundColor: HighlightColor(rgb: 0xE6_E6_E6),
+        foregroundColor: HighlightColor(rgb: 0xE6E6E6),
         textTraits: []
     ),
     styles: [
         "comment": HighlightStyle(
-            foregroundColor: HighlightColor(rgb: 0x7A_8A_99),
+            foregroundColor: HighlightColor(rgb: 0x7A8A99),
             textTraits: [.italic]
         ),
         "keyword": HighlightStyle(
-            foregroundColor: HighlightColor(rgb: 0xD9_9B_FF)
+            foregroundColor: HighlightColor(rgb: 0xD99BFF)
         ),
     ]
 )

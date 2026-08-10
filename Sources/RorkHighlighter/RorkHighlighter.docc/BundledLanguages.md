@@ -2,6 +2,51 @@
 
 Use common Tree-sitter grammars without adding parser packages to an app.
 
+## Available languages
+
+The standard catalog exposes every bundled definition as a typed
+``LanguageID`` value. Aliases work anywhere an identifier is accepted. File
+discovery applies when source is highlighted through a file URL.
+
+| Language | `LanguageID` | Aliases | File discovery |
+| --- | --- | --- | --- |
+| Astro | `.astro` | None | `.astro` |
+| Bash | `.bash` | `sh`, `shell` | `.bash`, `.bats`, `.sh`, `.zsh`, `.bash_profile`, `.bashrc`, `.profile`, `.zprofile`, `.zshrc` |
+| C | `.c` | None | `.c`, `.h` |
+| C++ | `.cpp` | `c++`, `cplusplus`, `cxx` | `.cc`, `.cpp`, `.cxx`, `.hh`, `.hpp`, `.hxx`, `.ipp`, `.tpp` |
+| CSS | `.css` | None | `.css` |
+| Dockerfile | `.dockerfile` | `docker` | `Containerfile`, `Dockerfile` |
+| dotenv | `.dotenv` | `env` | `.env`, `.env.development`, `.env.example`, `.env.local`, `.env.production`, `.env.test` |
+| Go | `.go` | `golang` | `.go` |
+| GraphQL | `.graphql` | `gql` | `.gql`, `.graphql`, `.graphqls` |
+| Groovy | `.groovy` | None | `.gradle`, `.groovy`, `.gsh`, `.gvy`, `.gy` |
+| HTML | `.html` | `htm` | `.htm`, `.html`, `.xhtml` |
+| Java | `.java` | None | `.java` |
+| JavaScript | `.javascript` | `js`, `jsx`, `node` | `.cjs`, `.js`, `.jsx`, `.mjs` |
+| JSDoc | `.jsdoc` | `js-doc` | None |
+| JSON | `.json` | None | `.geojson`, `.json`, `Package.resolved` |
+| JSON5 | `.json5` | `jsonc` | `.json5`, `.jsonc`, `jsconfig.json`, `tsconfig.json` |
+| Kotlin | `.kotlin` | `kt`, `kts` | `.kt`, `.kts` |
+| Markdown | `.markdown` | `md` | `.markdown`, `.md`, `.mdown`, `.mkd`, `.mkdn` |
+| Markdown Inline | `.markdownInline` | `markdown_inline` | None |
+| MDX | `.mdx` | None | `.mdx` |
+| Objective-C | `.objectiveC` | `obj-c`, `objc` | `.m`, `.mm` |
+| Java Properties | `.properties` | `java-properties` | `.properties` |
+| Python | `.python` | `py` | `.py`, `.pyi`, `.pyw` |
+| Regular Expression | `.regex` | `regexp` | None |
+| Ruby | `.ruby` | `rb` | `.gemspec`, `.podspec`, `.rake`, `.rb`, `Brewfile`, `Fastfile`, `Gemfile`, `Podfile`, `Rakefile` |
+| Rust | `.rust` | `rs` | `.rs` |
+| SCSS | `.scss` | None | `.scss` |
+| SQL | `.sql` | None | `.sql` |
+| Svelte | `.svelte` | None | `.svelte` |
+| Swift | `.swift` | `swiftlang` | `.swift` |
+| TOML | `.toml` | None | `.toml` |
+| TSX | `.tsx` | `react-typescript` | `.tsx` |
+| TypeScript | `.typescript` | `ts` | `.cts`, `.mts`, `.ts` |
+| Vue | `.vue` | None | `.vue` |
+| XML | `.xml` | None | `.plist`, `.storyboard`, `.svg`, `.xib`, `.xml` |
+| YAML | `.yaml` | `yml` | `.yaml`, `.yml`, `Podfile.lock` |
+
 ## Select a language
 
 Every bundled language has a typed ``LanguageID`` value:
@@ -28,10 +73,7 @@ let shell = try highlighter.highlight(
 and `yml`. File URL highlighting uses the same filename and extension metadata.
 
 The common pack covers React Native and Expo sources, Apple and Android native
-code, mobile build tooling, and mainstream web formats. It includes JavaScript,
-TypeScript, TSX, Swift, Objective-C, Java, Kotlin, Groovy, Ruby, HTML, CSS,
-SCSS, Vue, Svelte, Astro, GraphQL, SQL, JSON, JSON5, YAML, TOML, XML, Markdown,
-MDX, Dockerfile, dotenv, and supporting languages.
+code, mobile build tooling, and mainstream web formats.
 
 ## Highlight nested languages
 
