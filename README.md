@@ -137,13 +137,19 @@ let update = try await session.replaceCharacters(
 let renderingRanges = update.renderingRanges
 ```
 
-The session edits the existing Tree-sitter syntax tree, retains unaffected
-captures, and queries only the invalidated syntax. `update.snapshot` still
-contains the complete latest state when a backend prefers simple full
-rendering.
+The session edits the existing Tree-sitter syntax tree, so parsing stays
+incremental, and it queries the complete document so its captures always
+match a one-shot highlight of the same text. `update.invalidatedRanges`
+covers every capture that changed, and `update.snapshot` still contains the
+complete latest state when a backend prefers simple full rendering.
 
 Apply the same edit to your own text model before rendering the matching update.
 Keep revisions in order when coordinating edits from another versioned buffer.
+
+Streaming clients can read `snapshot.stableUTF16Length` to learn how much of
+the leading source parses without end-of-input recovery. Captures before that
+boundary match one-shot highlighting of the same text, while the trailing
+region remains speculative until more source arrives.
 
 ### Custom rendering backends
 

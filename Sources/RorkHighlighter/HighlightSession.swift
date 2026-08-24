@@ -36,6 +36,13 @@ public actor HighlightSession {
     /// query instead of exposing stale highlighting state.
     private var cachedHighlights: [HighlightSpan]?
 
+    /// Caches the settled prefix length for the current document revision.
+    ///
+    /// The value follows the same lifecycle as ``cachedHighlights`` so a
+    /// snapshot built from cached captures still reports the stability of
+    /// the current syntax tree.
+    private var cachedStableUTF16Length: Int?
+
     /// Creates a session after resolving and parsing its initial source.
     ///
     /// - Parameters:
@@ -73,6 +80,7 @@ public actor HighlightSession {
         self.textUTF16Length = textUTF16Length
         self.revision = 0
         self.cachedHighlights = snapshot.highlights
+        self.cachedStableUTF16Length = snapshot.stableUTF16Length
     }
 
     /// Returns the source text in the current revision.
@@ -91,11 +99,20 @@ public actor HighlightSession {
     /// - Throws: ``HighlighterError`` when query execution fails.
     public func snapshot() throws(HighlighterError) -> HighlightSnapshot {
         if let cachedHighlights {
+            let stableUTF16Length =
+                cachedStableUTF16Length
+                ?? highlighter.stableUTF16Length(
+                    of: layer,
+                    text: text,
+                    documentLength: textUTF16Length
+                )
+            cachedStableUTF16Length = stableUTF16Length
             return HighlightSnapshot(
                 parserProducedText: text,
                 language: languageDefinition.id,
                 revision: revision,
                 highlights: cachedHighlights,
+                stableUTF16Length: stableUTF16Length,
                 utf16Length: textUTF16Length
             )
         }
@@ -108,19 +125,24 @@ public actor HighlightSession {
             documentLength: textUTF16Length
         )
         cachedHighlights = snapshot.highlights
+        cachedStableUTF16Length = snapshot.stableUTF16Length
         return snapshot
     }
 
     /// Replaces a UTF-16 range and incrementally reparses the document.
     ///
     /// The returned snapshot is complete, while `invalidatedRanges` identifies
-    /// the regions a renderer needs to reconsider. The session retains captures
-    /// outside those regions and only queries Tree-sitter for changed syntax.
+    /// every region a renderer needs to reconsider. Parsing reuses the edited
+    /// syntax tree, and the query runs over the complete document so the
+    /// captures always match a one-shot highlight of the same tree. Bounding
+    /// the query to Tree-sitter's changed ranges was tried instead and
+    /// dropped, because query patterns can match or stop matching nodes whose
+    /// own structure never changed.
     ///
     /// - Parameters:
     ///   - range: The range in the current document revision.
     ///   - replacement: The source text that replaces `range`.
-    /// - Returns: The new snapshot and Tree-sitter invalidation ranges.
+    /// - Returns: The new snapshot and its invalidation ranges.
     /// - Throws: ``HighlighterError`` when the range is invalid or highlighting
     ///   the updated document fails.
     @discardableResult
@@ -192,190 +214,169 @@ public actor HighlightSession {
         )
 
         do {
-            if let previousHighlights = cachedHighlights {
-                cachedHighlights = try refreshedHighlights(
-                    previousHighlights,
-                    replacing: range,
-                    with: replacementRange,
-                    invalidatedRanges: invalidatedRanges
-                )
-            } else {
-                cachedHighlights = nil
-            }
+            let previousHighlights = cachedHighlights
+            cachedHighlights = nil
+            cachedStableUTF16Length = nil
 
             let snapshot = try snapshot()
             return HighlightUpdate(
                 replacedRange: range,
                 replacementRange: replacementRange,
-                invalidatedRanges: invalidatedRanges,
+                invalidatedRanges: Self.mergedInvalidatedRanges(
+                    treeRanges: invalidatedRanges,
+                    captureDiffRanges: Self.captureDiffRanges(
+                        previous: previousHighlights ?? [],
+                        current: snapshot.highlights,
+                        replacedRange: range,
+                        replacementRange: replacementRange
+                    ),
+                    documentLength: updatedTextUTF16Length
+                ),
                 snapshot: snapshot
             )
         } catch {
             cachedHighlights = nil
+            cachedStableUTF16Length = nil
             throw error
         }
     }
 
-    /// Refreshes cached captures within the syntax region changed by an edit.
+    /// Returns the regions whose captures differ between two revisions.
     ///
-    /// Captures outside the changed region are shifted by the edit delta and
-    /// retained. Captures intersecting that region are replaced by a bounded
-    /// Tree-sitter query, which avoids querying an otherwise unchanged file.
+    /// Tree-sitter's changed ranges describe structural edits, but a query
+    /// pattern can match or stop matching a node whose own structure never
+    /// changed, for example a name that becomes a call once its argument
+    /// list appears. Renderers repaint only invalidated regions, so every
+    /// capture difference has to surface here or stale styles remain
+    /// visible. The walk compares both ordered capture lists after rebasing
+    /// the previous revision around the edit.
     ///
     /// - Parameters:
-    ///   - previousHighlights: The ordered captures before the edit.
+    ///   - previous: The ordered captures before the edit.
+    ///   - current: The ordered captures after the edit.
     ///   - replacedRange: The range removed from the previous revision.
     ///   - replacementRange: The inserted range in the current revision.
-    ///   - invalidatedRanges: The regions changed by Tree-sitter.
-    /// - Returns: Complete ordered captures for the current revision.
-    /// - Throws: ``HighlighterError`` when the bounded query fails.
-    private func refreshedHighlights(
-        _ previousHighlights: [HighlightSpan],
-        replacing replacedRange: UTF16Range,
-        with replacementRange: UTF16Range,
-        invalidatedRanges: [UTF16Range]
-    ) throws(HighlighterError) -> [HighlightSpan] {
-        guard
-            let refreshRange = Self.refreshRange(
-                invalidatedRanges: invalidatedRanges,
-                replacementRange: replacementRange,
-                documentLength: textUTF16Length
+    /// - Returns: Unsorted regions covering every changed capture.
+    private static func captureDiffRanges(
+        previous: [HighlightSpan],
+        current: [HighlightSpan],
+        replacedRange: UTF16Range,
+        replacementRange: UTF16Range
+    ) -> [UTF16Range] {
+        let offsetDelta = replacementRange.length - replacedRange.length
+        var changedRanges: [UTF16Range] = []
+        var rebased: [HighlightSpan] = []
+        rebased.reserveCapacity(previous.count)
+
+        for highlight in previous {
+            if highlight.range.upperBound <= replacedRange.location {
+                rebased.append(highlight)
+            } else if highlight.range.location >= replacedRange.upperBound {
+                rebased.append(
+                    HighlightSpan(
+                        scopeComponents: highlight.scopeComponents,
+                        range: UTF16Range(
+                            location: highlight.range.location + offsetDelta,
+                            length: highlight.range.length
+                        )
+                    )
+                )
+            } else {
+                // A capture that intersected the edit no longer has one
+                // defensible position, so both of its possible remainders
+                // count as changed.
+                if highlight.range.location < replacedRange.location {
+                    changedRanges.append(
+                        UTF16Range(
+                            highlight.range.location..<replacedRange.location
+                        )
+                    )
+                }
+                if highlight.range.upperBound > replacedRange.upperBound {
+                    changedRanges.append(
+                        UTF16Range(
+                            replacementRange.upperBound..<(
+                                highlight.range.upperBound + offsetDelta
+                            )
+                        )
+                    )
+                }
+            }
+        }
+
+        var previousIndex = rebased.startIndex
+        var currentIndex = current.startIndex
+        while previousIndex < rebased.endIndex,
+            currentIndex < current.endIndex
+        {
+            let previousSpan = rebased[previousIndex]
+            let currentSpan = current[currentIndex]
+            if previousSpan == currentSpan {
+                previousIndex += 1
+                currentIndex += 1
+            } else if previousSpan < currentSpan {
+                changedRanges.append(previousSpan.range)
+                previousIndex += 1
+            } else {
+                changedRanges.append(currentSpan.range)
+                currentIndex += 1
+            }
+        }
+        changedRanges.append(
+            contentsOf: rebased[previousIndex...].map(\.range)
+        )
+        changedRanges.append(
+            contentsOf: current[currentIndex...].map(\.range)
+        )
+
+        return changedRanges
+    }
+
+    /// Merges structural and capture invalidation into disjoint ranges.
+    ///
+    /// - Parameters:
+    ///   - treeRanges: The regions Tree-sitter reports as changed.
+    ///   - captureDiffRanges: The regions whose captures changed.
+    ///   - documentLength: The UTF-16 length of the updated document.
+    /// - Returns: Sorted disjoint nonempty ranges bounded to the document.
+    private static func mergedInvalidatedRanges(
+        treeRanges: [UTF16Range],
+        captureDiffRanges: [UTF16Range],
+        documentLength: Int
+    ) -> [UTF16Range] {
+        let bounded = (treeRanges + captureDiffRanges).compactMap {
+            range -> UTF16Range? in
+            let lowerBound = min(max(0, range.location), documentLength)
+            let upperBound = min(
+                max(lowerBound, range.upperBound),
+                documentLength
             )
-        else {
+            guard lowerBound < upperBound else {
+                return nil
+            }
+            return UTF16Range(lowerBound..<upperBound)
+        }
+        let sorted = bounded.sorted()
+        guard var currentRange = sorted.first else {
             return []
         }
 
-        let refreshed = try highlighter.makeHighlights(
-            text: text,
-            language: languageDefinition.id,
-            layer: layer,
-            in: NSRange(
-                location: refreshRange.location,
-                length: refreshRange.length
-            ),
-            documentLength: textUTF16Length
-        )
-        let refreshedRanges = Set(refreshed.map(\.range))
-        let offsetDelta = replacementRange.length - replacedRange.length
-        var retained: [HighlightSpan] = []
-        retained.reserveCapacity(previousHighlights.count)
-
-        for highlight in previousHighlights {
-            guard
-                let rebased = Self.rebased(
-                    highlight,
-                    around: replacedRange,
-                    offsetDelta: offsetDelta
-                ),
-                !rebased.range.overlaps(refreshRange),
-                !refreshedRanges.contains(rebased.range)
-            else {
-                continue
-            }
-            retained.append(rebased)
-        }
-
-        return Self.merge(retained, with: refreshed)
-    }
-
-    /// Rebases one capture around an edited range.
-    ///
-    /// Captures intersecting the edit are discarded because the bounded query
-    /// replaces them. Captures after the edit move by the UTF-16 length delta.
-    ///
-    /// - Parameters:
-    ///   - highlight: The capture from the previous revision.
-    ///   - replacedRange: The range removed from the previous revision.
-    ///   - offsetDelta: The replacement length minus the removed length.
-    /// - Returns: The unchanged or shifted capture, or `nil` when it intersects
-    ///   the edit.
-    private static func rebased(
-        _ highlight: HighlightSpan,
-        around replacedRange: UTF16Range,
-        offsetDelta: Int
-    ) -> HighlightSpan? {
-        if highlight.range.upperBound <= replacedRange.location {
-            return highlight
-        }
-        if highlight.range.location >= replacedRange.upperBound {
-            return HighlightSpan(
-                scopeComponents: highlight.scopeComponents,
-                range: UTF16Range(
-                    location: highlight.range.location + offsetDelta,
-                    length: highlight.range.length
+        var result: [UTF16Range] = []
+        result.reserveCapacity(sorted.count)
+        for range in sorted.dropFirst() {
+            if range.location <= currentRange.upperBound {
+                currentRange = UTF16Range(
+                    currentRange.location..<max(
+                        currentRange.upperBound,
+                        range.upperBound
+                    )
                 )
-            )
-        }
-        return nil
-    }
-
-    /// Returns one bounded query region for all invalidated syntax.
-    ///
-    /// The region includes adjacent UTF-16 units when available. This lets the
-    /// bounded query replace captures that grow or merge across either edit
-    /// boundary, including insertions at the end of an existing capture.
-    ///
-    /// - Parameters:
-    ///   - invalidatedRanges: The regions changed by Tree-sitter.
-    ///   - replacementRange: The inserted range in the current revision.
-    ///   - documentLength: The current UTF-16 document length.
-    /// - Returns: A nonempty bounded range, or `nil` for an empty document.
-    private static func refreshRange(
-        invalidatedRanges: [UTF16Range],
-        replacementRange: UTF16Range,
-        documentLength: Int
-    ) -> UTF16Range? {
-        guard documentLength > 0 else {
-            return nil
-        }
-
-        var lowerBound = min(replacementRange.location, documentLength)
-        var upperBound = min(replacementRange.upperBound, documentLength)
-
-        for range in invalidatedRanges {
-            lowerBound = min(lowerBound, range.location)
-            upperBound = max(upperBound, range.upperBound)
-        }
-
-        if lowerBound > 0 {
-            lowerBound -= 1
-        }
-        if upperBound < documentLength {
-            upperBound += 1
-        }
-
-        return UTF16Range(lowerBound..<upperBound)
-    }
-
-    /// Merges two ordered capture arrays without sorting the complete result.
-    ///
-    /// - Parameters:
-    ///   - retained: The ordered captures preserved from the previous revision.
-    ///   - refreshed: The ordered captures returned by the bounded query.
-    /// - Returns: Every capture in deterministic application order.
-    private static func merge(
-        _ retained: [HighlightSpan],
-        with refreshed: [HighlightSpan]
-    ) -> [HighlightSpan] {
-        var result: [HighlightSpan] = []
-        result.reserveCapacity(retained.count + refreshed.count)
-        var retainedIndex = retained.startIndex
-        var refreshedIndex = refreshed.startIndex
-
-        while retainedIndex < retained.endIndex,
-            refreshedIndex < refreshed.endIndex
-        {
-            if refreshed[refreshedIndex] < retained[retainedIndex] {
-                result.append(refreshed[refreshedIndex])
-                refreshedIndex += 1
             } else {
-                result.append(retained[retainedIndex])
-                retainedIndex += 1
+                result.append(currentRange)
+                currentRange = range
             }
         }
-
-        result.append(contentsOf: retained[retainedIndex...])
-        result.append(contentsOf: refreshed[refreshedIndex...])
+        result.append(currentRange)
         return result
     }
 

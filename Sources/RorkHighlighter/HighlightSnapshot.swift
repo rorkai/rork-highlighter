@@ -12,6 +12,18 @@ public struct HighlightSnapshot: Hashable, Sendable {
     /// Holds every highlight span in deterministic application order.
     public let highlights: [HighlightSpan]
 
+    /// Holds the UTF-16 length of the leading source whose parse is settled.
+    ///
+    /// Streamed documents usually end inside an unfinished token or
+    /// construct, and Tree-sitter classifies that tail through error
+    /// recovery. Highlights that end before this boundary match a one-shot
+    /// highlight of the same text and rarely change when more source is
+    /// appended, while highlights at or beyond it remain speculative.
+    /// Parser-produced snapshots always carry a value. The value is `nil`
+    /// when a snapshot was assembled by hand without parse information, and
+    /// it stays out of snapshot equality like other derived parse metadata.
+    public let stableUTF16Length: Int?
+
     /// Caches the Foundation-native length used by incremental renderers.
     let utf16Length: Int
 
@@ -30,18 +42,25 @@ public struct HighlightSnapshot: Hashable, Sendable {
     ///   - language: The root language used to parse the text.
     ///   - revision: The document revision represented by the snapshot.
     ///   - highlights: The highlight spans in deterministic application order.
+    ///   - stableUTF16Length: The length of the leading source whose parse is
+    ///     settled, or `nil` when that boundary is unknown.
     public init(
         text: String,
         language: LanguageID,
         revision: UInt64,
-        highlights: [HighlightSpan]
+        highlights: [HighlightSpan],
+        stableUTF16Length: Int? = nil
     ) {
+        let utf16Length = text.utf16.count
         self.init(
             text: text,
             language: language,
             revision: revision,
             highlights: highlights,
-            utf16Length: text.utf16.count,
+            stableUTF16Length: stableUTF16Length.map {
+                min(max($0, 0), utf16Length)
+            },
+            utf16Length: utf16Length,
             hasParserProducedHighlightRanges: false
         )
     }
@@ -57,12 +76,15 @@ public struct HighlightSnapshot: Hashable, Sendable {
     ///   - language: The root language used to parse the text.
     ///   - revision: The document revision represented by the snapshot.
     ///   - highlights: The ordered captures produced by Tree-sitter.
+    ///   - stableUTF16Length: The settled prefix length derived from the
+    ///     parsed syntax trees.
     ///   - utf16Length: The validated UTF-16 length of the parsed source.
     init(
         parserProducedText text: String,
         language: LanguageID,
         revision: UInt64,
         highlights: [HighlightSpan],
+        stableUTF16Length: Int,
         utf16Length: Int
     ) {
         self.init(
@@ -70,6 +92,7 @@ public struct HighlightSnapshot: Hashable, Sendable {
             language: language,
             revision: revision,
             highlights: highlights,
+            stableUTF16Length: stableUTF16Length,
             utf16Length: utf16Length,
             hasParserProducedHighlightRanges: true
         )
@@ -82,6 +105,8 @@ public struct HighlightSnapshot: Hashable, Sendable {
     ///   - language: The root language used to parse the text.
     ///   - revision: The document revision represented by the snapshot.
     ///   - highlights: The ordered captures applied during rendering.
+    ///   - stableUTF16Length: The settled prefix length, or `nil` when that
+    ///     boundary is unknown.
     ///   - utf16Length: The UTF-16 length of the source text.
     ///   - hasParserProducedHighlightRanges: Whether parsing produced the
     ///     capture ranges.
@@ -90,6 +115,7 @@ public struct HighlightSnapshot: Hashable, Sendable {
         language: LanguageID,
         revision: UInt64,
         highlights: [HighlightSpan],
+        stableUTF16Length: Int?,
         utf16Length: Int,
         hasParserProducedHighlightRanges: Bool
     ) {
@@ -97,6 +123,7 @@ public struct HighlightSnapshot: Hashable, Sendable {
         self.language = language
         self.revision = revision
         self.highlights = highlights
+        self.stableUTF16Length = stableUTF16Length
         self.utf16Length = utf16Length
         self.hasParserProducedHighlightRanges =
             hasParserProducedHighlightRanges
@@ -104,8 +131,8 @@ public struct HighlightSnapshot: Hashable, Sendable {
 
     /// Compares the observable highlighting state of two snapshots.
     ///
-    /// Range provenance affects rendering work but not the snapshot value that
-    /// callers observe.
+    /// Range provenance and the derived stability boundary affect rendering
+    /// work but not the snapshot value that callers observe.
     ///
     /// - Parameters:
     ///   - lhs: The snapshot on the left side of the comparison.

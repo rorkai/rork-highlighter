@@ -3,6 +3,25 @@
 This document records the user-visible changes in each Rork Highlighter
 release.
 
+## 0.4.0 - 2026-08-24
+
+### Added
+
+- Added `HighlightSnapshot.stableUTF16Length`, which reports how much of the
+  leading source parses without end-of-input recovery. Streaming clients can
+  render exact captures before the boundary and keep the speculative tail
+  neutral until it settles.
+
+### Fixed
+
+- Session captures now always match a one-shot highlight of the same text.
+  The bounded incremental query missed patterns that match or stop matching
+  nodes whose own structure never changed, which let stale classifications
+  survive appends.
+- Session invalidation ranges now cover every capture difference between two
+  revisions, so incremental renderers no longer leave stale styles outside
+  Tree-sitter's structural change ranges.
+
 ## 0.3.0 - 2026-08-07
 
 ### Added
