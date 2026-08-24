@@ -219,11 +219,17 @@ public struct Highlighter: Sendable {
                 Self.maximumOneShotHighlightCapacity
             )
         )
+        let stableUTF16Length = ParseStabilityAnalyzer.stableUTF16Length(
+            of: tree.rootNode.map { [$0] } ?? [],
+            text: text,
+            documentLength: documentLength
+        )
         return HighlightSnapshot(
             parserProducedText: text,
             language: language,
             revision: 0,
             highlights: highlights,
+            stableUTF16Length: stableUTF16Length,
             utf16Length: documentLength
         )
     }
@@ -261,7 +267,35 @@ public struct Highlighter: Sendable {
                 in: fullRange,
                 documentLength: documentLength
             ),
+            stableUTF16Length: stableUTF16Length(
+                of: layer,
+                text: text,
+                documentLength: documentLength
+            ),
             utf16Length: documentLength
+        )
+    }
+
+    /// Computes the settled prefix length of a parsed language layer.
+    ///
+    /// - Parameters:
+    ///   - layer: The parsed root language layer and its injected sublayers.
+    ///   - text: The source represented by the layer.
+    ///   - documentLength: The validated UTF-16 source length.
+    /// - Returns: The length of the prefix unaffected by end-of-input
+    ///   recovery and token growth.
+    func stableUTF16Length(
+        of layer: LanguageLayer,
+        text: String,
+        documentLength: Int
+    ) -> Int {
+        guard let treeSnapshot = layer.snapshot() else {
+            return 0
+        }
+        return ParseStabilityAnalyzer.stableUTF16Length(
+            of: treeSnapshot,
+            text: text,
+            documentLength: documentLength
         )
     }
 
