@@ -293,11 +293,11 @@ public actor HighlightSession {
                     )
                 }
                 if highlight.range.upperBound > replacedRange.upperBound {
+                    let movedUpperBound =
+                        highlight.range.upperBound + offsetDelta
                     changedRanges.append(
                         UTF16Range(
-                            replacementRange.upperBound..<(
-                                highlight.range.upperBound + offsetDelta
-                            )
+                            replacementRange.upperBound..<movedUpperBound
                         )
                     )
                 }
@@ -365,11 +365,12 @@ public actor HighlightSession {
         result.reserveCapacity(sorted.count)
         for range in sorted.dropFirst() {
             if range.location <= currentRange.upperBound {
+                let mergedUpperBound = max(
+                    currentRange.upperBound,
+                    range.upperBound
+                )
                 currentRange = UTF16Range(
-                    currentRange.location..<max(
-                        currentRange.upperBound,
-                        range.upperBound
-                    )
+                    currentRange.location..<mergedUpperBound
                 )
             } else {
                 result.append(currentRange)
