@@ -314,8 +314,22 @@ struct ParseStabilityTests {
             revision: 0,
             highlights: []
         )
+        let interior = HighlightSnapshot(
+            text: "abc",
+            language: .swift,
+            revision: 0,
+            highlights: [],
+            stableUTF16Length: 1
+        )
         let midSurrogate = HighlightSnapshot(
             text: "🚀x",
+            language: .swift,
+            revision: 0,
+            highlights: [],
+            stableUTF16Length: 1
+        )
+        let scalarInsideGrapheme = HighlightSnapshot(
+            text: "e\u{301}x",
             language: .swift,
             revision: 0,
             highlights: [],
@@ -325,6 +339,11 @@ struct ParseStabilityTests {
         #expect(oversized.stableUTF16Length == 3)
         #expect(negative.stableUTF16Length == 0)
         #expect(unknown.stableUTF16Length == nil)
+        #expect(interior.stableUTF16Length == 1)
         #expect(midSurrogate.stableUTF16Length == 0)
+
+        // The position before a combining mark is a valid scalar boundary
+        // even though it sits inside one grapheme cluster.
+        #expect(scalarInsideGrapheme.stableUTF16Length == 1)
     }
 }

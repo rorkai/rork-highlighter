@@ -3,6 +3,15 @@
 This document records the user-visible changes in each Rork Highlighter
 release.
 
+## Unreleased
+
+### Fixed
+
+- Hand-built snapshot boundaries now keep valid scalar positions inside
+  grapheme clusters, such as the position before a combining mark. The
+  previous alignment used grapheme boundaries and rounded those positions
+  down unnecessarily.
+
 ## 0.4.0 - 2026-08-24
 
 ### Added
