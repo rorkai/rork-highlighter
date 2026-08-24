@@ -314,9 +314,17 @@ struct ParseStabilityTests {
             revision: 0,
             highlights: []
         )
+        let midSurrogate = HighlightSnapshot(
+            text: "🚀x",
+            language: .swift,
+            revision: 0,
+            highlights: [],
+            stableUTF16Length: 1
+        )
 
         #expect(oversized.stableUTF16Length == 3)
         #expect(negative.stableUTF16Length == 0)
         #expect(unknown.stableUTF16Length == nil)
+        #expect(midSurrogate.stableUTF16Length == 0)
     }
 }

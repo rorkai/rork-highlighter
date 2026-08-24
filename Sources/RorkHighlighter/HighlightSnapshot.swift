@@ -58,11 +58,48 @@ public struct HighlightSnapshot: Hashable, Sendable {
             revision: revision,
             highlights: highlights,
             stableUTF16Length: stableUTF16Length.map {
-                min(max($0, 0), utf16Length)
+                Self.scalarAlignedBoundary(
+                    $0,
+                    in: text,
+                    utf16Length: utf16Length
+                )
             },
             utf16Length: utf16Length,
             hasParserProducedHighlightRanges: false
         )
+    }
+
+    /// Clamps a caller-supplied boundary to the text and its scalars.
+    ///
+    /// Parser-produced boundaries always land between tokens, but hand-built
+    /// snapshots can carry any number, and a boundary inside a surrogate
+    /// pair would let clients build invalid UTF-16 ranges. The boundary
+    /// rounds down to the nearest Unicode scalar boundary.
+    ///
+    /// - Parameters:
+    ///   - value: The caller-supplied boundary.
+    ///   - text: The snapshot source text.
+    ///   - utf16Length: The UTF-16 length of the source text.
+    /// - Returns: A boundary inside the text on a scalar boundary.
+    private static func scalarAlignedBoundary(
+        _ value: Int,
+        in text: String,
+        utf16Length: Int
+    ) -> Int {
+        let clamped = min(max(value, 0), utf16Length)
+        guard clamped > 0, clamped < utf16Length else {
+            return clamped
+        }
+
+        let utf16 = text.utf16
+        let candidate = utf16.index(
+            utf16.startIndex,
+            offsetBy: clamped
+        )
+        guard String.Index(candidate, within: text) == nil else {
+            return clamped
+        }
+        return clamped - 1
     }
 
     /// Creates a parser-produced snapshot whose ranges are already trusted.
