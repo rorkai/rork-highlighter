@@ -74,7 +74,9 @@ public struct HighlightSnapshot: Hashable, Sendable {
     /// Parser-produced boundaries always land between tokens, but hand-built
     /// snapshots can carry any number, and a boundary inside a surrogate
     /// pair would let clients build invalid UTF-16 ranges. The boundary
-    /// rounds down to the nearest Unicode scalar boundary.
+    /// rounds down to the nearest Unicode scalar boundary. Scalar boundaries
+    /// inside a grapheme cluster, such as the position before a combining
+    /// mark, stay untouched because they are valid UTF-16 positions.
     ///
     /// - Parameters:
     ///   - value: The caller-supplied boundary.
@@ -96,10 +98,10 @@ public struct HighlightSnapshot: Hashable, Sendable {
             utf16.startIndex,
             offsetBy: clamped
         )
-        guard String.Index(candidate, within: text) == nil else {
-            return clamped
+        guard candidate.samePosition(in: text.unicodeScalars) != nil else {
+            return clamped - 1
         }
-        return clamped - 1
+        return clamped
     }
 
     /// Creates a parser-produced snapshot whose ranges are already trusted.
